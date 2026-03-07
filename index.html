@@ -72,7 +72,7 @@
         <h1>PDV Rápido</h1>
         <div class="form-grupo">
             <div style="flex: 3;">
-                <input type="text" id="codigoInput" placeholder="Bipe o código ou digite o ID e aperte Enter..." disabled autofocus>
+                <input type="text" id="codigoInput" placeholder="Bipe o código ou digite o NOME do produto e aperte Enter..." disabled autofocus>
             </div>
         </div>
         <table>
@@ -119,7 +119,7 @@
 </div>
 
 <script>
-    // SEU LINK ADICIONADO AQUI:
+    // SEU LINK DE API MANTIDO AQUI:
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
     let bancoDeProdutos = [];
@@ -137,7 +137,7 @@
         if(idTela === 'tela-pdv') document.getElementById('codigoInput').focus();
     }
 
-    // Carregar Produtos (Lógica mantida e conectada ao Dashboard)
+    // Carregar Produtos
     async function carregarProdutos() {
         let status = document.getElementById('status-bar');
         status.innerText = "Sincronizando dados...";
@@ -150,10 +150,7 @@
             status.style.color = "#166534";
             
             document.getElementById('codigoInput').disabled = false;
-            
-            // Atualiza o card de Produtos no Dashboard
             document.getElementById('dash-produtos').innerText = bancoDeProdutos.length;
-            
             atualizarTabelaGestao();
         } catch (erro) {
             status.innerText = "Erro de conexão. Verifique o link da API.";
@@ -162,17 +159,43 @@
         }
     }
 
-    // --- LÓGICA DO PDV ---
+    // --- NOVA LÓGICA DO PDV (PESQUISA INTELIGENTE) ---
     document.getElementById('codigoInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && this.value.trim() !== "") {
-            let prod = bancoDeProdutos.find(p => String(p.ID_Produto) === String(this.value.trim()));
+            let termoDigitado = this.value.trim().toLowerCase();
+            
+            // 1. Tenta achar o produto pelo ID exato ou pelo Nome exato
+            let prod = bancoDeProdutos.find(p => 
+                String(p.ID_Produto).toLowerCase() === termoDigitado || 
+                String(p.Nome_Produto).toLowerCase() === termoDigitado
+            );
+
+            // 2. Se não achar exato, procura palavras que CONTENHAM o que foi digitado
+            if (!prod) {
+                let produtosEncontrados = bancoDeProdutos.filter(p => 
+                    String(p.Nome_Produto).toLowerCase().includes(termoDigitado)
+                );
+                
+                if (produtosEncontrados.length === 1) {
+                    prod = produtosEncontrados[0]; // Só achou um, então é ele!
+                } else if (produtosEncontrados.length > 1) {
+                    // Achou vários com esse nome, mostra a lista para o usuário escolher o código
+                    let listaNomes = produtosEncontrados.map(p => `-> ${p.Nome_Produto} (Código: ${p.ID_Produto})`).join('\n');
+                    alert("Achei mais de um produto com essa palavra. Digite o código do produto desejado:\n\n" + listaNomes);
+                    return; // Para a execução para o usuário digitar de novo
+                }
+            }
+
+            // 3. Adiciona ao carrinho se encontrou o produto
             if (prod) {
                 let preco = parseFloat(prod.Preco_Venda.toString().replace(',','.')) || 0;
                 carrinho.push({ codigo: prod.ID_Produto, nome: prod.Nome_Produto, preco: preco });
                 total += preco;
                 atualizarCarrinho();
-            } else alert("Produto não encontrado!");
-            this.value = ""; 
+                this.value = ""; // Limpa o campo
+            } else {
+                alert("Produto não encontrado!");
+            }
         }
     });
 
