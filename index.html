@@ -119,8 +119,8 @@
 </div>
 
 <script>
-    // COLE O SEU LINK ABAIXO:
-    const API_URL = "SEU_LINK_DO_GOOGLE_APPS_SCRIPT_AQUI";
+    // SEU LINK ADICIONADO AQUI:
+    const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
     let bancoDeProdutos = [];
     let carrinho = [];
@@ -162,7 +162,7 @@
         }
     }
 
-    // --- LÓGICA DO PDV (Mantida igual) ---
+    // --- LÓGICA DO PDV ---
     document.getElementById('codigoInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && this.value.trim() !== "") {
             let prod = bancoDeProdutos.find(p => String(p.ID_Produto) === String(this.value.trim()));
@@ -190,7 +190,7 @@
 
     document.addEventListener('keydown', e => { if (e.key === 'F2') { e.preventDefault(); finalizarVenda(); } });
 
-    // --- LÓGICA DA GESTÃO (Mantida igual) ---
+    // --- LÓGICA DA GESTÃO ---
     function atualizarTabelaGestao() {
         document.getElementById('listaGestao').innerHTML = bancoDeProdutos.map(p => {
             if(!p.ID_Produto) return '';
