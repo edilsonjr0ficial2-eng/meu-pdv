@@ -3,152 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDV Rápido</title>
+    <title>Sistema de Gestão e PDV</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
         .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #333; }
+        
+        /* Abas de Navegação */
+        .abas { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
+        .aba { padding: 10px 20px; cursor: pointer; font-size: 18px; font-weight: bold; color: #666; border: none; background: none; }
+        .aba.ativa { color: #007bff; border-bottom: 3px solid #007bff; margin-bottom: -2px; }
+        
+        /* Ocultar telas */
+        .tela { display: none; }
+        .tela.ativa { display: block; }
+
+        /* Estilos do PDV */
         .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
         .search-box input { flex: 1; padding: 15px; font-size: 18px; border: 2px solid #ccc; border-radius: 5px; }
-        .search-box input:focus { border-color: #007bff; outline: none; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #f8f9fa; }
         .total-box { text-align: right; font-size: 24px; font-weight: bold; color: #28a745; margin-bottom: 20px; }
-        .btn-finalizar { background-color: #007bff; color: white; border: none; padding: 15px 30px; font-size: 18px; border-radius: 5px; cursor: pointer; width: 100%; transition: 0.3s; }
-        .btn-finalizar:hover { background-color: #0056b3; }
-        #status { text-align: center; color: #666; font-style: italic; margin-bottom: 15px; }
+        
+        /* Botões e Formulários */
+        button { cursor: pointer; border: none; border-radius: 5px; padding: 10px 15px; font-weight: bold; color: white; }
+        .btn-azul { background-color: #007bff; }
+        .btn-verde { background-color: #28a745; }
+        .btn-vermelho { background-color: #dc3545; }
+        .btn-finalizar { background-color: #007bff; font-size: 18px; padding: 15px; width: 100%; }
+        
+        .form-grupo { display: flex; gap: 10px; margin-bottom: 20px; align-items: flex-end; }
+        .form-grupo div { flex: 1; display: flex; flex-direction: column; }
+        .form-grupo input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        
+        #status { text-align: center; color: #666; font-style: italic; margin-bottom: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>PDV Rápido</h1>
+    <h1>Controle do Caixa</h1>
     
-    <div id="status">Carregando produtos do banco de dados...</div>
+    <div id="status">Conectando ao banco de dados...</div>
 
-    <div class="search-box">
-        <input type="text" id="codigoInput" placeholder="Bipe o código de barras ou digite o ID e aperte Enter..." disabled autofocus>
+    <div class="abas">
+        <button class="aba ativa" onclick="mudarAba('pdv')">🛒 Tela de PDV</button>
+        <button class="aba" onclick="mudarAba('gestao')">📦 Gestão de Produtos</button>
     </div>
 
-    <table id="tabelaCarrinho">
-        <thead>
-            <tr>
-                <th>Código</th>
-                <th>Produto</th>
-                <th>Qtd</th>
-                <th>Preço Un.</th>
-                <th>Subtotal</th>
-            </tr>
-        </thead>
-        <tbody id="listaCarrinho">
-            </tbody>
-    </table>
-
-    <div class="total-box">
-        Total: R$ <span id="valorTotal">0.00</span>
+    <div id="tela-pdv" class="tela ativa">
+        <div class="search-box">
+            <input type="text" id="codigoInput" placeholder="Bipe o código de barras ou ID e aperte Enter..." disabled autofocus>
+        </div>
+        <table>
+            <thead><tr><th>Código</th><th>Produto</th><th>Qtd</th><th>Preço</th></tr></thead>
+            <tbody id="listaCarrinho"></tbody>
+        </table>
+        <div class="total-box">Total: R$ <span id="valorTotal">0.00</span></div>
+        <button class="btn-finalizar" onclick="finalizarVenda()">Finalizar Venda (F2)</button>
     </div>
 
-    <button class="btn-finalizar" onclick="finalizarVenda()">Finalizar Venda (F2)</button>
+    <div id="tela-gestao" class="tela">
+        <h3>Adicionar Novo Produto</h3>
+        <div class="form-grupo">
+            <div><label>Código/ID</label><input type="text" id="novoId" placeholder="Ex: 105"></div>
+            <div><label>Nome do Produto</label><input type="text" id="novoNome" placeholder="Ex: Água 500ml"></div>
+            <div><label>Preço de Venda (R$)</label><input type="number" step="0.01" id="novoPreco" placeholder="Ex: 5.00"></div>
+            <button class="btn-verde" onclick="adicionarProduto()" id="btnAdicionar">Adicionar Produto</button>
+        </div>
+
+        <h3>Produtos Cadastrados</h3>
+        <table>
+            <thead><tr><th>Código</th><th>Produto</th><th>Preço</th><th>Ação</th></tr></thead>
+            <tbody id="listaGestao"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-    // O seu link da API do Google Sheets
+    // COLE SEU LINK AQUI DENTRO DAS ASPAS:
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
     let bancoDeProdutos = [];
     let carrinho = [];
     let total = 0;
 
-    // 1. Carregar os produtos ao abrir a tela
+    // ----- FUNÇÕES BASE -----
     async function carregarProdutos() {
+        document.getElementById('status').innerText = "Carregando dados...";
+        document.getElementById('status').style.color = "#666";
         try {
             const resposta = await fetch(API_URL);
             bancoDeProdutos = await resposta.json();
-            document.getElementById('status').innerText = "Sistema Pronto! Pode bipar os produtos.";
+            
+            // Garante que a planilha tinha dados corretos
+            if(bancoDeProdutos.length > 0 && !bancoDeProdutos[0].ID_Produto) {
+                 document.getElementById('status').innerText = "Erro: A planilha precisa dos cabeçalhos exatos na linha 1.";
+                 document.getElementById('status').style.color = "red";
+                 return;
+            }
+
+            document.getElementById('status').innerText = "Sistema Pronto!";
+            document.getElementById('status').style.color = "green";
             document.getElementById('codigoInput').disabled = false;
             document.getElementById('codigoInput').focus();
+            
+            atualizarTabelaGestao();
         } catch (erro) {
-            document.getElementById('status').innerText = "Erro ao carregar produtos. Verifique sua internet.";
+            document.getElementById('status').innerText = "Erro ao carregar produtos. Verifique o link e permissões.";
             document.getElementById('status').style.color = "red";
         }
     }
 
-    // 2. Escutar o Leitor de Código de Barras (ou tecla Enter)
+    function mudarAba(abaId) {
+        document.querySelectorAll('.aba').forEach(b => b.classList.remove('ativa'));
+        document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+        
+        event.target.classList.add('ativa');
+        document.getElementById('tela-' + abaId).classList.add('ativa');
+        
+        if(abaId === 'pdv') document.getElementById('codigoInput').focus();
+    }
+
+    // ----- FUNÇÕES DO PDV -----
     document.getElementById('codigoInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             let codigoDigitado = this.value.trim();
             if(codigoDigitado !== "") {
-                adicionarAoCarrinho(codigoDigitado);
-                this.value = ""; // Limpa o campo para o próximo bipe
+                let produto = bancoDeProdutos.find(p => String(p.ID_Produto) === String(codigoDigitado));
+                if (produto) {
+                    let preco = parseFloat(produto.Preco_Venda.toString().replace(',','.')) || 0;
+                    carrinho.push({ codigo: produto.ID_Produto, nome: String(produto.Nome_Produto), preco: preco });
+                    total += preco;
+                    atualizarCarrinho();
+                } else {
+                    alert("Produto não encontrado!");
+                }
+                this.value = ""; 
             }
         }
     });
 
-    // 3. Buscar o produto e adicionar à tela
-    function adicionarAoCarrinho(codigo) {
-        // Procura o produto no banco baixado do Google Sheets
-        let produto = bancoDeProdutos.find(p => String(p.ID_Produto) === String(codigo));
-
-        if (produto) {
-            let preco = parseFloat(produto.Preco_Venda) || 0;
-            
-            // Adiciona no array do carrinho
-            carrinho.push({
-                codigo: produto.ID_Produto,
-                nome: produto.Nome_Produto,
-                preco: preco
-            });
-
-            total += preco;
-            atualizarTela();
-        } else {
-            alert("Produto não encontrado: " + codigo);
-        }
-    }
-
-    // 4. Atualizar a tabela visual e o total
-    function atualizarTela() {
+    function atualizarCarrinho() {
         let tbody = document.getElementById('listaCarrinho');
-        tbody.innerHTML = ""; // Limpa a tabela
-        
+        tbody.innerHTML = ""; 
         carrinho.forEach(item => {
-            let tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${item.codigo}</td>
-                <td>${item.nome}</td>
-                <td>1</td>
-                <td>R$ ${item.preco.toFixed(2)}</td>
-                <td>R$ ${item.preco.toFixed(2)}</td>
-            `;
-            tbody.appendChild(tr);
+            tbody.innerHTML += `<tr><td>${item.codigo}</td><td>${item.nome}</td><td>1</td><td>R$ ${item.preco.toFixed(2)}</td></tr>`;
         });
-
         document.getElementById('valorTotal').innerText = total.toFixed(2);
     }
 
-    // 5. Botão de Finalizar Venda
     function finalizarVenda() {
-        if(carrinho.length === 0) {
-            alert("O carrinho está vazio!");
-            return;
-        }
-        alert("Venda de R$ " + total.toFixed(2) + " finalizada com sucesso! (A integração com a planilha de vendas será o próximo passo).");
-        carrinho = [];
-        total = 0;
-        atualizarTela();
-        document.getElementById('codigoInput').focus();
+        if(carrinho.length === 0) return alert("Carrinho vazio!");
+        alert("Venda de R$ " + total.toFixed(2) + " finalizada!");
+        carrinho = []; total = 0; atualizarCarrinho();
     }
 
-    // Atalho de teclado (F2 para finalizar)
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'F2') {
-            e.preventDefault();
-            finalizarVenda();
-        }
-    });
+    document.addEventListener('keydown', e => { if (e.key === 'F2') { e.preventDefault(); finalizarVenda(); } });
 
-    // Inicia o sistema
+    // ----- FUNÇÕES DE GESTÃO (COMUNICAÇÃO POST COM O GOOGLE) -----
+    function atualizarTabelaGestao() {
+        let tbody = document.getElementById('listaGestao');
+        tbody.innerHTML = "";
+        bancoDeProdutos.forEach(p => {
+            if(p.ID_Produto) {
+                let precoStr = p.Preco_Venda ? "R$ " + p.Preco_Venda : "R$ 0.00";
+                tbody.innerHTML += `<tr>
+                    <td>${p.ID_Produto}</td>
+                    <td>${p.Nome_Produto}</td>
+                    <td>${precoStr}</td>
+                    <td><button class="btn-vermelho" onclick="removerProduto('${p.ID_Produto}')">Apagar</button></td>
+                </tr>`;
+            }
+        });
+    }
+
+    async function adicionarProduto() {
+        let id = document.getElementById('novoId').value;
+        let nome = document.getElementById('novoNome').value;
+        let preco = document.getElementById('novoPreco').value;
+
+        if(!id || !nome || !preco) return alert("Preencha todos os campos!");
+        if(bancoDeProdutos.find(p => String(p.ID_Produto) === String(id))) return alert("Esse ID já existe!");
+
+        document.getElementById('btnAdicionar').innerText = "Salvando...";
+        
+        let payload = { acao: "adicionar", id: id, nome: nome, preco: preco };
+        
+        await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' } // text/plain evita bloqueios CORS do Google
+        });
+
+        document.getElementById('novoId').value = "";
+        document.getElementById('novoNome').value = "";
+        document.getElementById('novoPreco').value = "";
+        document.getElementById('btnAdicionar').innerText = "Adicionar Produto";
+        
+        carregarProdutos(); // Recarrega os dados atualizados
+    }
+
+    async function removerProduto(id) {
+        if(!confirm("Tem certeza que deseja apagar o produto " + id + "?")) return;
+        
+        document.getElementById('status').innerText = "Apagando produto...";
+        
+        let payload = { acao: "remover", id: id };
+        
+        await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        });
+
+        carregarProdutos(); // Recarrega os dados atualizados
+    }
+
+    // Inicia tudo
     carregarProdutos();
 </script>
 
