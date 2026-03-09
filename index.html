@@ -27,18 +27,21 @@
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
         th { background-color: #f1f5f9; color: #475569; }
-        .form-grupo { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-end; }
-        .form-grupo div { flex: 1; display: flex; flex-direction: column; }
+        .form-grupo { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-end; flex-wrap: wrap; }
+        .form-grupo div { flex: 1; display: flex; flex-direction: column; min-width: 120px; }
         .form-grupo input, .form-grupo select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 15px; }
         
         button { cursor: pointer; border: none; border-radius: 5px; padding: 12px 20px; font-weight: bold; color: white; font-size: 15px; transition: 0.2s; }
         .btn-azul { background-color: #0ea5e9; } .btn-azul:hover { background-color: #0284c7; }
         .btn-verde { background-color: #10b981; } .btn-verde:hover { background-color: #059669; }
         .btn-vermelho { background-color: #ef4444; } .btn-vermelho:hover { background-color: #dc2626; }
+        .btn-laranja { background-color: #f97316; } .btn-laranja:hover { background-color: #ea580c; }
         
         #status-bar { background: #e0f2fe; color: #0369a1; padding: 10px; text-align: center; font-weight: bold; border-radius: 5px; margin-bottom: 20px; }
         .val-entrada { color: #16a34a; font-weight: bold; }
         .val-saida { color: #dc2626; font-weight: bold; }
+        
+        .botoes-caixa { display: flex; gap: 10px; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -46,9 +49,10 @@
 <div class="sidebar">
     <h2>🎯 Meu Sistema</h2>
     <div class="menu-item ativo" onclick="mudarTela('tela-dashboard', this)">📊 Dashboard</div>
-    <div class="menu-item" onclick="mudarTela('tela-pdv', this)">🛒 PDV Rápido</div>
-    <div class="menu-item" onclick="mudarTela('tela-caixa', this)">💵 Livro de Caixa</div>
-    <div class="menu-item" onclick="mudarTela('tela-gestao', this)">📦 Produtos</div>
+    <div class="menu-item" onclick="mudarTela('tela-caixa', this)">🛒 Caixa</div>
+    <div class="menu-item" onclick="mudarTela('tela-comandas', this)">📝 Comandas</div>
+    <div class="menu-item" onclick="mudarTela('tela-livro', this)">💵 Livro de Caixa</div>
+    <div class="menu-item" onclick="mudarTela('tela-estoque', this)">📦 Estoque</div>
 </div>
 
 <div class="main-content">
@@ -59,34 +63,48 @@
         <div class="dashboard-cards">
             <div class="card"><h3>Vendas Hoje</h3><div class="valor" id="dash-vendas">R$ 0,00</div></div>
             <div class="card"><h3>Saldo em Caixa</h3><div class="valor" id="dash-saldo">R$ 0,00</div></div>
-            <div class="card"><h3>Produtos Cadastrados</h3><div class="valor" id="dash-produtos">0</div></div>
+            <div class="card"><h3>Produtos em Estoque</h3><div class="valor" id="dash-produtos">0</div></div>
         </div>
     </div>
 
-    <div id="tela-pdv" class="tela">
-        <h1>PDV Rápido</h1>
+    <div id="tela-caixa" class="tela">
+        <h1>Frente de Caixa</h1>
         <div class="form-grupo">
             <div style="flex: 3;">
                 <input type="text" id="codigoInput" placeholder="Bipe o código ou digite o NOME e aperte Enter..." disabled autofocus>
             </div>
         </div>
         <table>
-            <thead><tr><th>Código</th><th>Produto</th><th>Qtd</th><th>Preço</th></tr></thead>
+            <thead><tr><th>Código</th><th>Produto</th><th>Qtd</th><th>Preço Un.</th><th>Subtotal</th></tr></thead>
             <tbody id="listaCarrinho"></tbody>
         </table>
         <div style="text-align: right; font-size: 26px; font-weight: bold; color: #10b981; margin: 20px 0;">
             Total: R$ <span id="valorTotal">0.00</span>
         </div>
-        <button class="btn-azul" id="btnFinalizarVenda" style="width: 100%; font-size: 18px;" onclick="finalizarVenda()">Finalizar Venda (F2)</button>
+        
+        <div class="botoes-caixa">
+            <button class="btn-laranja" id="btnSalvarComanda" style="flex: 1; font-size: 18px;" onclick="abrirComanda()">Salvar em Comanda (F3)</button>
+            <button class="btn-azul" id="btnFinalizarVenda" style="flex: 1; font-size: 18px;" onclick="finalizarVenda()">Finalizar Venda Direta (F2)</button>
+        </div>
     </div>
 
-    <div id="tela-caixa" class="tela">
+    <div id="tela-comandas" class="tela">
+        <h1>Comandas Abertas</h1>
+        <table>
+            <thead><tr><th>Nº Comanda</th><th>Cliente/Mesa</th><th>Resumo dos Itens</th><th>Total (R$)</th><th>Ação</th></tr></thead>
+            <tbody id="listaComandas">
+                <tr><td colspan="5" style="text-align: center; color: #999;">Nenhuma comanda aberta no momento.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="tela-livro" class="tela">
         <h1>Livro de Caixa</h1>
         <div class="form-grupo">
             <div><label>Tipo</label>
-                <select id="tipoMovimento"><option value="Entrada">Entrada (Ex: Troco inicial)</option><option value="Saida">Saída (Ex: Pagamento Fornecedor)</option></select>
+                <select id="tipoMovimento"><option value="Entrada">Entrada (Ex: Troco inicial)</option><option value="Saida">Saída (Ex: Pgto Fornecedor)</option></select>
             </div>
-            <div><label>Descrição</label><input type="text" id="descMovimento" placeholder="Ex: Pagamento da conta de luz"></div>
+            <div><label>Descrição</label><input type="text" id="descMovimento" placeholder="Ex: Conta de luz"></div>
             <div><label>Valor (R$)</label><input type="number" step="0.01" id="valorMovimento"></div>
             <button class="btn-verde" style="margin-bottom: 2px;" onclick="registrarCaixa()">Registrar</button>
         </div>
@@ -96,26 +114,28 @@
         </table>
     </div>
 
-    <div id="tela-gestao" class="tela">
-        <h1>Gestão de Produtos</h1>
+    <div id="tela-estoque" class="tela">
+        <h1>Gestão de Estoque</h1>
         <div class="form-grupo">
             <div><label>ID/Código</label><input type="text" id="novoId"></div>
             <div><label>Nome do Produto</label><input type="text" id="novoNome"></div>
-            <div><label>Preço (R$)</label><input type="number" step="0.01" id="novoPreco"></div>
+            <div><label>Preço Custo</label><input type="number" step="0.01" id="novoCusto"></div>
+            <div><label>Preço Venda</label><input type="number" step="0.01" id="novoPreco"></div>
+            <div><label>Quantidade</label><input type="number" id="novaQtd"></div>
             <button class="btn-verde" style="margin-bottom: 2px;" onclick="adicionarProduto()" id="btnAdicionar">Salvar</button>
         </div>
         <table>
-            <thead><tr><th>Código</th><th>Produto</th><th>Preço</th><th>Ação</th></tr></thead>
+            <thead><tr><th>Código</th><th>Produto</th><th>Custo (R$)</th><th>Venda (R$)</th><th>Qtd</th><th>Ação</th></tr></thead>
             <tbody id="listaGestao"></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // A SUA URL ATUALIZADA ESTÁ AQUI:
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
     let bancoDeProdutos = [];
+    let bancoComandas = [];
     let carrinho = [];
     let total = 0;
 
@@ -124,93 +144,74 @@
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('ativo'));
         document.getElementById(idTela).classList.add('ativa');
         elementoMenu.classList.add('ativo');
-        if(idTela === 'tela-pdv') document.getElementById('codigoInput').focus();
+        if(idTela === 'tela-caixa') document.getElementById('codigoInput').focus();
     }
 
-    // --- CARREGAR DADOS COMPLETOS (PRODUTOS + CAIXA) ---
+    // --- CARREGAR DADOS COMPLETOS ---
     async function carregarDados() {
         let status = document.getElementById('status-bar');
-        status.innerText = "Sincronizando dados com a planilha...";
+        status.innerText = "Sincronizando banco de dados...";
         try {
             const resposta = await fetch(API_URL);
             const dados = await resposta.json();
             
             bancoDeProdutos = dados.produtos || [];
+            bancoComandas = dados.comandas || [];
             let bancoCaixa = dados.caixa || [];
             
             status.innerText = "Sistema Online";
-            status.style.backgroundColor = "#dcfce7";
-            status.style.color = "#166534";
+            status.style.backgroundColor = "#dcfce7"; status.style.color = "#166534";
             
             document.getElementById('codigoInput').disabled = false;
             document.getElementById('dash-produtos').innerText = bancoDeProdutos.length;
             
-            atualizarTabelaGestao();
+            atualizarTabelaEstoque();
+            atualizarTabelaComandas();
             atualizarDashboardECaixa(bancoCaixa);
         } catch (erro) {
             status.innerText = "Erro de conexão.";
-            status.style.backgroundColor = "#fee2e2";
-            status.style.color = "#991b1b";
+            status.style.backgroundColor = "#fee2e2"; status.style.color = "#991b1b";
         }
     }
 
-    // --- ATUALIZA O DASHBOARD E A TABELA DE CAIXA ---
+    // --- CAIXA E DASHBOARD ---
     function atualizarDashboardECaixa(caixa) {
-        let saldoTotal = 0;
-        let vendasHoje = 0;
-        let hojeStr = new Date().toLocaleDateString('pt-BR'); // Pega a data de hoje para o filtro
-
+        let saldoTotal = 0; let vendasHoje = 0;
+        let hojeStr = new Date().toLocaleDateString('pt-BR');
         let tbodyCaixa = document.getElementById('listaCaixa');
         tbodyCaixa.innerHTML = "";
 
-        // Percorre de trás pra frente (para os lançamentos mais novos ficarem no topo da lista)
         for(let i = caixa.length - 1; i >= 0; i--) {
             let mov = caixa[i];
             if(!mov.ID_Transacao) continue;
-
             let valor = parseFloat(mov.Valor.toString().replace(',','.')) || 0;
             
             if(mov.Tipo === "Entrada") saldoTotal += valor;
             if(mov.Tipo === "Saida") saldoTotal -= valor;
-
-            // Checa se a venda foi hoje
-            if(mov.Data_Hora && mov.Data_Hora.includes(hojeStr) && mov.Tipo === "Entrada" && mov.Descricao.includes("Venda")) {
+            if(mov.Data_Hora && mov.Data_Hora.includes(hojeStr) && mov.Tipo === "Entrada" && (mov.Descricao.includes("Venda") || mov.Descricao.includes("Pgto Comanda"))) {
                 vendasHoje += valor;
             }
 
             let classeCor = mov.Tipo === 'Entrada' ? 'val-entrada' : 'val-saida';
-            
-            tbodyCaixa.innerHTML += `<tr>
-                <td>${mov.Data_Hora}</td>
-                <td class="${classeCor}">${mov.Tipo}</td>
-                <td>${mov.Descricao}</td>
-                <td class="${classeCor}">R$ ${valor.toFixed(2)}</td>
-            </tr>`;
+            tbodyCaixa.innerHTML += `<tr><td>${mov.Data_Hora}</td><td class="${classeCor}">${mov.Tipo}</td><td>${mov.Descricao}</td><td class="${classeCor}">R$ ${valor.toFixed(2)}</td></tr>`;
         }
-
         document.getElementById('dash-saldo').innerText = "R$ " + saldoTotal.toFixed(2);
         document.getElementById('dash-vendas').innerText = "R$ " + vendasHoje.toFixed(2);
     }
 
-    // --- REGISTRAR ENTRADAS/SAÍDAS MANUAIS NO CAIXA ---
     async function registrarCaixa() {
         let tipo = document.getElementById('tipoMovimento').value;
         let desc = document.getElementById('descMovimento').value;
         let valor = document.getElementById('valorMovimento').value;
 
         if(!desc || !valor) return alert("Preencha a descrição e o valor!");
-        
-        document.getElementById('status-bar').innerText = "Gravando no Livro de Caixa...";
-        
-        let payload = { acao: "caixa", tipo: tipo, descricao: desc, valor: valor };
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-
-        document.getElementById('descMovimento').value = "";
-        document.getElementById('valorMovimento').value = "";
+        document.getElementById('status-bar').innerText = "Gravando...";
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "caixa", tipo: tipo, descricao: desc, valor: valor }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+        document.getElementById('descMovimento').value = ""; document.getElementById('valorMovimento').value = "";
         carregarDados();
     }
 
-    // --- LÓGICA DO PDV (CARRINHO E PESQUISA) ---
+    // --- LÓGICA DE FRENTE DE CAIXA (SOMA QUANTIDADES) ---
     document.getElementById('codigoInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && this.value.trim() !== "") {
             let termo = this.value.trim().toLowerCase();
@@ -227,7 +228,15 @@
 
             if (prod) {
                 let preco = parseFloat(prod.Preco_Venda.toString().replace(',','.')) || 0;
-                carrinho.push({ codigo: prod.ID_Produto, nome: prod.Nome_Produto, preco: preco });
+                
+                // Verifica se já existe no carrinho para somar a quantidade
+                let itemExistente = carrinho.find(i => i.codigo === prod.ID_Produto);
+                if(itemExistente) {
+                    itemExistente.qtd += 1;
+                } else {
+                    carrinho.push({ codigo: prod.ID_Produto, nome: prod.Nome_Produto, preco: preco, qtd: 1 });
+                }
+                
                 total += preco;
                 atualizarCarrinho();
                 this.value = ""; 
@@ -237,41 +246,86 @@
 
     function atualizarCarrinho() {
         let tbody = document.getElementById('listaCarrinho');
-        tbody.innerHTML = carrinho.map(i => `<tr><td>${i.codigo}</td><td>${i.nome}</td><td>1</td><td>R$ ${i.preco.toFixed(2)}</td></tr>`).join('');
+        tbody.innerHTML = carrinho.map(i => {
+            let subtotal = i.preco * i.qtd;
+            return `<tr><td>${i.codigo}</td><td>${i.nome}</td><td>${i.qtd}</td><td>R$ ${i.preco.toFixed(2)}</td><td>R$ ${subtotal.toFixed(2)}</td></tr>`;
+        }).join('');
         document.getElementById('valorTotal').innerText = total.toFixed(2);
     }
 
-    // --- GRAVAR VENDA NA PLANILHA ---
+    // --- VENDAS E COMANDAS ---
     async function finalizarVenda() {
         if(carrinho.length === 0) return alert("O carrinho está vazio!");
-        
         let btn = document.getElementById('btnFinalizarVenda');
-        btn.innerText = "Gravando Venda...";
-        btn.disabled = true;
+        btn.innerText = "Gravando Venda..."; btn.disabled = true;
 
-        let payload = { acao: "venda", total: total, carrinho: carrinho };
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "venda", total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
         
-        try {
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-            alert("Venda Finalizada! O valor já está no seu Dashboard.");
-            carrinho = []; total = 0; atualizarCarrinho();
-            carregarDados(); // Recarrega o painel e o caixa
-        } catch(e) {
-            alert("Erro ao gravar. Tente novamente.");
-        }
-        
-        btn.innerText = "Finalizar Venda (F2)";
-        btn.disabled = false;
+        alert("Venda Finalizada com sucesso! (Estoque descontado).");
+        carrinho = []; total = 0; atualizarCarrinho();
+        carregarDados();
+        btn.innerText = "Finalizar Venda Direta (F2)"; btn.disabled = false;
         document.getElementById('codigoInput').focus();
     }
 
-    document.addEventListener('keydown', e => { if (e.key === 'F2') { e.preventDefault(); finalizarVenda(); } });
+    async function abrirComanda() {
+        if(carrinho.length === 0) return alert("Adicione produtos antes de abrir a comanda!");
+        
+        let nomeCliente = prompt("Qual o nome do Cliente ou Número da Mesa?");
+        if(!nomeCliente) return; // Se cancelar, não faz nada
 
-    // --- GESTÃO DE PRODUTOS ---
-    function atualizarTabelaGestao() {
+        let btn = document.getElementById('btnSalvarComanda');
+        btn.innerText = "Salvando Comanda..."; btn.disabled = true;
+
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_comanda", cliente: nomeCliente, total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+        
+        alert(`Comanda de ${nomeCliente} aberta! (Itens já saíram do estoque).`);
+        carrinho = []; total = 0; atualizarCarrinho();
+        carregarDados();
+        btn.innerText = "Salvar em Comanda (F3)"; btn.disabled = false;
+    }
+
+    function atualizarTabelaComandas() {
+        let tbody = document.getElementById('listaComandas');
+        if(bancoComandas.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #999;">Nenhuma comanda aberta.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = bancoComandas.map(c => {
+            if(!c.ID_Comanda) return '';
+            let itensStr = "";
+            try { 
+                let itensObj = JSON.parse(c.Itens_JSON); 
+                itensStr = itensObj.map(i => `${i.qtd}x ${i.nome}`).join(', '); 
+            } catch(e) { itensStr = "Erro ao ler itens"; }
+            
+            let valor = parseFloat(c.Total.toString().replace(',','.')) || 0;
+
+            return `<tr><td>#${c.ID_Comanda}</td><td style="font-weight:bold;">${c.Cliente}</td><td>${itensStr}</td><td style="color:#10b981; font-weight:bold;">R$ ${valor.toFixed(2)}</td>
+            <td><button class="btn-verde" onclick="cobrarComanda('${c.ID_Comanda}')">Cobrar</button></td></tr>`;
+        }).join('');
+    }
+
+    async function cobrarComanda(idComanda) {
+        if(confirm("Deseja confirmar o pagamento desta comanda e enviar o valor para o Caixa?")) {
+            document.getElementById('status-bar').innerText = "Processando pagamento...";
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "cobrar_comanda", id_comanda: idComanda }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+            alert("Comanda paga com sucesso!");
+            carregarDados();
+        }
+    }
+
+    document.addEventListener('keydown', e => { 
+        if (e.key === 'F2') { e.preventDefault(); finalizarVenda(); }
+        if (e.key === 'F3') { e.preventDefault(); abrirComanda(); }
+    });
+
+    // --- ESTOQUE ---
+    function atualizarTabelaEstoque() {
         document.getElementById('listaGestao').innerHTML = bancoDeProdutos.map(p => {
             if(!p.ID_Produto) return '';
-            return `<tr><td>${p.ID_Produto}</td><td>${p.Nome_Produto}</td><td>R$ ${p.Preco_Venda}</td>
+            return `<tr><td>${p.ID_Produto}</td><td>${p.Nome_Produto}</td><td>R$ ${p.Preco_Custo}</td><td>R$ ${p.Preco_Venda}</td><td style="font-weight:bold;">${p.Quantidade}</td>
             <td><button class="btn-vermelho" onclick="removerProduto('${p.ID_Produto}')">Apagar</button></td></tr>`;
         }).join('');
     }
@@ -279,24 +333,27 @@
     async function adicionarProduto() {
         let id = document.getElementById('novoId').value;
         let nome = document.getElementById('novoNome').value;
+        let custo = document.getElementById('novoCusto').value;
         let preco = document.getElementById('novoPreco').value;
-        if(!id || !nome || !preco) return alert("Preencha todos os campos!");
+        let qtd = document.getElementById('novaQtd').value;
+
+        if(!id || !nome || !preco || !qtd) return alert("Preencha Código, Nome, Preço Venda e Quantidade!");
         
         document.getElementById('btnAdicionar').innerText = "Aguarde...";
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar", id: id, nome: nome, preco: preco }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-        document.getElementById('novoId').value = ""; document.getElementById('novoNome').value = ""; document.getElementById('novoPreco').value = "";
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar", id: id, nome: nome, custo: custo, preco: preco, quantidade: qtd }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+        
+        document.getElementById('novoId').value = ""; document.getElementById('novoNome').value = ""; document.getElementById('novoCusto').value = ""; document.getElementById('novoPreco').value = ""; document.getElementById('novaQtd').value = "";
         document.getElementById('btnAdicionar').innerText = "Salvar";
         carregarDados();
     }
 
     async function removerProduto(id) {
-        if(confirm("Apagar produto " + id + "?")) {
+        if(confirm("Apagar produto " + id + " do estoque?")) {
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover", id: id }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
             carregarDados();
         }
     }
 
-    // Inicia tudo
     carregarDados();
 </script>
 
