@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gestão Arena</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { margin: 0; background-color: #f4f7f6; display: flex; height: 100vh; overflow: hidden; }
@@ -19,8 +20,8 @@
         .tela.ativa { display: block; }
         h1 { color: #333; margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; }
         
-        .dashboard-cards { display: flex; gap: 20px; margin-bottom: 30px; }
-        .card { flex: 1; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; }
+        .dashboard-cards { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
+        .card { flex: 1; min-width: 200px; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; }
         .card h3 { margin: 0; color: #64748b; font-size: 16px; }
         .card .valor { font-size: 28px; font-weight: bold; color: #0f172a; margin-top: 10px; }
 
@@ -41,7 +42,12 @@
         .val-entrada { color: #16a34a; font-weight: bold; }
         .val-saida { color: #dc2626; font-weight: bold; }
         
-        .botoes-caixa { display: flex; gap: 10px; margin-top: 20px; }
+        .botoes-caixa { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        
+        /* Estilos do Leitor de Câmera */
+        #leitorCamera { width: 100%; max-width: 500px; margin: 0 auto 20px; display: none; border: 2px solid #0ea5e9; border-radius: 8px; overflow: hidden; }
+        .btn-camera { background-color: #334155; font-size: 20px; padding: 10px 15px; width: auto; }
+        .btn-camera:hover { background-color: #0f172a; }
     </style>
 </head>
 <body>
@@ -69,15 +75,22 @@
 
     <div id="tela-caixa" class="tela">
         <h1>Frente de Caixa</h1>
-        <div class="form-grupo">
-            <div style="flex: 3;">
-                <input type="text" id="codigoInput" placeholder="Bipe o código ou digite o NOME e aperte Enter..." disabled autofocus>
+        
+        <div id="leitorCamera"></div>
+
+        <div class="form-grupo" style="flex-direction: row; gap: 10px;">
+            <div style="flex: 1;">
+                <input type="text" id="codigoInput" placeholder="Bipe o código, digite o NOME ou use a câmera 📷..." disabled autofocus>
             </div>
+            <button class="btn-camera" onclick="alternarCamera()" title="Ler com a câmera do celular">📷</button>
         </div>
-        <table>
-            <thead><tr><th>Código</th><th>Produto</th><th>Qtd</th><th>Preço Un.</th><th>Subtotal</th></tr></thead>
-            <tbody id="listaCarrinho"></tbody>
-        </table>
+
+        <div style="overflow-x: auto;">
+            <table>
+                <thead><tr><th>Código</th><th>Produto</th><th>Qtd</th><th>Preço Un.</th><th>Subtotal</th></tr></thead>
+                <tbody id="listaCarrinho"></tbody>
+            </table>
+        </div>
         <div style="text-align: right; font-size: 26px; font-weight: bold; color: #10b981; margin: 20px 0;">
             Total: R$ <span id="valorTotal">0.00</span>
         </div>
@@ -90,28 +103,32 @@
 
     <div id="tela-comandas" class="tela">
         <h1>Comandas Abertas</h1>
-        <table>
-            <thead><tr><th>Nº Comanda</th><th>Cliente/Mesa</th><th>Resumo dos Itens</th><th>Total (R$)</th><th>Ação</th></tr></thead>
-            <tbody id="listaComandas">
-                <tr><td colspan="5" style="text-align: center; color: #999;">Nenhuma comanda aberta no momento.</td></tr>
-            </tbody>
-        </table>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead><tr><th>Nº Comanda</th><th>Cliente/Mesa</th><th>Resumo dos Itens</th><th>Total (R$)</th><th>Ação</th></tr></thead>
+                <tbody id="listaComandas">
+                    <tr><td colspan="5" style="text-align: center; color: #999;">Nenhuma comanda aberta.</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div id="tela-livro" class="tela">
         <h1>Livro de Caixa</h1>
         <div class="form-grupo">
             <div><label>Tipo</label>
-                <select id="tipoMovimento"><option value="Entrada">Entrada (Ex: Troco inicial)</option><option value="Saida">Saída (Ex: Pgto Fornecedor)</option></select>
+                <select id="tipoMovimento"><option value="Entrada">Entrada</option><option value="Saida">Saída</option></select>
             </div>
             <div><label>Descrição</label><input type="text" id="descMovimento" placeholder="Ex: Conta de luz"></div>
             <div><label>Valor (R$)</label><input type="number" step="0.01" id="valorMovimento"></div>
             <button class="btn-verde" style="margin-bottom: 2px;" onclick="registrarCaixa()">Registrar</button>
         </div>
-        <table>
-            <thead><tr><th>Data/Hora</th><th>Tipo</th><th>Descrição</th><th>Valor</th></tr></thead>
-            <tbody id="listaCaixa"></tbody>
-        </table>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead><tr><th>Data/Hora</th><th>Tipo</th><th>Descrição</th><th>Valor</th></tr></thead>
+                <tbody id="listaCaixa"></tbody>
+            </table>
+        </div>
     </div>
 
     <div id="tela-estoque" class="tela">
@@ -124,10 +141,12 @@
             <div><label>Quantidade</label><input type="number" id="novaQtd"></div>
             <button class="btn-verde" style="margin-bottom: 2px;" onclick="adicionarProduto()" id="btnAdicionar">Salvar</button>
         </div>
-        <table>
-            <thead><tr><th>Código</th><th>Produto</th><th>Custo (R$)</th><th>Venda (R$)</th><th>Qtd</th><th>Ação</th></tr></thead>
-            <tbody id="listaGestao"></tbody>
-        </table>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead><tr><th>Código</th><th>Produto</th><th>Custo (R$)</th><th>Venda (R$)</th><th>Qtd</th><th>Ação</th></tr></thead>
+                <tbody id="listaGestao"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -138,12 +157,21 @@
     let bancoComandas = [];
     let carrinho = [];
     let total = 0;
+    
+    // Variável para a câmera
+    let leitorHtml5 = null;
 
     function mudarTela(idTela, elementoMenu) {
         document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('ativo'));
         document.getElementById(idTela).classList.add('ativa');
         elementoMenu.classList.add('ativo');
+        
+        // Desliga a câmera se sair da tela do caixa
+        if(idTela !== 'tela-caixa' && leitorHtml5) {
+            fecharCamera();
+        }
+        
         if(idTela === 'tela-caixa') document.getElementById('codigoInput').focus();
     }
 
@@ -169,7 +197,7 @@
             atualizarTabelaComandas();
             atualizarDashboardECaixa(bancoCaixa);
         } catch (erro) {
-            status.innerText = "Erro de conexão.";
+            status.innerText = "Erro de conexão. Verifique o link da API.";
             status.style.backgroundColor = "#fee2e2"; status.style.color = "#991b1b";
         }
     }
@@ -211,38 +239,88 @@
         carregarDados();
     }
 
-    // --- LÓGICA DE FRENTE DE CAIXA (SOMA QUANTIDADES) ---
+    // --- LÓGICA DA CÂMERA (LEITOR DE CÓDIGO DE BARRAS) ---
+    function alternarCamera() {
+        let divCamera = document.getElementById('leitorCamera');
+        if (divCamera.style.display === "block") {
+            fecharCamera();
+        } else {
+            abrirCamera();
+        }
+    }
+
+    function abrirCamera() {
+        let divCamera = document.getElementById('leitorCamera');
+        divCamera.style.display = "block";
+
+        if (!leitorHtml5) {
+            leitorHtml5 = new Html5Qrcode("leitorCamera");
+        }
+
+        leitorHtml5.start(
+            { facingMode: "environment" }, // Usa a câmera traseira do celular
+            { fps: 10, qrbox: { width: 250, height: 150 } },
+            (codigoLido) => {
+                // Ao ler com sucesso: fecha a câmera e processa o código
+                fecharCamera();
+                document.getElementById('codigoInput').value = codigoLido;
+                processarEntradaCodigo(codigoLido);
+            },
+            (erro) => {
+                // Ignora erros normais enquanto foca
+            }
+        ).catch(err => {
+            alert("Não foi possível acessar a câmera. Verifique as permissões do seu navegador.");
+            divCamera.style.display = "none";
+        });
+    }
+
+    function fecharCamera() {
+        if (leitorHtml5) {
+            leitorHtml5.stop().then(() => {
+                document.getElementById('leitorCamera').style.display = "none";
+            }).catch(err => console.log("Erro ao desligar a câmera", err));
+        }
+    }
+
+    // --- LÓGICA DE PESQUISA (Agora centralizada para o Teclado e para a Câmera) ---
     document.getElementById('codigoInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && this.value.trim() !== "") {
-            let termo = this.value.trim().toLowerCase();
-            let prod = bancoDeProdutos.find(p => String(p.ID_Produto).toLowerCase() === termo || String(p.Nome_Produto).toLowerCase() === termo);
-
-            if (!prod) {
-                let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto).toLowerCase().includes(termo));
-                if (achados.length === 1) prod = achados[0];
-                else if (achados.length > 1) {
-                    alert("Achei mais de um produto:\n" + achados.map(p => `-> ${p.Nome_Produto} (Cód: ${p.ID_Produto})`).join('\n') + "\n\nDigite o código exato.");
-                    return;
-                }
-            }
-
-            if (prod) {
-                let preco = parseFloat(prod.Preco_Venda.toString().replace(',','.')) || 0;
-                
-                // Verifica se já existe no carrinho para somar a quantidade
-                let itemExistente = carrinho.find(i => i.codigo === prod.ID_Produto);
-                if(itemExistente) {
-                    itemExistente.qtd += 1;
-                } else {
-                    carrinho.push({ codigo: prod.ID_Produto, nome: prod.Nome_Produto, preco: preco, qtd: 1 });
-                }
-                
-                total += preco;
-                atualizarCarrinho();
-                this.value = ""; 
-            } else alert("Produto não encontrado!");
+            processarEntradaCodigo(this.value.trim());
+            this.value = ""; 
         }
     });
+
+    function processarEntradaCodigo(termo) {
+        termo = termo.toLowerCase();
+        let prod = bancoDeProdutos.find(p => String(p.ID_Produto).toLowerCase() === termo || String(p.Nome_Produto).toLowerCase() === termo);
+
+        if (!prod) {
+            let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto).toLowerCase().includes(termo));
+            if (achados.length === 1) prod = achados[0];
+            else if (achados.length > 1) {
+                alert("Achei mais de um produto:\n" + achados.map(p => `-> ${p.Nome_Produto} (Cód: ${p.ID_Produto})`).join('\n') + "\n\nDigite o código exato.");
+                return;
+            }
+        }
+
+        if (prod) {
+            let preco = parseFloat(prod.Preco_Venda.toString().replace(',','.')) || 0;
+            
+            // Verifica se já existe no carrinho para somar a quantidade
+            let itemExistente = carrinho.find(i => i.codigo === prod.ID_Produto);
+            if(itemExistente) {
+                itemExistente.qtd += 1;
+            } else {
+                carrinho.push({ codigo: prod.ID_Produto, nome: prod.Nome_Produto, preco: preco, qtd: 1 });
+            }
+            
+            total += preco;
+            atualizarCarrinho();
+        } else {
+            alert("Produto não encontrado no estoque!");
+        }
+    }
 
     function atualizarCarrinho() {
         let tbody = document.getElementById('listaCarrinho');
@@ -257,11 +335,11 @@
     async function finalizarVenda() {
         if(carrinho.length === 0) return alert("O carrinho está vazio!");
         let btn = document.getElementById('btnFinalizarVenda');
-        btn.innerText = "Gravando Venda..."; btn.disabled = true;
+        btn.innerText = "Gravando..."; btn.disabled = true;
 
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "venda", total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
         
-        alert("Venda Finalizada com sucesso! (Estoque descontado).");
+        alert("Venda Finalizada com sucesso!");
         carrinho = []; total = 0; atualizarCarrinho();
         carregarDados();
         btn.innerText = "Finalizar Venda Direta (F2)"; btn.disabled = false;
@@ -272,14 +350,14 @@
         if(carrinho.length === 0) return alert("Adicione produtos antes de abrir a comanda!");
         
         let nomeCliente = prompt("Qual o nome do Cliente ou Número da Mesa?");
-        if(!nomeCliente) return; // Se cancelar, não faz nada
+        if(!nomeCliente) return;
 
         let btn = document.getElementById('btnSalvarComanda');
-        btn.innerText = "Salvando Comanda..."; btn.disabled = true;
+        btn.innerText = "Salvando..."; btn.disabled = true;
 
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_comanda", cliente: nomeCliente, total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
         
-        alert(`Comanda de ${nomeCliente} aberta! (Itens já saíram do estoque).`);
+        alert(`Comanda de ${nomeCliente} aberta!`);
         carrinho = []; total = 0; atualizarCarrinho();
         carregarDados();
         btn.innerText = "Salvar em Comanda (F3)"; btn.disabled = false;
@@ -308,8 +386,8 @@
     }
 
     async function cobrarComanda(idComanda) {
-        if(confirm("Deseja confirmar o pagamento desta comanda e enviar o valor para o Caixa?")) {
-            document.getElementById('status-bar').innerText = "Processando pagamento...";
+        if(confirm("Confirmar pagamento e enviar o valor para o Caixa?")) {
+            document.getElementById('status-bar').innerText = "Processando...";
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "cobrar_comanda", id_comanda: idComanda }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
             alert("Comanda paga com sucesso!");
             carregarDados();
