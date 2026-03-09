@@ -8,34 +8,52 @@
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { margin: 0; background-color: #f4f7f6; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Oculta o talão térmico no ecrã normal e formata para impressão */
         @media screen { #cupao-impressao { display: none; } }
-        @media print { body * { visibility: hidden; display: none !important; } #cupao-impressao, #cupao-impressao * { visibility: visible; display: block !important; } #cupao-impressao { position: absolute; left: 0; top: 0; width: 58mm; padding: 0; margin: 0; font-family: monospace; font-size: 12px; color: #000; } }
+        @media print { 
+            body * { visibility: hidden; display: none !important; } 
+            #cupao-impressao, #cupao-impressao * { visibility: visible; display: block !important; } 
+            #cupao-impressao { position: absolute; left: 0; top: 0; width: 58mm; padding: 0; margin: 0; font-family: monospace; font-size: 12px; color: #000; } 
+        }
 
+        /* TELA DE LOGIN */
+        #tela-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e293b; display: flex; justify-content: center; align-items: center; z-index: 9999; flex-direction: column; }
+        .login-box { background: #fff; padding: 40px; border-radius: 10px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .login-box h2 { color: #0f172a; margin-top: 0; margin-bottom: 25px; }
+        .login-box input { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 16px; }
+        .login-box button { width: 100%; padding: 15px; background: #0ea5e9; color: white; border: none; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .login-box button:hover { background: #0284c7; }
+        #msg-login { color: #ef4444; font-weight: bold; margin-bottom: 15px; display: none; }
+
+        /* MENU LATERAL */
         .sidebar { width: 250px; background-color: #1e293b; color: white; display: flex; flex-direction: column; padding-top: 20px; transition: 0.3s; }
-        .sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 22px; color: #38bdf8; }
+        .sidebar h2 { text-align: center; margin-bottom: 5px; font-size: 22px; color: #38bdf8; }
+        #operadorLogadoText { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 25px; }
         .menu-item { padding: 15px 20px; cursor: pointer; font-size: 16px; border-left: 4px solid transparent; transition: 0.3s; }
         .menu-item:hover { background-color: #334155; }
         .menu-item.ativo { background-color: #0f172a; border-left-color: #38bdf8; font-weight: bold; }
         
+        /* ÁREA PRINCIPAL E CARDS */
         .main-content { flex: 1; padding: 30px; overflow-y: auto; position: relative; }
         .tela { display: none; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .tela.ativa { display: block; }
         h1 { color: #333; margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; font-size: 24px; }
-        
         .dashboard-cards { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
         .card { flex: 1; min-width: 200px; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; }
         .card h3 { margin: 0; color: #64748b; font-size: 16px; }
         .card .valor { font-size: 28px; font-weight: bold; color: #0f172a; margin-top: 10px; }
 
+        /* TABELAS E FORMULÁRIOS */
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; min-width: 500px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
         th { background-color: #f1f5f9; color: #475569; }
-        
         .form-grupo { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-end; flex-wrap: wrap; }
         .form-grupo div { flex: 1; display: flex; flex-direction: column; min-width: 120px; }
         .form-grupo input, .form-grupo select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 16px; }
         
+        /* BOTÕES */
         button { cursor: pointer; border: none; border-radius: 5px; padding: 12px 20px; font-weight: bold; color: white; font-size: 15px; transition: 0.2s; }
         .btn-azul { background-color: #0ea5e9; } .btn-azul:hover { background-color: #0284c7; }
         .btn-verde { background-color: #10b981; } .btn-verde:hover { background-color: #059669; }
@@ -44,28 +62,28 @@
         .btn-amarelo { background-color: #eab308; color: black; } .btn-amarelo:hover { background-color: #ca8a04; }
         
         #status-bar { background: #e0f2fe; color: #0369a1; padding: 10px; text-align: center; font-weight: bold; border-radius: 5px; margin-bottom: 20px; }
-        
         .botoes-caixa { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        
+        /* QUADRAS E CÂMERA */
         .botoes-quadra { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .btn-quadra { flex: 1; background-color: #14b8a6; font-size: 16px; padding: 15px; display: flex; justify-content: center; align-items: center; gap: 8px;}
         .btn-quadra:hover { background-color: #0d9488; }
-
         #leitorCamera { width: 100%; max-width: 500px; margin: 0 auto 20px; display: none; border: 2px solid #0ea5e9; border-radius: 8px; overflow: hidden; }
         .btn-camera { background-color: #334155; font-size: 20px; padding: 10px 15px; width: auto; display: flex; align-items: center; justify-content: center; }
+        
         #alerta-caixa { display: none; background: #fee2e2; color: #991b1b; padding: 15px; text-align: center; font-weight: bold; border-radius: 5px; margin-bottom: 20px; border: 2px solid #ef4444; }
 
-        /* Modal Comandas */
+        /* MODAL COMANDAS */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
         .modal-box { background: #fff; padding: 25px; border-radius: 8px; width: 90%; max-width: 500px; text-align: center; }
-        .modal-box h3 { margin-top: 0; }
         .lista-comandas-modal { max-height: 300px; overflow-y: auto; margin: 20px 0; text-align: left; }
         .btn-comanda-item { display: block; width: 100%; margin-bottom: 10px; padding: 15px; background: #f1f5f9; color: #333; border: 1px solid #cbd5e1; text-align: left; font-size: 16px; border-radius: 5px; }
-        .btn-comanda-item:hover { background: #e2e8f0; }
 
+        /* RESPONSIVIDADE MOBILE */
         @media (max-width: 768px) {
             body { flex-direction: column; } 
             .sidebar { width: 100%; padding-top: 0; flex-direction: row; overflow-x: auto; white-space: nowrap; align-items: center; justify-content: flex-start; }
-            .sidebar::-webkit-scrollbar { display: none; } .sidebar h2 { display: none; }
+            .sidebar::-webkit-scrollbar { display: none; } .sidebar h2, #operadorLogadoText { display: none; }
             .menu-item { padding: 15px; font-size: 15px; border-left: none; border-bottom: 4px solid transparent; flex: 0 0 auto; }
             .menu-item.ativo { border-left-color: transparent; border-bottom-color: #38bdf8; background-color: transparent; color: #38bdf8; }
             .main-content { padding: 15px; height: calc(100vh - 55px); } .tela { padding: 15px; }
@@ -76,10 +94,21 @@
 </head>
 <body>
 
+<div id="tela-login">
+    <div class="login-box">
+        <h2>🔒 Acesso ao Sistema</h2>
+        <div id="msg-login">Usuário ou senha incorretos!</div>
+        <input type="text" id="loginUsuario" placeholder="Usuário (Ex: edilson)" autocomplete="off">
+        <input type="password" id="loginSenha" placeholder="Senha" autocomplete="off">
+        <button onclick="fazerLogin()">Entrar</button>
+    </div>
+</div>
+
 <div id="cupao-impressao"></div>
 
 <div class="sidebar">
-    <h2>🎯 Meu Sistema</h2>
+    <h2>🎯 Arena Vitale</h2>
+    <div id="operadorLogadoText">Operador: Nenhum</div>
     <div class="menu-item ativo" onclick="mudarTela('tela-dashboard', this)">📊 Dashboard</div>
     <div class="menu-item" onclick="mudarTela('tela-caixa', this)">🛒 Caixa</div>
     <div class="menu-item" onclick="mudarTela('tela-comandas', this)">📝 Comandas</div>
@@ -115,7 +144,7 @@
 
         <div class="form-grupo" style="margin-bottom: 10px;">
             <div style="flex: 1;">
-                <label>Selecionar Cliente (Opcional para venda direta)</label>
+                <label>Selecionar Cliente (Opcional)</label>
                 <select id="selectClienteVenda"><option value="Consumidor Final">Consumidor Final</option></select>
             </div>
         </div>
@@ -173,13 +202,13 @@
     <div id="tela-livro" class="tela">
         <h1>Livro de Caixa</h1>
         <div class="form-grupo">
-            <div><label>Tipo</label><select id="tipoMovimento"><option value="Entrada">Entrada</option><option value="Saida">Saída</option></select></div>
+            <div><label>Tipo</label><select id="tipoMovimento"><option value="Entrada">Entrada</option><option value="Saida">Saída (Sangria/Despesa)</option></select></div>
             <div><label>Descrição</label><input type="text" id="descMovimento" placeholder="Ex: Conta de luz"></div>
             <div><label>Valor (R$)</label><input type="number" step="0.01" id="valorMovimento"></div>
             <button class="btn-verde" id="btnRegistrarLivro" style="margin-bottom: 2px;" onclick="registrarCaixa()" disabled>Registrar</button>
         </div>
         <div class="table-responsive">
-            <table><thead><tr><th>Data/Hora</th><th>Tipo</th><th>Descrição</th><th>Valor</th></tr></thead><tbody id="listaCaixa"></tbody></table>
+            <table><thead><tr><th>Hora e Data</th><th>Tipo</th><th>Descrição</th><th>Valor</th><th>Ação</th></tr></thead><tbody id="listaCaixa"></tbody></table>
         </div>
     </div>
 
@@ -187,7 +216,7 @@
         <h1>Gestão de Estoque</h1>
         <div class="form-grupo">
             <div style="flex-direction: row; gap: 5px;">
-                <div style="flex: 1;"><label>ID/Código</label><input type="text" id="novoId" placeholder="Bipe, digite ou use a câmera"></div>
+                <div style="flex: 1;"><label>ID/Código</label><input type="text" id="novoId" placeholder="Bipe, digite ou câmera"></div>
                 <button class="btn-camera" style="margin-bottom: 0; align-self: flex-end;" onclick="alternarCamera('novoId')">📷</button>
             </div>
             <div><label>Nome do Produto</label><input type="text" id="novoNome"></div>
@@ -216,13 +245,38 @@
 </div>
 
 <script>
+    // --- LINK OFICIAL DA API DO GOOGLE SHEETS ---
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
+    // --- SISTEMA DE LOGIN ---
+    const USUARIOS_PERMITIDOS = {
+        "edilson": "078795",
+        "paulo": "enzo123",
+        "sheila": "enzoisa"
+    };
+    let operadorAtual = "";
+
+    function fazerLogin() {
+        let user = document.getElementById('loginUsuario').value.trim().toLowerCase();
+        let pass = document.getElementById('loginSenha').value.trim();
+        
+        if(USUARIOS_PERMITIDOS[user] && USUARIOS_PERMITIDOS[user] === pass) {
+            operadorAtual = user.charAt(0).toUpperCase() + user.slice(1);
+            document.getElementById('tela-login').style.display = 'none';
+            document.getElementById('operadorLogadoText').innerText = "Operador: " + operadorAtual;
+            carregarDados();
+        } else {
+            document.getElementById('msg-login').style.display = 'block';
+        }
+    }
+    document.getElementById('loginSenha').addEventListener('keypress', function(e) { if(e.key === 'Enter') fazerLogin(); });
+
+    // --- VARIÁVEIS GLOBAIS ---
     let bancoDeProdutos = [], bancoComandas = [], bancoCaixaGlobal = [], bancoClientes = [];
     let turnoAtual = null, carrinho = [], total = 0, leitorHtml5 = null;
-    let inputCameraAlvo = "codigoInput"; // Define onde o código lido pela câmera vai cair
-    let idEditandoEstoque = null; // Controla se estamos editando um produto no estoque
+    let inputCameraAlvo = "codigoInput", idEditandoEstoque = null;
 
+    // --- NAVEGAÇÃO ---
     function mudarTela(idTela, elementoMenu) {
         document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('ativo'));
@@ -232,36 +286,37 @@
         if(idTela === 'tela-caixa' && turnoAtual) document.getElementById('codigoInput').focus();
     }
 
+    // --- CARREGAMENTO DO BANCO DE DADOS ---
     async function carregarDados() {
         let status = document.getElementById('status-bar');
         status.innerText = "Sincronizando banco de dados...";
         try {
-            const resposta = await fetch(API_URL);
-            const dados = await resposta.json();
+            const resposta = await fetch(API_URL); const dados = await resposta.json();
             bancoDeProdutos = dados.produtos || []; bancoComandas = dados.comandas || [];
             bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || [];
             turnoAtual = (dados.turnos || []).find(t => t.Status === "Aberto");
             
             atualizarInterfaceTurno();
             status.innerText = "Sistema Online"; status.style.backgroundColor = "#dcfce7"; status.style.color = "#166534";
-            
             atualizarTabelaEstoque(); atualizarTabelaComandas(); atualizarDashboardECaixa(); atualizarListasClientes();
         } catch (erro) { status.innerText = "Erro de conexão."; status.style.backgroundColor = "#fee2e2"; status.style.color = "#991b1b"; }
     }
 
-    // --- QUADRAS E CARRINHO ---
+    // --- FUNÇÕES AUXILIARES ---
+    function pedirFormaPagamento() {
+        let op = prompt("Forma de Pagamento:\n1 - Cartão de Crédito\n2 - Cartão de Débito\n3 - Espécie\n4 - Pix\n\n(Digite apenas o número)");
+        if(op === "1") return "Crédito"; if(op === "2") return "Débito";
+        if(op === "3") return "Espécie"; if(op === "4") return "Pix";
+        return null;
+    }
+
+    // --- QUADRAS E CARRINHO (CAIXA) ---
     function adicionarQuadra(nomeQuadra) {
-        let horas = prompt(`Quantas horas para a ${nomeQuadra}?`, "1");
-        if(!horas) return;
-        let valor = prompt(`Qual o valor TOTAL a cobrar pelo tempo? (Ex: 80.00)`, "80.00");
-        if(!valor) return;
-
+        let horas = prompt(`Quantas horas para a ${nomeQuadra}?`, "1"); if(!horas) return;
+        let valor = prompt(`Valor TOTAL a cobrar pelo tempo? (Ex: 80.00)`, "80.00"); if(!valor) return;
         let precoObj = parseFloat(valor.replace(',','.'));
-        let qtdObj = parseInt(horas);
-
-        carrinho.push({ codigo: 'SERVICO', nome: `${nomeQuadra} (${qtdObj}h)`, preco: precoObj, qtd: 1 });
-        total += precoObj;
-        atualizarCarrinho();
+        carrinho.push({ codigo: 'SERVICO', nome: `${nomeQuadra} (${parseInt(horas)}h)`, preco: precoObj, qtd: 1 });
+        total += precoObj; atualizarCarrinho();
     }
 
     document.getElementById('codigoInput').addEventListener('keypress', function(e) {
@@ -273,10 +328,8 @@
         let prod = bancoDeProdutos.find(p => String(p.ID_Produto).toLowerCase() === termo || String(p.Nome_Produto).toLowerCase() === termo);
         if (!prod) {
             let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto).toLowerCase().includes(termo));
-            if (achados.length === 1) prod = achados[0];
-            else if (achados.length > 1) { alert("Múltiplos produtos encontrados. Digite o código exato."); return; }
+            if (achados.length === 1) prod = achados[0]; else if (achados.length > 1) { alert("Múltiplos produtos encontrados. Digite o código exato."); return; }
         }
-
         if (prod) {
             let preco = parseFloat(prod.Preco_Venda.toString().replace(',','.')) || 0;
             let ext = carrinho.find(i => i.codigo === prod.ID_Produto);
@@ -290,32 +343,21 @@
         document.getElementById('valorTotal').innerText = total.toFixed(2);
     }
 
-    // --- CÂMERA (MULTIPROPOSITO) ---
-    function alternarCamera(alvoId) {
-        inputCameraAlvo = alvoId;
-        let divCamera = document.getElementById('leitorCamera');
-        if (divCamera.style.display === "block") fecharCamera(); else abrirCamera();
-    }
-    function abrirCamera() {
-        let divCamera = document.getElementById('leitorCamera'); divCamera.style.display = "block";
-        if (!leitorHtml5) leitorHtml5 = new Html5Qrcode("leitorCamera");
-        leitorHtml5.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } },
-            (codigoLido) => { 
-                fecharCamera(); 
-                document.getElementById(inputCameraAlvo).value = codigoLido; 
-                if(inputCameraAlvo === 'codigoInput') processarEntradaCodigo(codigoLido); 
-            }, (erro) => {}).catch(err => { alert("Sem acesso à câmara."); divCamera.style.display = "none"; });
-    }
+    // --- CÂMERA ---
+    function alternarCamera(alvoId) { inputCameraAlvo = alvoId; let divCamera = document.getElementById('leitorCamera'); if (divCamera.style.display === "block") fecharCamera(); else abrirCamera(); }
+    function abrirCamera() { let divCamera = document.getElementById('leitorCamera'); divCamera.style.display = "block"; if (!leitorHtml5) leitorHtml5 = new Html5Qrcode("leitorCamera"); leitorHtml5.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, (codigoLido) => { fecharCamera(); document.getElementById(inputCameraAlvo).value = codigoLido; if(inputCameraAlvo === 'codigoInput') processarEntradaCodigo(codigoLido); }, (erro) => {}).catch(err => { alert("Sem acesso à câmara."); divCamera.style.display = "none"; }); }
     function fecharCamera() { if(leitorHtml5) leitorHtml5.stop().then(() => { document.getElementById('leitorCamera').style.display = "none"; }).catch(e=>e); }
 
-    // --- VENDAS E COMANDAS (FLUXO NOVO) ---
+    // --- VENDAS DIRETA ---
     async function finalizarVenda() {
         if(!turnoAtual) return alert("Abra o caixa!"); if(carrinho.length === 0) return alert("Carrinho vazio!");
+        let formaPag = pedirFormaPagamento(); if(!formaPag) return alert("Pagamento cancelado.");
+        
         let clienteSel = document.getElementById('selectClienteVenda').value;
         document.getElementById('btnFinalizarVenda').innerText = "Gravando..."; document.getElementById('btnFinalizarVenda').disabled = true;
         let cGuardado = [...carrinho], tGuardado = total;
 
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "venda", cliente: clienteSel, total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "venda", cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual, forma_pagamento: formaPag }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
         carrinho = []; total = 0; atualizarCarrinho(); carregarDados();
         document.getElementById('btnFinalizarVenda').innerText = "Finalizar Venda Direta (F2)"; document.getElementById('btnFinalizarVenda').disabled = false;
         
@@ -323,6 +365,7 @@
         if(confirm("Enviar por WhatsApp?")) enviarWhatsApp(clienteSel, cGuardado, tGuardado);
     }
 
+    // --- COMANDAS ---
     function abrirModalComandas() {
         if(!turnoAtual) return alert("Abra o caixa!"); if(carrinho.length === 0) return alert("Carrinho vazio!");
         let lista = document.getElementById('listaComandasModal');
@@ -332,19 +375,16 @@
     function fecharModalComandas() { document.getElementById('modalComandas').style.display = 'none'; }
 
     async function criarNovaComandaModal() {
-        fecharModalComandas();
-        let nome = prompt("Qual o nome do Cliente para a NOVA comanda?");
-        if(!nome) return;
+        fecharModalComandas(); let nome = prompt("Nome do Cliente para a NOVA comanda?"); if(!nome) return;
         document.getElementById('status-bar').innerText = "Abrindo Comanda...";
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_comanda", cliente: nome, total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
         alert("Comanda criada!"); carrinho = []; total = 0; atualizarCarrinho(); carregarDados();
     }
 
     async function adicionarNaComandaExistente(idComanda, nomeCli) {
-        fecharModalComandas();
-        document.getElementById('status-bar').innerText = "Adicionando itens...";
+        fecharModalComandas(); document.getElementById('status-bar').innerText = "Adicionando itens...";
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_item_comanda", id_comanda: idComanda, total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-        alert(`Itens adicionados à comanda de ${nomeCli}!`); carrinho = []; total = 0; atualizarCarrinho(); carregarDados();
+        alert(`Itens adicionados!`); carrinho = []; total = 0; atualizarCarrinho(); carregarDados();
     }
 
     function atualizarTabelaComandas() {
@@ -365,9 +405,10 @@
 
     async function cobrarComanda(idComanda, cliente, itensJsonStr, totalVal) {
         if(!turnoAtual) return alert("Abra o caixa!");
-        if(confirm(`Confirmar pagamento de ${cliente}?`)) {
+        let formaPag = pedirFormaPagamento(); if(!formaPag) return alert("Cancelado.");
+        if(confirm(`Confirmar recebimento de ${cliente}?`)) {
             document.getElementById('status-bar').innerText = "Recebendo...";
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "cobrar_comanda", id_comanda: idComanda }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "cobrar_comanda", id_comanda: idComanda, operador: operadorAtual, forma_pagamento: formaPag }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
             let iArr = JSON.parse(decodeURIComponent(itensJsonStr)); carregarDados();
             if(confirm("Imprimir recibo?")) imprimirCupao(cliente, iArr, totalVal);
             if(confirm("Enviar WhatsApp?")) enviarWhatsApp(cliente, iArr, totalVal);
@@ -375,14 +416,14 @@
     }
 
     async function excluirComanda(idComanda) {
-        if(confirm("ATENÇÃO: Deseja apagar esta comanda e devolver os itens ao estoque sem cobrar?")) {
+        if(confirm("ATENÇÃO: Deseja apagar esta comanda e devolver os itens ao estoque?")) {
             document.getElementById('status-bar').innerText = "Excluindo...";
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "excluir_comanda", id_comanda: idComanda }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
             carregarDados();
         }
     }
 
-    // --- ESTOQUE EDITÁVEL ---
+    // --- ESTOQUE ---
     function atualizarTabelaEstoque() {
         document.getElementById('listaGestao').innerHTML = bancoDeProdutos.map(p => {
             if(!p.ID_Produto) return '';
@@ -393,51 +434,77 @@
             </td></tr>`;
         }).join('');
     }
-
+    
     function prepararEdicaoEstoque(id) {
-        let p = bancoDeProdutos.find(x => String(x.ID_Produto) === String(id));
-        if(!p) return;
+        let p = bancoDeProdutos.find(x => String(x.ID_Produto) === String(id)); if(!p) return;
         document.getElementById('novoId').value = p.ID_Produto; document.getElementById('novoNome').value = p.Nome_Produto;
         document.getElementById('novoCusto').value = p.Preco_Custo; document.getElementById('novoPreco').value = p.Preco_Venda;
-        document.getElementById('novaQtd').value = p.Quantidade;
-        idEditandoEstoque = id;
-        document.getElementById('btnAdicionarEstoque').innerText = "Atualizar Produto";
-        document.getElementById('btnAdicionarEstoque').className = "btn-amarelo";
-        window.scrollTo(0, 0); // Sobe a tela para o formulário
+        document.getElementById('novaQtd').value = p.Quantidade; idEditandoEstoque = id;
+        document.getElementById('btnAdicionarEstoque').innerText = "Atualizar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-amarelo";
+        window.scrollTo(0, 0);
     }
-
+    
     async function salvarProdutoEstoque() {
         let id = document.getElementById('novoId').value, nome = document.getElementById('novoNome').value;
         let custo = document.getElementById('novoCusto').value, preco = document.getElementById('novoPreco').value, qtd = document.getElementById('novaQtd').value;
         if(!id || !nome || !preco || !qtd) return alert("Preencha tudo!");
-        
         let acaoReq = idEditandoEstoque ? "editar_produto" : "adicionar";
         document.getElementById('btnAdicionarEstoque').innerText = "Salvando...";
-        
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: acaoReq, id_antigo: idEditandoEstoque, id: id, nome: nome, custo: custo, preco: preco, quantidade: qtd }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-        
         document.getElementById('novoId').value = ""; document.getElementById('novoNome').value = ""; document.getElementById('novoCusto').value = ""; document.getElementById('novoPreco').value = ""; document.getElementById('novaQtd').value = "";
-        idEditandoEstoque = null; document.getElementById('btnAdicionarEstoque').innerText = "Salvar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-verde";
-        carregarDados();
+        idEditandoEstoque = null; document.getElementById('btnAdicionarEstoque').innerText = "Salvar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-verde"; carregarDados();
     }
-    
     async function removerProduto(id) { if(confirm("Apagar produto?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover", id: id }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); carregarDados(); } }
 
-    // Funções auxiliares de reciclo (Impressão e Clientes) foram mantidas nos mesmos blocos de antes
-    function enviarWhatsApp(clienteNome, itensCart, valorT) { let resumo = itensCart.map(i => `${i.qtd}x ${i.nome}`).join('%0A'); let texto = `*ARENA VITALE*%0AOlá ${clienteNome}, aqui está o resumo da sua compra:%0A%0A${resumo}%0A%0A*Total: R$ ${valorT.toFixed(2)}*%0A%0AObrigado!`; window.open(`https://wa.me/?text=${texto}`, '_blank'); }
-    function imprimirCupao(clienteNome, itensCart, valorT) { let cupao = document.getElementById('cupao-impressao'); let data = new Date().toLocaleString('pt-BR'); let itensHtml = itensCart.map(i => `<div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.preco * i.qtd).toFixed(2)}</span></div>`).join(''); cupao.innerHTML = `<div style="text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 5px;">ARENA VITALE</div><div style="text-align: center; font-size: 10px; margin-bottom: 10px;">Russas - CE</div><div style="text-align: center; font-size: 12px; margin-bottom: 10px;">Recibo Não Fiscal</div><div>Data: ${data}</div><div>Cliente: ${clienteNome}</div><hr style="border-top: 1px dashed #000; margin: 5px 0;">${itensHtml}<hr style="border-top: 1px dashed #000; margin: 5px 0;"><div style="text-align: right; font-weight: bold; font-size: 14px;">TOTAL: R$ ${valorT.toFixed(2)}</div><div style="text-align: center; margin-top: 15px; font-size: 10px;">Obrigado e volte sempre!</div>`; window.print(); }
+    // --- CAIXA (LIVRO, DASHBOARD E TURNOS) ---
+    function atualizarDashboardECaixa() {
+        let sTurno = 0, vHoje = 0, hj = new Date().toLocaleDateString('pt-BR'); 
+        document.getElementById('listaCaixa').innerHTML = bancoCaixaGlobal.slice().reverse().map(m => { 
+            if(!m.ID_Transacao) return ''; let v = parseFloat(m.Valor.toString().replace(',','.'))||0; 
+            if(turnoAtual && m.ID_Transacao >= turnoAtual.ID_Turno) { if(m.Tipo==="Entrada") sTurno+=v; if(m.Tipo==="Saida") sTurno-=v; } 
+            if(m.Data_Hora.includes(hj) && m.Tipo==="Entrada" && m.Descricao.includes("Venda")) vHoje+=v; 
+            
+            // Separação segura para colocar Hora antes da Data no Livro de Caixa
+            let pTempo = m.Data_Hora.split(m.Data_Hora.includes(',') ? ',' : ' '); 
+            let hData = pTempo.length > 1 ? `${pTempo[1].trim()} - ${pTempo[0].trim()}` : m.Data_Hora;
+            
+            let c = m.Tipo==='Entrada'?'val-entrada':'val-saida'; 
+            return `<tr><td>${hData}</td><td class="${c}">${m.Tipo}</td><td>${m.Descricao}</td><td class="${c}">R$ ${v.toFixed(2)}</td>
+            <td><button class="btn-vermelho" style="padding: 5px 10px; font-size:12px;" onclick="excluirItemCaixa('${m.ID_Transacao}')">X Excluir</button></td></tr>`; 
+        }).join(''); 
+        document.getElementById('dash-saldo').innerText = "R$ " + sTurno.toFixed(2); document.getElementById('dash-vendas').innerText = "R$ " + vHoje.toFixed(2); 
+    }
     
-    // Inicialização do restante de código (Livro Caixa e Clientes mantidos ocultos por questão de espaço visual do snippet, mas continuam intactos no fluxo)
-    async function adicionarCliente() { let id = document.getElementById('novoIdCli').value, nome = document.getElementById('novoNomeCli').value, tel = document.getElementById('novoTelCli').value; if(!id || !nome) return alert("Preencha ID e Nome!"); await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_cliente", id: id, nome: nome, telefone: tel }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); carregarDados(); }
-    async function removerCliente(id) { if(confirm("Apagar cliente?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_cliente", id: id }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); carregarDados(); } }
-    function atualizarListasClientes() { let tbody = document.getElementById('listaClientesGestao'); let selectVenda = document.getElementById('selectClienteVenda'); tbody.innerHTML = ""; selectVenda.innerHTML = '<option value="Consumidor Final">Consumidor Final</option>'; bancoClientes.forEach(c => { if(!c.ID_Cliente) return; tbody.innerHTML += `<tr><td>${c.ID_Cliente}</td><td>${c.Nome}</td><td>${c.Telefone}</td><td><button class="btn-vermelho" onclick="removerCliente('${c.ID_Cliente}')">Apagar</button></td></tr>`; selectVenda.innerHTML += `<option value="${c.Nome}">${c.Nome}</option>`; }); }
+    async function excluirItemCaixa(idTrans) {
+        if(confirm("Apagar este registro do Caixa?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "excluir_caixa", id_transacao: idTrans }) }); carregarDados(); }
+    }
+    
+    async function registrarCaixa() { 
+        let t = document.getElementById('tipoMovimento').value, d = document.getElementById('descMovimento').value, v = document.getElementById('valorMovimento').value; 
+        if(d&&v) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "caixa", tipo: t, descricao: d, valor: v, operador: operadorAtual }) }); document.getElementById('descMovimento').value=""; document.getElementById('valorMovimento').value=""; carregarDados(); } 
+    }
+    
+    async function acaoCaixa() { 
+        if(!turnoAtual) { let f = prompt("Troco inicial:", "0"); if(f!==null) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_caixa", fundo: parseFloat(f.replace(',','.'))||0, operador: operadorAtual }) }); carregarDados(); } 
+        } else { 
+            let esp = 0; bancoCaixaGlobal.forEach(m => { if(m.ID_Transacao >= turnoAtual.ID_Turno) { let v = parseFloat(m.Valor.toString().replace(',','.'))||0; if(m.Tipo==="Entrada") esp+=v; if(m.Tipo==="Saida") esp-=v; } }); 
+            let apStr = prompt("Valor na gaveta:", "0"); if(apStr!==null) { let ap = parseFloat(apStr.replace(',','.'))||0; let dif = ap - esp; if(confirm(`Esperado: R$ ${esp.toFixed(2)}\nContado: R$ ${ap.toFixed(2)}\nConfirmar fechamento?`)) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "fechar_caixa", valor_apurado: ap, diferenca: dif }) }); carregarDados(); } } 
+        } 
+    }
+    
     function atualizarInterfaceTurno() { let s = turnoAtual ? ["#10b981", "ABERTO", "Fechar Caixa", "btn-vermelho", "none", false] : ["#ef4444", "FECHADO", "Abrir Caixa", "btn-verde", "block", true]; document.getElementById('card-status-caixa').style.borderColor = s[0]; document.getElementById('texto-status-caixa').style.color = s[0]; document.getElementById('texto-status-caixa').innerText = s[1]; document.getElementById('btnAcaoCaixa').innerText = s[2]; document.getElementById('btnAcaoCaixa').className = s[3]; document.getElementById('alerta-caixa').style.display = s[4]; ['codigoInput','btnCamera','btnSalvarComanda','btnFinalizarVenda','btnRegistrarLivro'].forEach(id => document.getElementById(id).disabled = s[5]); }
-    async function acaoCaixa() { if(!turnoAtual) { let f = prompt("Troco inicial:", "0"); if(f!==null) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_caixa", fundo: parseFloat(f.replace(',','.'))||0 }) }); carregarDados(); } } else { let esp = 0; bancoCaixaGlobal.forEach(m => { if(m.ID_Transacao >= turnoAtual.ID_Turno) { let v = parseFloat(m.Valor.toString().replace(',','.'))||0; if(m.Tipo==="Entrada") esp+=v; if(m.Tipo==="Saida") esp-=v; } }); let apStr = prompt("Valor na gaveta:", "0"); if(apStr!==null) { let ap = parseFloat(apStr.replace(',','.'))||0; let dif = ap - esp; if(confirm(`Esperado: R$ ${esp.toFixed(2)}\nContado: R$ ${ap.toFixed(2)}\nDeseja confirmar fechamento?`)) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "fechar_caixa", valor_apurado: ap, diferenca: dif }) }); carregarDados(); } } } }
-    async function registrarCaixa() { let t = document.getElementById('tipoMovimento').value, d = document.getElementById('descMovimento').value, v = document.getElementById('valorMovimento').value; if(d&&v) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "caixa", tipo: t, descricao: d, valor: v }) }); document.getElementById('descMovimento').value=""; document.getElementById('valorMovimento').value=""; carregarDados(); } }
-    function atualizarDashboardECaixa() { let sTurno = 0, vHoje = 0, hj = new Date().toLocaleDateString('pt-BR'); document.getElementById('listaCaixa').innerHTML = bancoCaixaGlobal.slice().reverse().map(m => { if(!m.ID_Transacao) return ''; let v = parseFloat(m.Valor.toString().replace(',','.'))||0; if(turnoAtual && m.ID_Transacao >= turnoAtual.ID_Turno) { if(m.Tipo==="Entrada") sTurno+=v; if(m.Tipo==="Saida") sTurno-=v; } if(m.Data_Hora.includes(hj) && m.Tipo==="Entrada" && m.Descricao.includes("Venda")) vHoje+=v; let c = m.Tipo==='Entrada'?'val-entrada':'val-saida'; return `<tr><td>${m.Data_Hora}</td><td class="${c}">${m.Tipo}</td><td>${m.Descricao}</td><td class="${c}">R$ ${v.toFixed(2)}</td></tr>`; }).join(''); document.getElementById('dash-saldo').innerText = "R$ " + sTurno.toFixed(2); document.getElementById('dash-vendas').innerText = "R$ " + vHoje.toFixed(2); }
-    
-    document.addEventListener('keydown', e => { if(turnoAtual) { if(e.key==='F2'){e.preventDefault();finalizarVenda();} if(e.key==='F3'){e.preventDefault();abrirModalComandas();} } });
-    carregarDados();
+
+    // --- CLIENTES ---
+    async function adicionarCliente() { let id = document.getElementById('novoIdCli').value, nome = document.getElementById('novoNomeCli').value, tel = document.getElementById('novoTelCli').value; if(!id || !nome) return alert("Preencha ID e Nome!"); await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_cliente", id: id, nome: nome, telefone: tel }) }); carregarDados(); }
+    async function removerCliente(id) { if(confirm("Apagar cliente?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_cliente", id: id }) }); carregarDados(); } }
+    function atualizarListasClientes() { let tbody = document.getElementById('listaClientesGestao'); let selectVenda = document.getElementById('selectClienteVenda'); tbody.innerHTML = ""; selectVenda.innerHTML = '<option value="Consumidor Final">Consumidor Final</option>'; bancoClientes.forEach(c => { if(!c.ID_Cliente) return; tbody.innerHTML += `<tr><td>${c.ID_Cliente}</td><td>${c.Nome}</td><td>${c.Telefone}</td><td><button class="btn-vermelho" onclick="removerCliente('${c.ID_Cliente}')">Apagar</button></td></tr>`; selectVenda.innerHTML += `<option value="${c.Nome}">${c.Nome}</option>`; }); }
+
+    // --- RECIBOS E WHATSAPP ---
+    function enviarWhatsApp(clienteNome, itensCart, valorT) { let resumo = itensCart.map(i => `${i.qtd}x ${i.nome}`).join('%0A'); let texto = `*ARENA VITALE*%0AOlá ${clienteNome}, aqui está o resumo da sua compra:%0A%0A${resumo}%0A%0A*Total: R$ ${valorT.toFixed(2)}*%0A%0AObrigado!`; window.open(`https://wa.me/?text=${texto}`, '_blank'); }
+    function imprimirCupao(clienteNome, itensCart, valorT) { let cupao = document.getElementById('cupao-impressao'); let data = new Date().toLocaleString('pt-BR'); let itensHtml = itensCart.map(i => `<div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.preco * i.qtd).toFixed(2)}</span></div>`).join(''); cupao.innerHTML = `<div style="text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 5px;">ARENA VITALE</div><div style="text-align: center; font-size: 10px; margin-bottom: 10px;">Russas - CE</div><div style="text-align: center; font-size: 12px; margin-bottom: 10px;">Recibo Não Fiscal</div><div>Data: ${data}</div><div>Operador: ${operadorAtual}</div><div>Cliente: ${clienteNome}</div><hr style="border-top: 1px dashed #000; margin: 5px 0;">${itensHtml}<hr style="border-top: 1px dashed #000; margin: 5px 0;"><div style="text-align: right; font-weight: bold; font-size: 14px;">TOTAL: R$ ${valorT.toFixed(2)}</div><div style="text-align: center; margin-top: 15px; font-size: 10px;">Obrigado e volte sempre!</div>`; window.print(); }
+
+    // --- ATALHOS DE TECLADO ---
+    document.addEventListener('keydown', e => { if(turnoAtual && document.getElementById('tela-login').style.display === 'none') { if(e.key==='F2'){e.preventDefault();finalizarVenda();} if(e.key==='F3'){e.preventDefault();abrirModalComandas();} } });
 </script>
 
 </body>
