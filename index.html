@@ -2,14 +2,14 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sistema de Gestão Arena</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { margin: 0; background-color: #f4f7f6; display: flex; height: 100vh; overflow: hidden; }
         
-        .sidebar { width: 250px; background-color: #1e293b; color: white; display: flex; flex-direction: column; padding-top: 20px; }
+        .sidebar { width: 250px; background-color: #1e293b; color: white; display: flex; flex-direction: column; padding-top: 20px; transition: 0.3s; }
         .sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 22px; color: #38bdf8; }
         .menu-item { padding: 15px 20px; cursor: pointer; font-size: 16px; border-left: 4px solid transparent; transition: 0.3s; }
         .menu-item:hover { background-color: #334155; }
@@ -18,19 +18,22 @@
         .main-content { flex: 1; padding: 30px; overflow-y: auto; }
         .tela { display: none; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .tela.ativa { display: block; }
-        h1 { color: #333; margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; }
+        h1 { color: #333; margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; font-size: 24px; }
         
         .dashboard-cards { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
         .card { flex: 1; min-width: 200px; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; }
         .card h3 { margin: 0; color: #64748b; font-size: 16px; }
         .card .valor { font-size: 28px; font-weight: bold; color: #0f172a; margin-top: 10px; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        /* Ajustes de Tabela para Mobile */
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; min-width: 500px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
         th { background-color: #f1f5f9; color: #475569; }
+        
         .form-grupo { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-end; flex-wrap: wrap; }
         .form-grupo div { flex: 1; display: flex; flex-direction: column; min-width: 120px; }
-        .form-grupo input, .form-grupo select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 15px; }
+        .form-grupo input, .form-grupo select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 16px; /* 16px evita zoom automático no iPhone */ }
         
         button { cursor: pointer; border: none; border-radius: 5px; padding: 12px 20px; font-weight: bold; color: white; font-size: 15px; transition: 0.2s; }
         .btn-azul { background-color: #0ea5e9; } .btn-azul:hover { background-color: #0284c7; }
@@ -46,8 +49,34 @@
         
         /* Estilos do Leitor de Câmera */
         #leitorCamera { width: 100%; max-width: 500px; margin: 0 auto 20px; display: none; border: 2px solid #0ea5e9; border-radius: 8px; overflow: hidden; }
-        .btn-camera { background-color: #334155; font-size: 20px; padding: 10px 15px; width: auto; }
+        .btn-camera { background-color: #334155; font-size: 20px; padding: 10px 15px; width: auto; display: flex; align-items: center; justify-content: center; }
         .btn-camera:hover { background-color: #0f172a; }
+
+        /* ========================================= */
+        /* RESPONSIVIDADE PARA CELULARES (MOBILE)    */
+        /* ========================================= */
+        @media (max-width: 768px) {
+            body { flex-direction: column; } /* Menu vai para cima */
+            
+            /* Transforma a barra lateral num menu de arrastar pro lado */
+            .sidebar { width: 100%; padding-top: 0; flex-direction: row; overflow-x: auto; white-space: nowrap; align-items: center; justify-content: flex-start; }
+            .sidebar::-webkit-scrollbar { display: none; } /* Esconde a barra de rolagem feia */
+            .sidebar h2 { display: none; } /* Esconde o título para dar espaço aos botões */
+            
+            .menu-item { padding: 15px; font-size: 15px; border-left: none; border-bottom: 4px solid transparent; flex: 0 0 auto; }
+            .menu-item.ativo { border-left-color: transparent; border-bottom-color: #38bdf8; background-color: transparent; color: #38bdf8; }
+            
+            .main-content { padding: 15px; height: calc(100vh - 55px); } /* Ajusta o tamanho da área de trabalho */
+            .tela { padding: 15px; }
+            
+            .dashboard-cards { flex-direction: column; gap: 15px; } /* Cards um embaixo do outro */
+            .form-grupo div { min-width: 100%; } /* Campos de formulário ocupam 100% da tela */
+            
+            .botoes-caixa button { width: 100%; font-size: 16px; padding: 15px; margin-bottom: 5px; } /* Botões grandes para dedo */
+            
+            #valorTotal { font-size: 22px; }
+            h1 { font-size: 20px; }
+        }
     </style>
 </head>
 <body>
@@ -78,32 +107,32 @@
         
         <div id="leitorCamera"></div>
 
-        <div class="form-grupo" style="flex-direction: row; gap: 10px;">
-            <div style="flex: 1;">
-                <input type="text" id="codigoInput" placeholder="Bipe o código, digite o NOME ou use a câmera 📷..." disabled autofocus>
+        <div class="form-grupo" style="flex-direction: row; gap: 10px; flex-wrap: nowrap;">
+            <div style="flex: 1; min-width: unset;">
+                <input type="text" id="codigoInput" placeholder="Código, Nome ou Câmera 📷" disabled autofocus>
             </div>
             <button class="btn-camera" onclick="alternarCamera()" title="Ler com a câmera do celular">📷</button>
         </div>
 
-        <div style="overflow-x: auto;">
+        <div class="table-responsive">
             <table>
                 <thead><tr><th>Código</th><th>Produto</th><th>Qtd</th><th>Preço Un.</th><th>Subtotal</th></tr></thead>
                 <tbody id="listaCarrinho"></tbody>
             </table>
         </div>
-        <div style="text-align: right; font-size: 26px; font-weight: bold; color: #10b981; margin: 20px 0;">
+        <div style="text-align: right; font-size: 24px; font-weight: bold; color: #10b981; margin: 20px 0;">
             Total: R$ <span id="valorTotal">0.00</span>
         </div>
         
         <div class="botoes-caixa">
-            <button class="btn-laranja" id="btnSalvarComanda" style="flex: 1; font-size: 18px;" onclick="abrirComanda()">Salvar em Comanda (F3)</button>
-            <button class="btn-azul" id="btnFinalizarVenda" style="flex: 1; font-size: 18px;" onclick="finalizarVenda()">Finalizar Venda Direta (F2)</button>
+            <button class="btn-laranja" id="btnSalvarComanda" style="flex: 1;" onclick="abrirComanda()">Salvar na Comanda (F3)</button>
+            <button class="btn-azul" id="btnFinalizarVenda" style="flex: 1;" onclick="finalizarVenda()">Finalizar Venda (F2)</button>
         </div>
     </div>
 
     <div id="tela-comandas" class="tela">
         <h1>Comandas Abertas</h1>
-        <div style="overflow-x: auto;">
+        <div class="table-responsive">
             <table>
                 <thead><tr><th>Nº Comanda</th><th>Cliente/Mesa</th><th>Resumo dos Itens</th><th>Total (R$)</th><th>Ação</th></tr></thead>
                 <tbody id="listaComandas">
@@ -123,7 +152,7 @@
             <div><label>Valor (R$)</label><input type="number" step="0.01" id="valorMovimento"></div>
             <button class="btn-verde" style="margin-bottom: 2px;" onclick="registrarCaixa()">Registrar</button>
         </div>
-        <div style="overflow-x: auto;">
+        <div class="table-responsive">
             <table>
                 <thead><tr><th>Data/Hora</th><th>Tipo</th><th>Descrição</th><th>Valor</th></tr></thead>
                 <tbody id="listaCaixa"></tbody>
@@ -134,14 +163,14 @@
     <div id="tela-estoque" class="tela">
         <h1>Gestão de Estoque</h1>
         <div class="form-grupo">
-            <div><label>ID/Código</label><input type="text" id="novoId"></div>
+            <div><label>ID/Código</label><input type="text" id="novoId" placeholder="Bipe ou digite"></div>
             <div><label>Nome do Produto</label><input type="text" id="novoNome"></div>
             <div><label>Preço Custo</label><input type="number" step="0.01" id="novoCusto"></div>
             <div><label>Preço Venda</label><input type="number" step="0.01" id="novoPreco"></div>
             <div><label>Quantidade</label><input type="number" id="novaQtd"></div>
-            <button class="btn-verde" style="margin-bottom: 2px;" onclick="adicionarProduto()" id="btnAdicionar">Salvar</button>
+            <button class="btn-verde" style="margin-bottom: 2px;" onclick="adicionarProduto()" id="btnAdicionar">Salvar Produto</button>
         </div>
-        <div style="overflow-x: auto;">
+        <div class="table-responsive">
             <table>
                 <thead><tr><th>Código</th><th>Produto</th><th>Custo (R$)</th><th>Venda (R$)</th><th>Qtd</th><th>Ação</th></tr></thead>
                 <tbody id="listaGestao"></tbody>
@@ -151,14 +180,13 @@
 </div>
 
 <script>
+    // SEU LINK DO GOOGLE SHEETS
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
     let bancoDeProdutos = [];
     let bancoComandas = [];
     let carrinho = [];
     let total = 0;
-    
-    // Variável para a câmera
     let leitorHtml5 = null;
 
     function mudarTela(idTela, elementoMenu) {
@@ -167,15 +195,10 @@
         document.getElementById(idTela).classList.add('ativa');
         elementoMenu.classList.add('ativo');
         
-        // Desliga a câmera se sair da tela do caixa
-        if(idTela !== 'tela-caixa' && leitorHtml5) {
-            fecharCamera();
-        }
-        
+        if(idTela !== 'tela-caixa' && leitorHtml5) { fecharCamera(); }
         if(idTela === 'tela-caixa') document.getElementById('codigoInput').focus();
     }
 
-    // --- CARREGAR DADOS COMPLETOS ---
     async function carregarDados() {
         let status = document.getElementById('status-bar');
         status.innerText = "Sincronizando banco de dados...";
@@ -202,7 +225,6 @@
         }
     }
 
-    // --- CAIXA E DASHBOARD ---
     function atualizarDashboardECaixa(caixa) {
         let saldoTotal = 0; let vendasHoje = 0;
         let hojeStr = new Date().toLocaleDateString('pt-BR');
@@ -239,38 +261,29 @@
         carregarDados();
     }
 
-    // --- LÓGICA DA CÂMERA (LEITOR DE CÓDIGO DE BARRAS) ---
     function alternarCamera() {
         let divCamera = document.getElementById('leitorCamera');
-        if (divCamera.style.display === "block") {
-            fecharCamera();
-        } else {
-            abrirCamera();
-        }
+        if (divCamera.style.display === "block") { fecharCamera(); } 
+        else { abrirCamera(); }
     }
 
     function abrirCamera() {
         let divCamera = document.getElementById('leitorCamera');
         divCamera.style.display = "block";
 
-        if (!leitorHtml5) {
-            leitorHtml5 = new Html5Qrcode("leitorCamera");
-        }
+        if (!leitorHtml5) { leitorHtml5 = new Html5Qrcode("leitorCamera"); }
 
         leitorHtml5.start(
-            { facingMode: "environment" }, // Usa a câmera traseira do celular
+            { facingMode: "environment" },
             { fps: 10, qrbox: { width: 250, height: 150 } },
             (codigoLido) => {
-                // Ao ler com sucesso: fecha a câmera e processa o código
                 fecharCamera();
                 document.getElementById('codigoInput').value = codigoLido;
                 processarEntradaCodigo(codigoLido);
             },
-            (erro) => {
-                // Ignora erros normais enquanto foca
-            }
+            (erro) => { }
         ).catch(err => {
-            alert("Não foi possível acessar a câmera. Verifique as permissões do seu navegador.");
+            alert("Não foi possível acessar a câmera do celular.");
             divCamera.style.display = "none";
         });
     }
@@ -279,11 +292,10 @@
         if (leitorHtml5) {
             leitorHtml5.stop().then(() => {
                 document.getElementById('leitorCamera').style.display = "none";
-            }).catch(err => console.log("Erro ao desligar a câmera", err));
+            }).catch(err => console.log(err));
         }
     }
 
-    // --- LÓGICA DE PESQUISA (Agora centralizada para o Teclado e para a Câmera) ---
     document.getElementById('codigoInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && this.value.trim() !== "") {
             processarEntradaCodigo(this.value.trim());
@@ -306,14 +318,9 @@
 
         if (prod) {
             let preco = parseFloat(prod.Preco_Venda.toString().replace(',','.')) || 0;
-            
-            // Verifica se já existe no carrinho para somar a quantidade
             let itemExistente = carrinho.find(i => i.codigo === prod.ID_Produto);
-            if(itemExistente) {
-                itemExistente.qtd += 1;
-            } else {
-                carrinho.push({ codigo: prod.ID_Produto, nome: prod.Nome_Produto, preco: preco, qtd: 1 });
-            }
+            if(itemExistente) { itemExistente.qtd += 1; } 
+            else { carrinho.push({ codigo: prod.ID_Produto, nome: prod.Nome_Produto, preco: preco, qtd: 1 }); }
             
             total += preco;
             atualizarCarrinho();
@@ -331,7 +338,6 @@
         document.getElementById('valorTotal').innerText = total.toFixed(2);
     }
 
-    // --- VENDAS E COMANDAS ---
     async function finalizarVenda() {
         if(carrinho.length === 0) return alert("O carrinho está vazio!");
         let btn = document.getElementById('btnFinalizarVenda');
@@ -342,12 +348,12 @@
         alert("Venda Finalizada com sucesso!");
         carrinho = []; total = 0; atualizarCarrinho();
         carregarDados();
-        btn.innerText = "Finalizar Venda Direta (F2)"; btn.disabled = false;
+        btn.innerText = "Finalizar Venda (F2)"; btn.disabled = false;
         document.getElementById('codigoInput').focus();
     }
 
     async function abrirComanda() {
-        if(carrinho.length === 0) return alert("Adicione produtos antes de abrir a comanda!");
+        if(carrinho.length === 0) return alert("Adicione produtos primeiro!");
         
         let nomeCliente = prompt("Qual o nome do Cliente ou Número da Mesa?");
         if(!nomeCliente) return;
@@ -360,7 +366,7 @@
         alert(`Comanda de ${nomeCliente} aberta!`);
         carrinho = []; total = 0; atualizarCarrinho();
         carregarDados();
-        btn.innerText = "Salvar em Comanda (F3)"; btn.disabled = false;
+        btn.innerText = "Salvar na Comanda (F3)"; btn.disabled = false;
     }
 
     function atualizarTabelaComandas() {
@@ -399,7 +405,6 @@
         if (e.key === 'F3') { e.preventDefault(); abrirComanda(); }
     });
 
-    // --- ESTOQUE ---
     function atualizarTabelaEstoque() {
         document.getElementById('listaGestao').innerHTML = bancoDeProdutos.map(p => {
             if(!p.ID_Produto) return '';
@@ -421,7 +426,7 @@
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar", id: id, nome: nome, custo: custo, preco: preco, quantidade: qtd }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
         
         document.getElementById('novoId').value = ""; document.getElementById('novoNome').value = ""; document.getElementById('novoCusto').value = ""; document.getElementById('novoPreco').value = ""; document.getElementById('novaQtd').value = "";
-        document.getElementById('btnAdicionar').innerText = "Salvar";
+        document.getElementById('btnAdicionar').innerText = "Salvar Produto";
         carregarDados();
     }
 
