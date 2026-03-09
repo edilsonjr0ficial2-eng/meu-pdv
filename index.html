@@ -5,30 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gestão Arena</title>
     <style>
-        /* Estilos Gerais e Menu Lateral Moderno */
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { margin: 0; background-color: #f4f7f6; display: flex; height: 100vh; overflow: hidden; }
         
-        /* Sidebar (Menu Lateral) */
         .sidebar { width: 250px; background-color: #1e293b; color: white; display: flex; flex-direction: column; padding-top: 20px; }
         .sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 22px; color: #38bdf8; }
         .menu-item { padding: 15px 20px; cursor: pointer; font-size: 16px; border-left: 4px solid transparent; transition: 0.3s; }
         .menu-item:hover { background-color: #334155; }
         .menu-item.ativo { background-color: #0f172a; border-left-color: #38bdf8; font-weight: bold; }
         
-        /* Área Principal */
         .main-content { flex: 1; padding: 30px; overflow-y: auto; }
         .tela { display: none; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .tela.ativa { display: block; }
         h1 { color: #333; margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; }
         
-        /* Cards do Dashboard */
         .dashboard-cards { display: flex; gap: 20px; margin-bottom: 30px; }
         .card { flex: 1; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; }
         .card h3 { margin: 0; color: #64748b; font-size: 16px; }
         .card .valor { font-size: 28px; font-weight: bold; color: #0f172a; margin-top: 10px; }
 
-        /* Tabelas e Formulários */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
         th { background-color: #f1f5f9; color: #475569; }
@@ -36,13 +31,14 @@
         .form-grupo div { flex: 1; display: flex; flex-direction: column; }
         .form-grupo input, .form-grupo select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 15px; }
         
-        /* Botões */
         button { cursor: pointer; border: none; border-radius: 5px; padding: 12px 20px; font-weight: bold; color: white; font-size: 15px; transition: 0.2s; }
         .btn-azul { background-color: #0ea5e9; } .btn-azul:hover { background-color: #0284c7; }
         .btn-verde { background-color: #10b981; } .btn-verde:hover { background-color: #059669; }
         .btn-vermelho { background-color: #ef4444; } .btn-vermelho:hover { background-color: #dc2626; }
         
         #status-bar { background: #e0f2fe; color: #0369a1; padding: 10px; text-align: center; font-weight: bold; border-radius: 5px; margin-bottom: 20px; }
+        .val-entrada { color: #16a34a; font-weight: bold; }
+        .val-saida { color: #dc2626; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -65,14 +61,13 @@
             <div class="card"><h3>Saldo em Caixa</h3><div class="valor" id="dash-saldo">R$ 0,00</div></div>
             <div class="card"><h3>Produtos Cadastrados</h3><div class="valor" id="dash-produtos">0</div></div>
         </div>
-        <p style="color: #666; text-align: center;">(Os gráficos e relatórios detalhados entrarão aqui após configurarmos a aba de Vendas na planilha!)</p>
     </div>
 
     <div id="tela-pdv" class="tela">
         <h1>PDV Rápido</h1>
         <div class="form-grupo">
             <div style="flex: 3;">
-                <input type="text" id="codigoInput" placeholder="Bipe o código ou digite o NOME do produto e aperte Enter..." disabled autofocus>
+                <input type="text" id="codigoInput" placeholder="Bipe o código ou digite o NOME e aperte Enter..." disabled autofocus>
             </div>
         </div>
         <table>
@@ -82,24 +77,22 @@
         <div style="text-align: right; font-size: 26px; font-weight: bold; color: #10b981; margin: 20px 0;">
             Total: R$ <span id="valorTotal">0.00</span>
         </div>
-        <button class="btn-azul" style="width: 100%; font-size: 18px;" onclick="finalizarVenda()">Finalizar Venda (F2)</button>
+        <button class="btn-azul" id="btnFinalizarVenda" style="width: 100%; font-size: 18px;" onclick="finalizarVenda()">Finalizar Venda (F2)</button>
     </div>
 
     <div id="tela-caixa" class="tela">
         <h1>Livro de Caixa</h1>
         <div class="form-grupo">
             <div><label>Tipo</label>
-                <select id="tipoMovimento"><option value="Entrada">Entrada (Suprimento)</option><option value="Saida">Saída (Sangria/Despesa)</option></select>
+                <select id="tipoMovimento"><option value="Entrada">Entrada (Ex: Troco inicial)</option><option value="Saida">Saída (Ex: Pagamento Fornecedor)</option></select>
             </div>
-            <div><label>Descrição</label><input type="text" id="descMovimento" placeholder="Ex: Troco inicial"></div>
+            <div><label>Descrição</label><input type="text" id="descMovimento" placeholder="Ex: Pagamento da conta de luz"></div>
             <div><label>Valor (R$)</label><input type="number" step="0.01" id="valorMovimento"></div>
-            <button class="btn-verde" style="margin-bottom: 2px;">Registrar</button>
+            <button class="btn-verde" style="margin-bottom: 2px;" onclick="registrarCaixa()">Registrar</button>
         </div>
         <table>
             <thead><tr><th>Data/Hora</th><th>Tipo</th><th>Descrição</th><th>Valor</th></tr></thead>
-            <tbody>
-                <tr><td colspan="4" style="text-align: center; color: #999;">Aguardando integração com a planilha de Caixa...</td></tr>
-            </tbody>
+            <tbody id="listaCaixa"></tbody>
         </table>
     </div>
 
@@ -119,31 +112,31 @@
 </div>
 
 <script>
-    // SEU LINK DE API MANTIDO AQUI:
+    // A SUA URL ATUALIZADA ESTÁ AQUI:
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
     let bancoDeProdutos = [];
     let carrinho = [];
     let total = 0;
 
-    // Navegação do Menu Lateral
     function mudarTela(idTela, elementoMenu) {
         document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('ativo'));
-        
         document.getElementById(idTela).classList.add('ativa');
         elementoMenu.classList.add('ativo');
-        
         if(idTela === 'tela-pdv') document.getElementById('codigoInput').focus();
     }
 
-    // Carregar Produtos
-    async function carregarProdutos() {
+    // --- CARREGAR DADOS COMPLETOS (PRODUTOS + CAIXA) ---
+    async function carregarDados() {
         let status = document.getElementById('status-bar');
-        status.innerText = "Sincronizando dados...";
+        status.innerText = "Sincronizando dados com a planilha...";
         try {
             const resposta = await fetch(API_URL);
-            bancoDeProdutos = await resposta.json();
+            const dados = await resposta.json();
+            
+            bancoDeProdutos = dados.produtos || [];
+            let bancoCaixa = dados.caixa || [];
             
             status.innerText = "Sistema Online";
             status.style.backgroundColor = "#dcfce7";
@@ -151,51 +144,94 @@
             
             document.getElementById('codigoInput').disabled = false;
             document.getElementById('dash-produtos').innerText = bancoDeProdutos.length;
+            
             atualizarTabelaGestao();
+            atualizarDashboardECaixa(bancoCaixa);
         } catch (erro) {
-            status.innerText = "Erro de conexão. Verifique o link da API.";
+            status.innerText = "Erro de conexão.";
             status.style.backgroundColor = "#fee2e2";
             status.style.color = "#991b1b";
         }
     }
 
-    // --- NOVA LÓGICA DO PDV (PESQUISA INTELIGENTE) ---
+    // --- ATUALIZA O DASHBOARD E A TABELA DE CAIXA ---
+    function atualizarDashboardECaixa(caixa) {
+        let saldoTotal = 0;
+        let vendasHoje = 0;
+        let hojeStr = new Date().toLocaleDateString('pt-BR'); // Pega a data de hoje para o filtro
+
+        let tbodyCaixa = document.getElementById('listaCaixa');
+        tbodyCaixa.innerHTML = "";
+
+        // Percorre de trás pra frente (para os lançamentos mais novos ficarem no topo da lista)
+        for(let i = caixa.length - 1; i >= 0; i--) {
+            let mov = caixa[i];
+            if(!mov.ID_Transacao) continue;
+
+            let valor = parseFloat(mov.Valor.toString().replace(',','.')) || 0;
+            
+            if(mov.Tipo === "Entrada") saldoTotal += valor;
+            if(mov.Tipo === "Saida") saldoTotal -= valor;
+
+            // Checa se a venda foi hoje
+            if(mov.Data_Hora && mov.Data_Hora.includes(hojeStr) && mov.Tipo === "Entrada" && mov.Descricao.includes("Venda")) {
+                vendasHoje += valor;
+            }
+
+            let classeCor = mov.Tipo === 'Entrada' ? 'val-entrada' : 'val-saida';
+            
+            tbodyCaixa.innerHTML += `<tr>
+                <td>${mov.Data_Hora}</td>
+                <td class="${classeCor}">${mov.Tipo}</td>
+                <td>${mov.Descricao}</td>
+                <td class="${classeCor}">R$ ${valor.toFixed(2)}</td>
+            </tr>`;
+        }
+
+        document.getElementById('dash-saldo').innerText = "R$ " + saldoTotal.toFixed(2);
+        document.getElementById('dash-vendas').innerText = "R$ " + vendasHoje.toFixed(2);
+    }
+
+    // --- REGISTRAR ENTRADAS/SAÍDAS MANUAIS NO CAIXA ---
+    async function registrarCaixa() {
+        let tipo = document.getElementById('tipoMovimento').value;
+        let desc = document.getElementById('descMovimento').value;
+        let valor = document.getElementById('valorMovimento').value;
+
+        if(!desc || !valor) return alert("Preencha a descrição e o valor!");
+        
+        document.getElementById('status-bar').innerText = "Gravando no Livro de Caixa...";
+        
+        let payload = { acao: "caixa", tipo: tipo, descricao: desc, valor: valor };
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+
+        document.getElementById('descMovimento').value = "";
+        document.getElementById('valorMovimento').value = "";
+        carregarDados();
+    }
+
+    // --- LÓGICA DO PDV (CARRINHO E PESQUISA) ---
     document.getElementById('codigoInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && this.value.trim() !== "") {
-            let termoDigitado = this.value.trim().toLowerCase();
-            
-            // 1. Tenta achar o produto pelo ID exato ou pelo Nome exato
-            let prod = bancoDeProdutos.find(p => 
-                String(p.ID_Produto).toLowerCase() === termoDigitado || 
-                String(p.Nome_Produto).toLowerCase() === termoDigitado
-            );
+            let termo = this.value.trim().toLowerCase();
+            let prod = bancoDeProdutos.find(p => String(p.ID_Produto).toLowerCase() === termo || String(p.Nome_Produto).toLowerCase() === termo);
 
-            // 2. Se não achar exato, procura palavras que CONTENHAM o que foi digitado
             if (!prod) {
-                let produtosEncontrados = bancoDeProdutos.filter(p => 
-                    String(p.Nome_Produto).toLowerCase().includes(termoDigitado)
-                );
-                
-                if (produtosEncontrados.length === 1) {
-                    prod = produtosEncontrados[0]; // Só achou um, então é ele!
-                } else if (produtosEncontrados.length > 1) {
-                    // Achou vários com esse nome, mostra a lista para o usuário escolher o código
-                    let listaNomes = produtosEncontrados.map(p => `-> ${p.Nome_Produto} (Código: ${p.ID_Produto})`).join('\n');
-                    alert("Achei mais de um produto com essa palavra. Digite o código do produto desejado:\n\n" + listaNomes);
-                    return; // Para a execução para o usuário digitar de novo
+                let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto).toLowerCase().includes(termo));
+                if (achados.length === 1) prod = achados[0];
+                else if (achados.length > 1) {
+                    alert("Achei mais de um produto:\n" + achados.map(p => `-> ${p.Nome_Produto} (Cód: ${p.ID_Produto})`).join('\n') + "\n\nDigite o código exato.");
+                    return;
                 }
             }
 
-            // 3. Adiciona ao carrinho se encontrou o produto
             if (prod) {
                 let preco = parseFloat(prod.Preco_Venda.toString().replace(',','.')) || 0;
                 carrinho.push({ codigo: prod.ID_Produto, nome: prod.Nome_Produto, preco: preco });
                 total += preco;
                 atualizarCarrinho();
-                this.value = ""; // Limpa o campo
-            } else {
-                alert("Produto não encontrado!");
-            }
+                this.value = ""; 
+            } else alert("Produto não encontrado!");
         }
     });
 
@@ -205,15 +241,33 @@
         document.getElementById('valorTotal').innerText = total.toFixed(2);
     }
 
-    function finalizarVenda() {
-        if(carrinho.length === 0) return alert("Carrinho vazio!");
-        alert("Venda de R$ " + total.toFixed(2) + " finalizada! (Próximo passo: gravar na planilha)");
-        carrinho = []; total = 0; atualizarCarrinho();
+    // --- GRAVAR VENDA NA PLANILHA ---
+    async function finalizarVenda() {
+        if(carrinho.length === 0) return alert("O carrinho está vazio!");
+        
+        let btn = document.getElementById('btnFinalizarVenda');
+        btn.innerText = "Gravando Venda...";
+        btn.disabled = true;
+
+        let payload = { acao: "venda", total: total, carrinho: carrinho };
+        
+        try {
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+            alert("Venda Finalizada! O valor já está no seu Dashboard.");
+            carrinho = []; total = 0; atualizarCarrinho();
+            carregarDados(); // Recarrega o painel e o caixa
+        } catch(e) {
+            alert("Erro ao gravar. Tente novamente.");
+        }
+        
+        btn.innerText = "Finalizar Venda (F2)";
+        btn.disabled = false;
+        document.getElementById('codigoInput').focus();
     }
 
     document.addEventListener('keydown', e => { if (e.key === 'F2') { e.preventDefault(); finalizarVenda(); } });
 
-    // --- LÓGICA DA GESTÃO ---
+    // --- GESTÃO DE PRODUTOS ---
     function atualizarTabelaGestao() {
         document.getElementById('listaGestao').innerHTML = bancoDeProdutos.map(p => {
             if(!p.ID_Produto) return '';
@@ -226,25 +280,24 @@
         let id = document.getElementById('novoId').value;
         let nome = document.getElementById('novoNome').value;
         let preco = document.getElementById('novoPreco').value;
-
         if(!id || !nome || !preco) return alert("Preencha todos os campos!");
-        document.getElementById('btnAdicionar').innerText = "Aguarde...";
         
+        document.getElementById('btnAdicionar').innerText = "Aguarde...";
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar", id: id, nome: nome, preco: preco }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-
         document.getElementById('novoId').value = ""; document.getElementById('novoNome').value = ""; document.getElementById('novoPreco').value = "";
         document.getElementById('btnAdicionar').innerText = "Salvar";
-        carregarProdutos();
+        carregarDados();
     }
 
     async function removerProduto(id) {
         if(confirm("Apagar produto " + id + "?")) {
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover", id: id }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-            carregarProdutos();
+            carregarDados();
         }
     }
 
-    carregarProdutos();
+    // Inicia tudo
+    carregarDados();
 </script>
 
 </body>
