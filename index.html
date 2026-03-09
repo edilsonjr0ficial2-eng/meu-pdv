@@ -9,6 +9,16 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { margin: 0; background-color: #f4f7f6; display: flex; height: 100vh; overflow: hidden; }
         
+        /* Oculta o talão térmico no ecrã normal */
+        @media screen { #cupao-impressao { display: none; } }
+        
+        /* Formatação para a Impressora Térmica (58mm) */
+        @media print {
+            body * { visibility: hidden; display: none !important; }
+            #cupao-impressao, #cupao-impressao * { visibility: visible; display: block !important; }
+            #cupao-impressao { position: absolute; left: 0; top: 0; width: 58mm; padding: 0; margin: 0; font-family: monospace; font-size: 12px; color: #000; }
+        }
+
         .sidebar { width: 250px; background-color: #1e293b; color: white; display: flex; flex-direction: column; padding-top: 20px; transition: 0.3s; }
         .sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 22px; color: #38bdf8; }
         .menu-item { padding: 15px 20px; cursor: pointer; font-size: 16px; border-left: 4px solid transparent; transition: 0.3s; }
@@ -70,11 +80,14 @@
 </head>
 <body>
 
+<div id="cupao-impressao"></div>
+
 <div class="sidebar">
     <h2>🎯 Meu Sistema</h2>
     <div class="menu-item ativo" onclick="mudarTela('tela-dashboard', this)">📊 Dashboard</div>
     <div class="menu-item" onclick="mudarTela('tela-caixa', this)">🛒 Caixa</div>
     <div class="menu-item" onclick="mudarTela('tela-comandas', this)">📝 Comandas</div>
+    <div class="menu-item" onclick="mudarTela('tela-clientes', this)">👥 Clientes</div>
     <div class="menu-item" onclick="mudarTela('tela-livro', this)">💵 Livro de Caixa</div>
     <div class="menu-item" onclick="mudarTela('tela-estoque', this)">📦 Estoque</div>
 </div>
@@ -90,7 +103,6 @@
                 <div class="valor" id="texto-status-caixa" style="color: #0369a1;">FECHADO</div>
                 <button id="btnAcaoCaixa" class="btn-azul" style="margin-top: 15px; width: 100%;" onclick="acaoCaixa()">Abrir Caixa</button>
             </div>
-            
             <div class="card"><h3>Vendas Hoje</h3><div class="valor" id="dash-vendas">R$ 0,00</div></div>
             <div class="card"><h3>Saldo Atual no Caixa</h3><div class="valor" id="dash-saldo">R$ 0,00</div></div>
         </div>
@@ -98,9 +110,17 @@
 
     <div id="tela-caixa" class="tela">
         <h1>Frente de Caixa</h1>
+        <div id="alerta-caixa">⚠️ O CAIXA ESTÁ FECHADO! Vá ao Dashboard para Abrir o Caixa.</div>
         
-        <div id="alerta-caixa">⚠️ O CAIXA ESTÁ FECHADO! Vá ao Dashboard para Abrir o Caixa e poder vender.</div>
-        
+        <div class="form-grupo" style="margin-bottom: 10px;">
+            <div style="flex: 1;">
+                <label>Selecionar Cliente (Opcional)</label>
+                <select id="selectClienteVenda">
+                    <option value="Consumidor Final">Consumidor Final</option>
+                </select>
+            </div>
+        </div>
+
         <div id="leitorCamera"></div>
 
         <div class="form-grupo" style="flex-direction: row; gap: 10px; flex-wrap: nowrap;">
@@ -134,6 +154,22 @@
                 <tbody id="listaComandas">
                     <tr><td colspan="5" style="text-align: center; color: #999;">Nenhuma comanda aberta.</td></tr>
                 </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tela-clientes" class="tela">
+        <h1>Gestão de Clientes</h1>
+        <div class="form-grupo">
+            <div><label>ID/Cartão</label><input type="text" id="novoIdCli" placeholder="Ex: 001"></div>
+            <div><label>Nome do Cliente</label><input type="text" id="novoNomeCli"></div>
+            <div><label>Telefone/WhatsApp</label><input type="text" id="novoTelCli" placeholder="Ex: 55889..."></div>
+            <button class="btn-verde" style="margin-bottom: 2px;" onclick="adicionarCliente()" id="btnAdicionarCli">Gravar Cliente</button>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead><tr><th>ID</th><th>Nome</th><th>Telefone</th><th>Ação</th></tr></thead>
+                <tbody id="listaClientesGestao"></tbody>
             </table>
         </div>
     </div>
@@ -181,7 +217,8 @@
     let bancoDeProdutos = [];
     let bancoComandas = [];
     let bancoCaixaGlobal = [];
-    let turnoAtual = null; // Controla se o caixa está aberto
+    let bancoClientes = [];
+    let turnoAtual = null; 
     let carrinho = [];
     let total = 0;
     let leitorHtml5 = null;
@@ -206,31 +243,92 @@
             bancoDeProdutos = dados.produtos || [];
             bancoComandas = dados.comandas || [];
             bancoCaixaGlobal = dados.caixa || [];
+            bancoClientes = dados.clientes || [];
             let bancoTurnos = dados.turnos || [];
             
-            // Verifica se existe algum turno ABERTO
             turnoAtual = bancoTurnos.find(t => t.Status === "Aberto");
-            
             atualizarInterfaceTurno();
             
             status.innerText = "Sistema Online";
             status.style.backgroundColor = "#dcfce7"; status.style.color = "#166534";
             
-            document.getElementById('dash-produtos').innerText = bancoDeProdutos.length;
-            
             atualizarTabelaEstoque();
             atualizarTabelaComandas();
             atualizarDashboardECaixa();
+            atualizarListasClientes();
         } catch (erro) {
             status.innerText = "Erro de conexão. Verifique o link da API.";
             status.style.backgroundColor = "#fee2e2"; status.style.color = "#991b1b";
         }
     }
 
-    // --- LÓGICA DE ABERTURA E FECHAMENTO DE CAIXA ---
+    // --- CLIENTES ---
+    function atualizarListasClientes() {
+        let tbody = document.getElementById('listaClientesGestao');
+        let selectVenda = document.getElementById('selectClienteVenda');
+        
+        tbody.innerHTML = "";
+        selectVenda.innerHTML = '<option value="Consumidor Final">Consumidor Final</option>';
+
+        bancoClientes.forEach(c => {
+            if(!c.ID_Cliente) return;
+            tbody.innerHTML += `<tr><td>${c.ID_Cliente}</td><td>${c.Nome}</td><td>${c.Telefone}</td>
+            <td><button class="btn-vermelho" onclick="removerCliente('${c.ID_Cliente}')">Apagar</button></td></tr>`;
+            selectVenda.innerHTML += `<option value="${c.Nome}">${c.Nome}</option>`;
+        });
+    }
+
+    async function adicionarCliente() {
+        let id = document.getElementById('novoIdCli').value;
+        let nome = document.getElementById('novoNomeCli').value;
+        let tel = document.getElementById('novoTelCli').value;
+        if(!id || !nome) return alert("Preencha o ID e o Nome!");
+        
+        document.getElementById('btnAdicionarCli').innerText = "Aguarde...";
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_cliente", id: id, nome: nome, telefone: tel }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+        
+        document.getElementById('novoIdCli').value = ""; document.getElementById('novoNomeCli').value = ""; document.getElementById('novoTelCli').value = "";
+        document.getElementById('btnAdicionarCli').innerText = "Gravar Cliente";
+        carregarDados();
+    }
+
+    async function removerCliente(id) {
+        if(confirm("Apagar cliente?")) {
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_cliente", id: id }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+            carregarDados();
+        }
+    }
+
+    // --- TALÃO E WHATSAPP ---
+    function enviarWhatsApp(clienteNome, itensCart, valorT) {
+        let resumo = itensCart.map(i => `${i.qtd}x ${i.nome}`).join('%0A');
+        let texto = `*ARENA VITALE*%0AOlá ${clienteNome}, aqui está o resumo da sua compra:%0A%0A${resumo}%0A%0A*Total: R$ ${valorT.toFixed(2)}*%0A%0AObrigado pela preferência!`;
+        window.open(`https://wa.me/?text=${texto}`, '_blank');
+    }
+
+    function imprimirCupao(clienteNome, itensCart, valorT) {
+        let cupao = document.getElementById('cupao-impressao');
+        let data = new Date().toLocaleString('pt-BR');
+        let itensHtml = itensCart.map(i => `<div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.preco * i.qtd).toFixed(2)}</span></div>`).join('');
+
+        cupao.innerHTML = `
+            <div style="text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 5px;">ARENA VITALE</div>
+            <div style="text-align: center; font-size: 10px; margin-bottom: 10px;">Russas - CE</div>
+            <div style="text-align: center; font-size: 12px; margin-bottom: 10px;">Recibo Não Fiscal</div>
+            <div>Data: ${data}</div>
+            <div>Cliente: ${clienteNome}</div>
+            <hr style="border-top: 1px dashed #000; margin: 5px 0;">
+            ${itensHtml}
+            <hr style="border-top: 1px dashed #000; margin: 5px 0;">
+            <div style="text-align: right; font-weight: bold; font-size: 14px;">TOTAL: R$ ${valorT.toFixed(2)}</div>
+            <div style="text-align: center; margin-top: 15px; font-size: 10px;">Obrigado e volte sempre!</div>
+        `;
+        window.print();
+    }
+
+    // --- ABERTURA E FECHAMENTO DE CAIXA ---
     function atualizarInterfaceTurno() {
         if(turnoAtual) {
-            // CAIXA ABERTO: Libera sistema
             document.getElementById('card-status-caixa').style.borderColor = "#10b981";
             document.getElementById('texto-status-caixa').innerText = "ABERTO";
             document.getElementById('texto-status-caixa').style.color = "#10b981";
@@ -244,7 +342,6 @@
             document.getElementById('btnFinalizarVenda').disabled = false;
             document.getElementById('btnRegistrarLivro').disabled = false;
         } else {
-            // CAIXA FECHADO: Bloqueia vendas
             document.getElementById('card-status-caixa').style.borderColor = "#ef4444";
             document.getElementById('texto-status-caixa').innerText = "FECHADO";
             document.getElementById('texto-status-caixa').style.color = "#ef4444";
@@ -262,54 +359,38 @@
 
     async function acaoCaixa() {
         if(!turnoAtual) {
-            // ABRIR CAIXA
-            let fundoStr = prompt("Qual o valor do troco inicial que está na gaveta? (Ex: 50.00)", "0.00");
+            let fundoStr = prompt("Valor do troco inicial:", "0.00");
             if(fundoStr === null) return;
             let fundo = parseFloat(fundoStr.replace(',','.')) || 0;
-            
             document.getElementById('status-bar').innerText = "Abrindo caixa...";
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_caixa", fundo: fundo }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
             carregarDados();
         } else {
-            // FECHAR CAIXA
-            let esperado = calcularSaldoEsperadoTurno();
-            let apuradoStr = prompt("Para o fechamento cego, conte o dinheiro da gaveta e digite o valor total:", "0.00");
+            let esperado = 0;
+            bancoCaixaGlobal.forEach(mov => {
+                if(mov.ID_Transacao >= turnoAtual.ID_Turno) {
+                    let v = parseFloat(mov.Valor.toString().replace(',','.')) || 0;
+                    if(mov.Tipo === "Entrada") esperado += v;
+                    if(mov.Tipo === "Saida") esperado -= v;
+                }
+            });
+            let apuradoStr = prompt("Conte o dinheiro da gaveta e digite o valor total:", "0.00");
             if(apuradoStr === null) return;
-            
             let apurado = parseFloat(apuradoStr.replace(',','.')) || 0;
             let diferenca = apurado - esperado;
             
-            let msgDiferenca = diferenca === 0 ? "Bateu exato!" : (diferenca > 0 ? `Sobrou R$ ${diferenca.toFixed(2)}` : `Faltou R$ ${Math.abs(diferenca).toFixed(2)}`);
-            
-            let confirmacao = confirm(`--- RESUMO DO CAIXA ---\n\nValor Esperado pelo Sistema: R$ ${esperado.toFixed(2)}\nValor Contado na Gaveta: R$ ${apurado.toFixed(2)}\nSituação: ${msgDiferenca}\n\nDeseja confirmar o fechamento do caixa?`);
-            
-            if(!confirmacao) return;
+            let msg = diferenca === 0 ? "Bateu exato!" : (diferenca > 0 ? `Sobrou R$ ${diferenca.toFixed(2)}` : `Faltou R$ ${Math.abs(diferenca).toFixed(2)}`);
+            if(!confirm(`Valor Esperado: R$ ${esperado.toFixed(2)}\nValor Gaveta: R$ ${apurado.toFixed(2)}\n${msg}\n\nConfirmar fechamento?`)) return;
 
             document.getElementById('status-bar').innerText = "Fechando caixa...";
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "fechar_caixa", valor_apurado: apurado, diferenca: diferenca }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-            alert("Caixa fechado com sucesso!");
+            alert("Caixa fechado!");
             carregarDados();
         }
     }
 
-    function calcularSaldoEsperadoTurno() {
-        if(!turnoAtual) return 0;
-        let saldoEsperado = 0;
-        // O ID do turno é um carimbo de tempo. Somamos tudo no caixa que aconteceu depois desse horário
-        bancoCaixaGlobal.forEach(mov => {
-            if(mov.ID_Transacao && mov.ID_Transacao >= turnoAtual.ID_Turno) {
-                let v = parseFloat(mov.Valor.toString().replace(',','.')) || 0;
-                if(mov.Tipo === "Entrada") saldoEsperado += v;
-                if(mov.Tipo === "Saida") saldoEsperado -= v;
-            }
-        });
-        return saldoEsperado;
-    }
-
-    // --- ATUALIZAÇÕES VISUAIS ---
     function atualizarDashboardECaixa() {
-        let saldoTurno = calcularSaldoEsperadoTurno();
-        let vendasHoje = 0;
+        let saldoTurno = 0; let vendasHoje = 0;
         let hojeStr = new Date().toLocaleDateString('pt-BR');
         let tbodyCaixa = document.getElementById('listaCaixa');
         tbodyCaixa.innerHTML = "";
@@ -319,9 +400,12 @@
             if(!mov.ID_Transacao) continue;
             let valor = parseFloat(mov.Valor.toString().replace(',','.')) || 0;
             
-            if(mov.Data_Hora && mov.Data_Hora.includes(hojeStr) && mov.Tipo === "Entrada" && (mov.Descricao.includes("Venda") || mov.Descricao.includes("Pgto Comanda"))) {
-                vendasHoje += valor;
+            if(turnoAtual && mov.ID_Transacao >= turnoAtual.ID_Turno) {
+                if(mov.Tipo === "Entrada") saldoTurno += valor;
+                if(mov.Tipo === "Saida") saldoTurno -= valor;
             }
+
+            if(mov.Data_Hora && mov.Data_Hora.includes(hojeStr) && mov.Tipo === "Entrada" && (mov.Descricao.includes("Venda") || mov.Descricao.includes("Pgto Comanda"))) { vendasHoje += valor; }
 
             let classeCor = mov.Tipo === 'Entrada' ? 'val-entrada' : 'val-saida';
             tbodyCaixa.innerHTML += `<tr><td>${mov.Data_Hora}</td><td class="${classeCor}">${mov.Tipo}</td><td>${mov.Descricao}</td><td class="${classeCor}">R$ ${valor.toFixed(2)}</td></tr>`;
@@ -334,7 +418,6 @@
         let tipo = document.getElementById('tipoMovimento').value;
         let desc = document.getElementById('descMovimento').value;
         let valor = document.getElementById('valorMovimento').value;
-
         if(!desc || !valor) return alert("Preencha a descrição e o valor!");
         document.getElementById('status-bar').innerText = "Gravando...";
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "caixa", tipo: tipo, descricao: desc, valor: valor }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
@@ -342,11 +425,10 @@
         carregarDados();
     }
 
-    // --- CÂMERA E PESQUISA ---
+    // --- CÂMERA E CARRINHO ---
     function alternarCamera() {
         let divCamera = document.getElementById('leitorCamera');
-        if (divCamera.style.display === "block") { fecharCamera(); } 
-        else { abrirCamera(); }
+        if (divCamera.style.display === "block") { fecharCamera(); } else { abrirCamera(); }
     }
 
     function abrirCamera() {
@@ -355,7 +437,7 @@
         if (!leitorHtml5) { leitorHtml5 = new Html5Qrcode("leitorCamera"); }
         leitorHtml5.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } },
             (codigoLido) => { fecharCamera(); document.getElementById('codigoInput').value = codigoLido; processarEntradaCodigo(codigoLido); }, (erro) => { }
-        ).catch(err => { alert("Não foi possível acessar a câmera do celular."); divCamera.style.display = "none"; });
+        ).catch(err => { alert("Sem acesso à câmara."); divCamera.style.display = "none"; });
     }
 
     function fecharCamera() {
@@ -397,19 +479,27 @@
         document.getElementById('valorTotal').innerText = total.toFixed(2);
     }
 
-    // --- VENDAS ---
+    // --- FINALIZAÇÕES ---
     async function finalizarVenda() {
         if(!turnoAtual) return alert("Abra o caixa primeiro!");
         if(carrinho.length === 0) return alert("O carrinho está vazio!");
+        
+        let clienteSel = document.getElementById('selectClienteVenda').value;
         let btn = document.getElementById('btnFinalizarVenda');
         btn.innerText = "Gravando..."; btn.disabled = true;
 
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "venda", total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+        let cartGuardado = [...carrinho];
+        let totalGuardado = total;
+
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "venda", cliente: clienteSel, total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
         
-        alert("Venda Finalizada com sucesso!");
         carrinho = []; total = 0; atualizarCarrinho();
         carregarDados();
         btn.innerText = "Finalizar Venda (F2)"; btn.disabled = false;
+        
+        if(confirm("Deseja imprimir o recibo térmico?")) imprimirCupao(clienteSel, cartGuardado, totalGuardado);
+        if(confirm("Deseja enviar o recibo por WhatsApp?")) enviarWhatsApp(clienteSel, cartGuardado, totalGuardado);
+        
         document.getElementById('codigoInput').focus();
     }
 
@@ -417,15 +507,19 @@
         if(!turnoAtual) return alert("Abra o caixa primeiro!");
         if(carrinho.length === 0) return alert("Adicione produtos primeiro!");
         
-        let nomeCliente = prompt("Qual o nome do Cliente ou Número da Mesa?");
-        if(!nomeCliente) return;
+        let clienteSel = document.getElementById('selectClienteVenda').value;
+        if (clienteSel === "Consumidor Final") {
+            let n = prompt("Qual o nome ou Número da Mesa?");
+            if(!n) return;
+            clienteSel = n;
+        }
 
         let btn = document.getElementById('btnSalvarComanda');
         btn.innerText = "Salvando..."; btn.disabled = true;
 
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_comanda", cliente: nomeCliente, total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_comanda", cliente: clienteSel, total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
         
-        alert(`Comanda de ${nomeCliente} aberta!`);
+        alert(`Comanda de ${clienteSel} aberta!`);
         carrinho = []; total = 0; atualizarCarrinho();
         carregarDados();
         btn.innerText = "Salvar na Comanda (F3)"; btn.disabled = false;
@@ -439,24 +533,28 @@
         }
         tbody.innerHTML = bancoComandas.map(c => {
             if(!c.ID_Comanda) return '';
-            let itensStr = "";
+            let itensStr = "", itensObj = [];
             try { 
-                let itensObj = JSON.parse(c.Itens_JSON); 
+                itensObj = JSON.parse(c.Itens_JSON); 
                 itensStr = itensObj.map(i => `${i.qtd}x ${i.nome}`).join(', '); 
             } catch(e) { itensStr = "Erro"; }
             let valor = parseFloat(c.Total.toString().replace(',','.')) || 0;
             return `<tr><td>#${c.ID_Comanda}</td><td style="font-weight:bold;">${c.Cliente}</td><td>${itensStr}</td><td style="color:#10b981; font-weight:bold;">R$ ${valor.toFixed(2)}</td>
-            <td><button class="btn-verde" onclick="cobrarComanda('${c.ID_Comanda}')">Cobrar</button></td></tr>`;
+            <td><button class="btn-verde" onclick="cobrarComanda('${c.ID_Comanda}', '${c.Cliente}', '${encodeURIComponent(JSON.stringify(itensObj))}', ${valor})">Cobrar</button></td></tr>`;
         }).join('');
     }
 
-    async function cobrarComanda(idComanda) {
+    async function cobrarComanda(idComanda, cliente, itensJsonStr, totalVal) {
         if(!turnoAtual) return alert("Abra o caixa primeiro para receber!");
         if(confirm("Confirmar pagamento e enviar o valor para o Caixa?")) {
             document.getElementById('status-bar').innerText = "Processando...";
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "cobrar_comanda", id_comanda: idComanda }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-            alert("Comanda paga com sucesso!");
+            
+            let itensArray = JSON.parse(decodeURIComponent(itensJsonStr));
             carregarDados();
+            
+            if(confirm("Pagamento efetuado! Imprimir recibo?")) imprimirCupao(cliente, itensArray, totalVal);
+            if(confirm("Enviar recibo por WhatsApp?")) enviarWhatsApp(cliente, itensArray, totalVal);
         }
     }
 
