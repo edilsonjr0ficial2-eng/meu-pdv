@@ -25,7 +25,6 @@
         .card h3 { margin: 0; color: #64748b; font-size: 16px; }
         .card .valor { font-size: 28px; font-weight: bold; color: #0f172a; margin-top: 10px; }
 
-        /* Ajustes de Tabela para Mobile */
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; min-width: 500px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
@@ -33,7 +32,7 @@
         
         .form-grupo { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-end; flex-wrap: wrap; }
         .form-grupo div { flex: 1; display: flex; flex-direction: column; min-width: 120px; }
-        .form-grupo input, .form-grupo select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 16px; /* 16px evita zoom automático no iPhone */ }
+        .form-grupo input, .form-grupo select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 16px; }
         
         button { cursor: pointer; border: none; border-radius: 5px; padding: 12px 20px; font-weight: bold; color: white; font-size: 15px; transition: 0.2s; }
         .btn-azul { background-color: #0ea5e9; } .btn-azul:hover { background-color: #0284c7; }
@@ -47,33 +46,23 @@
         
         .botoes-caixa { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
         
-        /* Estilos do Leitor de Câmera */
         #leitorCamera { width: 100%; max-width: 500px; margin: 0 auto 20px; display: none; border: 2px solid #0ea5e9; border-radius: 8px; overflow: hidden; }
         .btn-camera { background-color: #334155; font-size: 20px; padding: 10px 15px; width: auto; display: flex; align-items: center; justify-content: center; }
-        .btn-camera:hover { background-color: #0f172a; }
+        
+        #alerta-caixa { display: none; background: #fee2e2; color: #991b1b; padding: 15px; text-align: center; font-weight: bold; border-radius: 5px; margin-bottom: 20px; border: 2px solid #ef4444; }
 
-        /* ========================================= */
-        /* RESPONSIVIDADE PARA CELULARES (MOBILE)    */
-        /* ========================================= */
         @media (max-width: 768px) {
-            body { flex-direction: column; } /* Menu vai para cima */
-            
-            /* Transforma a barra lateral num menu de arrastar pro lado */
+            body { flex-direction: column; } 
             .sidebar { width: 100%; padding-top: 0; flex-direction: row; overflow-x: auto; white-space: nowrap; align-items: center; justify-content: flex-start; }
-            .sidebar::-webkit-scrollbar { display: none; } /* Esconde a barra de rolagem feia */
-            .sidebar h2 { display: none; } /* Esconde o título para dar espaço aos botões */
-            
+            .sidebar::-webkit-scrollbar { display: none; }
+            .sidebar h2 { display: none; }
             .menu-item { padding: 15px; font-size: 15px; border-left: none; border-bottom: 4px solid transparent; flex: 0 0 auto; }
             .menu-item.ativo { border-left-color: transparent; border-bottom-color: #38bdf8; background-color: transparent; color: #38bdf8; }
-            
-            .main-content { padding: 15px; height: calc(100vh - 55px); } /* Ajusta o tamanho da área de trabalho */
+            .main-content { padding: 15px; height: calc(100vh - 55px); }
             .tela { padding: 15px; }
-            
-            .dashboard-cards { flex-direction: column; gap: 15px; } /* Cards um embaixo do outro */
-            .form-grupo div { min-width: 100%; } /* Campos de formulário ocupam 100% da tela */
-            
-            .botoes-caixa button { width: 100%; font-size: 16px; padding: 15px; margin-bottom: 5px; } /* Botões grandes para dedo */
-            
+            .dashboard-cards { flex-direction: column; gap: 15px; } 
+            .form-grupo div { min-width: 100%; } 
+            .botoes-caixa button { width: 100%; font-size: 16px; padding: 15px; margin-bottom: 5px; }
             #valorTotal { font-size: 22px; }
             h1 { font-size: 20px; }
         }
@@ -96,14 +85,21 @@
     <div id="tela-dashboard" class="tela ativa">
         <h1>Resumo do Dia</h1>
         <div class="dashboard-cards">
+            <div class="card" id="card-status-caixa" style="background: #e0f2fe; border-color: #7dd3fc;">
+                <h3>Status do Caixa</h3>
+                <div class="valor" id="texto-status-caixa" style="color: #0369a1;">FECHADO</div>
+                <button id="btnAcaoCaixa" class="btn-azul" style="margin-top: 15px; width: 100%;" onclick="acaoCaixa()">Abrir Caixa</button>
+            </div>
+            
             <div class="card"><h3>Vendas Hoje</h3><div class="valor" id="dash-vendas">R$ 0,00</div></div>
-            <div class="card"><h3>Saldo em Caixa</h3><div class="valor" id="dash-saldo">R$ 0,00</div></div>
-            <div class="card"><h3>Produtos em Estoque</h3><div class="valor" id="dash-produtos">0</div></div>
+            <div class="card"><h3>Saldo Atual no Caixa</h3><div class="valor" id="dash-saldo">R$ 0,00</div></div>
         </div>
     </div>
 
     <div id="tela-caixa" class="tela">
         <h1>Frente de Caixa</h1>
+        
+        <div id="alerta-caixa">⚠️ O CAIXA ESTÁ FECHADO! Vá ao Dashboard para Abrir o Caixa e poder vender.</div>
         
         <div id="leitorCamera"></div>
 
@@ -111,7 +107,7 @@
             <div style="flex: 1; min-width: unset;">
                 <input type="text" id="codigoInput" placeholder="Código, Nome ou Câmera 📷" disabled autofocus>
             </div>
-            <button class="btn-camera" onclick="alternarCamera()" title="Ler com a câmera do celular">📷</button>
+            <button class="btn-camera" id="btnCamera" onclick="alternarCamera()" disabled>📷</button>
         </div>
 
         <div class="table-responsive">
@@ -125,8 +121,8 @@
         </div>
         
         <div class="botoes-caixa">
-            <button class="btn-laranja" id="btnSalvarComanda" style="flex: 1;" onclick="abrirComanda()">Salvar na Comanda (F3)</button>
-            <button class="btn-azul" id="btnFinalizarVenda" style="flex: 1;" onclick="finalizarVenda()">Finalizar Venda (F2)</button>
+            <button class="btn-laranja" id="btnSalvarComanda" style="flex: 1;" onclick="abrirComanda()" disabled>Salvar na Comanda (F3)</button>
+            <button class="btn-azul" id="btnFinalizarVenda" style="flex: 1;" onclick="finalizarVenda()" disabled>Finalizar Venda (F2)</button>
         </div>
     </div>
 
@@ -146,11 +142,11 @@
         <h1>Livro de Caixa</h1>
         <div class="form-grupo">
             <div><label>Tipo</label>
-                <select id="tipoMovimento"><option value="Entrada">Entrada</option><option value="Saida">Saída</option></select>
+                <select id="tipoMovimento"><option value="Entrada">Entrada</option><option value="Saida">Saída (Sangria/Despesa)</option></select>
             </div>
             <div><label>Descrição</label><input type="text" id="descMovimento" placeholder="Ex: Conta de luz"></div>
             <div><label>Valor (R$)</label><input type="number" step="0.01" id="valorMovimento"></div>
-            <button class="btn-verde" style="margin-bottom: 2px;" onclick="registrarCaixa()">Registrar</button>
+            <button class="btn-verde" id="btnRegistrarLivro" style="margin-bottom: 2px;" onclick="registrarCaixa()" disabled>Registrar</button>
         </div>
         <div class="table-responsive">
             <table>
@@ -180,11 +176,12 @@
 </div>
 
 <script>
-    // SEU LINK DO GOOGLE SHEETS
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
     let bancoDeProdutos = [];
     let bancoComandas = [];
+    let bancoCaixaGlobal = [];
+    let turnoAtual = null; // Controla se o caixa está aberto
     let carrinho = [];
     let total = 0;
     let leitorHtml5 = null;
@@ -196,7 +193,7 @@
         elementoMenu.classList.add('ativo');
         
         if(idTela !== 'tela-caixa' && leitorHtml5) { fecharCamera(); }
-        if(idTela === 'tela-caixa') document.getElementById('codigoInput').focus();
+        if(idTela === 'tela-caixa' && turnoAtual) document.getElementById('codigoInput').focus();
     }
 
     async function carregarDados() {
@@ -208,36 +205,120 @@
             
             bancoDeProdutos = dados.produtos || [];
             bancoComandas = dados.comandas || [];
-            let bancoCaixa = dados.caixa || [];
+            bancoCaixaGlobal = dados.caixa || [];
+            let bancoTurnos = dados.turnos || [];
+            
+            // Verifica se existe algum turno ABERTO
+            turnoAtual = bancoTurnos.find(t => t.Status === "Aberto");
+            
+            atualizarInterfaceTurno();
             
             status.innerText = "Sistema Online";
             status.style.backgroundColor = "#dcfce7"; status.style.color = "#166534";
             
-            document.getElementById('codigoInput').disabled = false;
             document.getElementById('dash-produtos').innerText = bancoDeProdutos.length;
             
             atualizarTabelaEstoque();
             atualizarTabelaComandas();
-            atualizarDashboardECaixa(bancoCaixa);
+            atualizarDashboardECaixa();
         } catch (erro) {
             status.innerText = "Erro de conexão. Verifique o link da API.";
             status.style.backgroundColor = "#fee2e2"; status.style.color = "#991b1b";
         }
     }
 
-    function atualizarDashboardECaixa(caixa) {
-        let saldoTotal = 0; let vendasHoje = 0;
+    // --- LÓGICA DE ABERTURA E FECHAMENTO DE CAIXA ---
+    function atualizarInterfaceTurno() {
+        if(turnoAtual) {
+            // CAIXA ABERTO: Libera sistema
+            document.getElementById('card-status-caixa').style.borderColor = "#10b981";
+            document.getElementById('texto-status-caixa').innerText = "ABERTO";
+            document.getElementById('texto-status-caixa').style.color = "#10b981";
+            document.getElementById('btnAcaoCaixa').innerText = "Fechar Caixa";
+            document.getElementById('btnAcaoCaixa').className = "btn-vermelho";
+            
+            document.getElementById('alerta-caixa').style.display = "none";
+            document.getElementById('codigoInput').disabled = false;
+            document.getElementById('btnCamera').disabled = false;
+            document.getElementById('btnSalvarComanda').disabled = false;
+            document.getElementById('btnFinalizarVenda').disabled = false;
+            document.getElementById('btnRegistrarLivro').disabled = false;
+        } else {
+            // CAIXA FECHADO: Bloqueia vendas
+            document.getElementById('card-status-caixa').style.borderColor = "#ef4444";
+            document.getElementById('texto-status-caixa').innerText = "FECHADO";
+            document.getElementById('texto-status-caixa').style.color = "#ef4444";
+            document.getElementById('btnAcaoCaixa').innerText = "Abrir Caixa";
+            document.getElementById('btnAcaoCaixa').className = "btn-verde";
+            
+            document.getElementById('alerta-caixa').style.display = "block";
+            document.getElementById('codigoInput').disabled = true;
+            document.getElementById('btnCamera').disabled = true;
+            document.getElementById('btnSalvarComanda').disabled = true;
+            document.getElementById('btnFinalizarVenda').disabled = true;
+            document.getElementById('btnRegistrarLivro').disabled = true;
+        }
+    }
+
+    async function acaoCaixa() {
+        if(!turnoAtual) {
+            // ABRIR CAIXA
+            let fundoStr = prompt("Qual o valor do troco inicial que está na gaveta? (Ex: 50.00)", "0.00");
+            if(fundoStr === null) return;
+            let fundo = parseFloat(fundoStr.replace(',','.')) || 0;
+            
+            document.getElementById('status-bar').innerText = "Abrindo caixa...";
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_caixa", fundo: fundo }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+            carregarDados();
+        } else {
+            // FECHAR CAIXA
+            let esperado = calcularSaldoEsperadoTurno();
+            let apuradoStr = prompt("Para o fechamento cego, conte o dinheiro da gaveta e digite o valor total:", "0.00");
+            if(apuradoStr === null) return;
+            
+            let apurado = parseFloat(apuradoStr.replace(',','.')) || 0;
+            let diferenca = apurado - esperado;
+            
+            let msgDiferenca = diferenca === 0 ? "Bateu exato!" : (diferenca > 0 ? `Sobrou R$ ${diferenca.toFixed(2)}` : `Faltou R$ ${Math.abs(diferenca).toFixed(2)}`);
+            
+            let confirmacao = confirm(`--- RESUMO DO CAIXA ---\n\nValor Esperado pelo Sistema: R$ ${esperado.toFixed(2)}\nValor Contado na Gaveta: R$ ${apurado.toFixed(2)}\nSituação: ${msgDiferenca}\n\nDeseja confirmar o fechamento do caixa?`);
+            
+            if(!confirmacao) return;
+
+            document.getElementById('status-bar').innerText = "Fechando caixa...";
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "fechar_caixa", valor_apurado: apurado, diferenca: diferenca }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+            alert("Caixa fechado com sucesso!");
+            carregarDados();
+        }
+    }
+
+    function calcularSaldoEsperadoTurno() {
+        if(!turnoAtual) return 0;
+        let saldoEsperado = 0;
+        // O ID do turno é um carimbo de tempo. Somamos tudo no caixa que aconteceu depois desse horário
+        bancoCaixaGlobal.forEach(mov => {
+            if(mov.ID_Transacao && mov.ID_Transacao >= turnoAtual.ID_Turno) {
+                let v = parseFloat(mov.Valor.toString().replace(',','.')) || 0;
+                if(mov.Tipo === "Entrada") saldoEsperado += v;
+                if(mov.Tipo === "Saida") saldoEsperado -= v;
+            }
+        });
+        return saldoEsperado;
+    }
+
+    // --- ATUALIZAÇÕES VISUAIS ---
+    function atualizarDashboardECaixa() {
+        let saldoTurno = calcularSaldoEsperadoTurno();
+        let vendasHoje = 0;
         let hojeStr = new Date().toLocaleDateString('pt-BR');
         let tbodyCaixa = document.getElementById('listaCaixa');
         tbodyCaixa.innerHTML = "";
 
-        for(let i = caixa.length - 1; i >= 0; i--) {
-            let mov = caixa[i];
+        for(let i = bancoCaixaGlobal.length - 1; i >= 0; i--) {
+            let mov = bancoCaixaGlobal[i];
             if(!mov.ID_Transacao) continue;
             let valor = parseFloat(mov.Valor.toString().replace(',','.')) || 0;
             
-            if(mov.Tipo === "Entrada") saldoTotal += valor;
-            if(mov.Tipo === "Saida") saldoTotal -= valor;
             if(mov.Data_Hora && mov.Data_Hora.includes(hojeStr) && mov.Tipo === "Entrada" && (mov.Descricao.includes("Venda") || mov.Descricao.includes("Pgto Comanda"))) {
                 vendasHoje += valor;
             }
@@ -245,7 +326,7 @@
             let classeCor = mov.Tipo === 'Entrada' ? 'val-entrada' : 'val-saida';
             tbodyCaixa.innerHTML += `<tr><td>${mov.Data_Hora}</td><td class="${classeCor}">${mov.Tipo}</td><td>${mov.Descricao}</td><td class="${classeCor}">R$ ${valor.toFixed(2)}</td></tr>`;
         }
-        document.getElementById('dash-saldo').innerText = "R$ " + saldoTotal.toFixed(2);
+        document.getElementById('dash-saldo').innerText = "R$ " + saldoTurno.toFixed(2);
         document.getElementById('dash-vendas').innerText = "R$ " + vendasHoje.toFixed(2);
     }
 
@@ -261,6 +342,7 @@
         carregarDados();
     }
 
+    // --- CÂMERA E PESQUISA ---
     function alternarCamera() {
         let divCamera = document.getElementById('leitorCamera');
         if (divCamera.style.display === "block") { fecharCamera(); } 
@@ -270,37 +352,18 @@
     function abrirCamera() {
         let divCamera = document.getElementById('leitorCamera');
         divCamera.style.display = "block";
-
         if (!leitorHtml5) { leitorHtml5 = new Html5Qrcode("leitorCamera"); }
-
-        leitorHtml5.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: { width: 250, height: 150 } },
-            (codigoLido) => {
-                fecharCamera();
-                document.getElementById('codigoInput').value = codigoLido;
-                processarEntradaCodigo(codigoLido);
-            },
-            (erro) => { }
-        ).catch(err => {
-            alert("Não foi possível acessar a câmera do celular.");
-            divCamera.style.display = "none";
-        });
+        leitorHtml5.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } },
+            (codigoLido) => { fecharCamera(); document.getElementById('codigoInput').value = codigoLido; processarEntradaCodigo(codigoLido); }, (erro) => { }
+        ).catch(err => { alert("Não foi possível acessar a câmera do celular."); divCamera.style.display = "none"; });
     }
 
     function fecharCamera() {
-        if (leitorHtml5) {
-            leitorHtml5.stop().then(() => {
-                document.getElementById('leitorCamera').style.display = "none";
-            }).catch(err => console.log(err));
-        }
+        if (leitorHtml5) { leitorHtml5.stop().then(() => { document.getElementById('leitorCamera').style.display = "none"; }).catch(err => console.log(err)); }
     }
 
     document.getElementById('codigoInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter' && this.value.trim() !== "") {
-            processarEntradaCodigo(this.value.trim());
-            this.value = ""; 
-        }
+        if (e.key === 'Enter' && this.value.trim() !== "") { processarEntradaCodigo(this.value.trim()); this.value = ""; }
     });
 
     function processarEntradaCodigo(termo) {
@@ -321,12 +384,8 @@
             let itemExistente = carrinho.find(i => i.codigo === prod.ID_Produto);
             if(itemExistente) { itemExistente.qtd += 1; } 
             else { carrinho.push({ codigo: prod.ID_Produto, nome: prod.Nome_Produto, preco: preco, qtd: 1 }); }
-            
-            total += preco;
-            atualizarCarrinho();
-        } else {
-            alert("Produto não encontrado no estoque!");
-        }
+            total += preco; atualizarCarrinho();
+        } else { alert("Produto não encontrado no estoque!"); }
     }
 
     function atualizarCarrinho() {
@@ -338,7 +397,9 @@
         document.getElementById('valorTotal').innerText = total.toFixed(2);
     }
 
+    // --- VENDAS ---
     async function finalizarVenda() {
+        if(!turnoAtual) return alert("Abra o caixa primeiro!");
         if(carrinho.length === 0) return alert("O carrinho está vazio!");
         let btn = document.getElementById('btnFinalizarVenda');
         btn.innerText = "Gravando..."; btn.disabled = true;
@@ -353,6 +414,7 @@
     }
 
     async function abrirComanda() {
+        if(!turnoAtual) return alert("Abra o caixa primeiro!");
         if(carrinho.length === 0) return alert("Adicione produtos primeiro!");
         
         let nomeCliente = prompt("Qual o nome do Cliente ou Número da Mesa?");
@@ -375,23 +437,21 @@
             tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #999;">Nenhuma comanda aberta.</td></tr>`;
             return;
         }
-
         tbody.innerHTML = bancoComandas.map(c => {
             if(!c.ID_Comanda) return '';
             let itensStr = "";
             try { 
                 let itensObj = JSON.parse(c.Itens_JSON); 
                 itensStr = itensObj.map(i => `${i.qtd}x ${i.nome}`).join(', '); 
-            } catch(e) { itensStr = "Erro ao ler itens"; }
-            
+            } catch(e) { itensStr = "Erro"; }
             let valor = parseFloat(c.Total.toString().replace(',','.')) || 0;
-
             return `<tr><td>#${c.ID_Comanda}</td><td style="font-weight:bold;">${c.Cliente}</td><td>${itensStr}</td><td style="color:#10b981; font-weight:bold;">R$ ${valor.toFixed(2)}</td>
             <td><button class="btn-verde" onclick="cobrarComanda('${c.ID_Comanda}')">Cobrar</button></td></tr>`;
         }).join('');
     }
 
     async function cobrarComanda(idComanda) {
+        if(!turnoAtual) return alert("Abra o caixa primeiro para receber!");
         if(confirm("Confirmar pagamento e enviar o valor para o Caixa?")) {
             document.getElementById('status-bar').innerText = "Processando...";
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "cobrar_comanda", id_comanda: idComanda }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
@@ -401,10 +461,13 @@
     }
 
     document.addEventListener('keydown', e => { 
-        if (e.key === 'F2') { e.preventDefault(); finalizarVenda(); }
-        if (e.key === 'F3') { e.preventDefault(); abrirComanda(); }
+        if(turnoAtual) {
+            if (e.key === 'F2') { e.preventDefault(); finalizarVenda(); }
+            if (e.key === 'F3') { e.preventDefault(); abrirComanda(); }
+        }
     });
 
+    // --- ESTOQUE ---
     function atualizarTabelaEstoque() {
         document.getElementById('listaGestao').innerHTML = bancoDeProdutos.map(p => {
             if(!p.ID_Produto) return '';
