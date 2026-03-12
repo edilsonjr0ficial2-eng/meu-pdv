@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sistema de Gestão Arena</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { margin: 0; background-color: #f4f7f6; display: flex; height: 100vh; overflow: hidden; }
@@ -16,7 +17,6 @@
             #cupao-impressao { position: absolute; left: 0; top: 0; width: 58mm; padding: 0; margin: 0; font-family: monospace; font-size: 12px; color: #000; } 
         }
 
-        /* TELA DE LOGIN */
         #tela-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e293b; display: flex; justify-content: center; align-items: center; z-index: 9999; flex-direction: column; }
         .login-box { background: #fff; padding: 40px; border-radius: 10px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .login-box h2 { color: #0f172a; margin-top: 0; margin-bottom: 10px; }
@@ -27,7 +27,6 @@
         #msg-login { color: #ef4444; font-weight: bold; margin-bottom: 15px; display: none; }
         #status-login { color: #0ea5e9; font-weight: bold; margin-bottom: 15px; }
 
-        /* MENU LATERAL */
         .sidebar { width: 250px; background-color: #1e293b; color: white; display: flex; flex-direction: column; padding-top: 20px; transition: 0.3s; }
         .sidebar h2 { text-align: center; margin-bottom: 5px; font-size: 22px; color: #38bdf8; }
         #operadorLogadoText { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 25px; }
@@ -41,7 +40,6 @@
         .tela.ativa { display: block; }
         h1 { color: #333; margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; font-size: 24px; }
         
-        /* ALERTA DE ESTOQUE */
         #alerta-estoque { display: none; background: #fef2f2; border: 2px solid #f87171; padding: 15px; margin-bottom: 20px; border-radius: 8px; color: #b91c1c; }
         
         .dashboard-cards { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
@@ -57,7 +55,6 @@
         .form-grupo div { flex: 1; display: flex; flex-direction: column; min-width: 120px; }
         .form-grupo input, .form-grupo select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 16px; }
         
-        /* BOTÕES */
         button { cursor: pointer; border: none; border-radius: 5px; padding: 12px 20px; font-weight: bold; color: white; font-size: 15px; transition: 0.2s; }
         .btn-azul { background-color: #0ea5e9; } .btn-azul:hover:not(:disabled) { background-color: #0284c7; }
         .btn-verde { background-color: #10b981; } .btn-verde:hover:not(:disabled) { background-color: #059669; }
@@ -78,11 +75,15 @@
         
         #alerta-caixa { display: none; background: #fee2e2; color: #991b1b; padding: 15px; text-align: center; font-weight: bold; border-radius: 5px; margin-bottom: 20px; border: 2px solid #ef4444; }
 
-        /* MODAL COMANDAS */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
         .modal-box { background: #fff; padding: 25px; border-radius: 8px; width: 90%; max-width: 500px; text-align: center; }
         .lista-comandas-modal { max-height: 300px; overflow-y: auto; margin: 20px 0; text-align: left; }
         .btn-comanda-item { display: block; width: 100%; margin-bottom: 10px; padding: 15px; background: #f1f5f9; color: #333; border: 1px solid #cbd5e1; text-align: left; font-size: 16px; border-radius: 5px; }
+
+        /* MODAL DE PAGAMENTO MISTO */
+        .linha-pag { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .linha-pag label { width: 120px; text-align: left; font-weight: bold; color: #475569; }
+        .linha-pag input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 16px; }
 
         @media (max-width: 768px) {
             body { flex-direction: column; } 
@@ -121,7 +122,6 @@
     <div class="menu-item" onclick="mudarTela('tela-livro', this)">💵 Livro de Caixa</div>
     <div class="menu-item" onclick="mudarTela('tela-estoque', this)">📦 Estoque</div>
     <div class="menu-item" id="menu-usuarios" onclick="mudarTela('tela-usuarios', this)" style="display: none;">⚙️ Usuários</div>
-    
     <div class="menu-item" style="color: #ef4444; border-top: 1px solid #334155; margin-top: 20px;" onclick="fazerLogout()">🚪 Sair do Sistema</div>
 </div>
 
@@ -129,8 +129,7 @@
     <div id="status-bar">Sistema Online</div>
 
     <div id="tela-dashboard" class="tela ativa">
-        <h1>Resumo do Dia</h1>
-        
+        <h1>Visão Geral da Arena</h1>
         <div id="alerta-estoque"></div>
 
         <div class="dashboard-cards">
@@ -140,7 +139,18 @@
                 <button id="btnAcaoCaixa" class="btn-azul" style="margin-top: 15px; width: 100%;" onclick="acaoCaixa()">Abrir Caixa</button>
             </div>
             <div class="card"><h3>Vendas Hoje</h3><div class="valor" id="dash-vendas">R$ 0,00</div></div>
-            <div class="card"><h3>Saldo Atual no Caixa</h3><div class="valor" id="dash-saldo">R$ 0,00</div></div>
+            <div class="card"><h3>Saldo Atual na Gaveta</h3><div class="valor" id="dash-saldo">R$ 0,00</div></div>
+        </div>
+
+        <div style="display:flex; gap:20px; flex-wrap:wrap; margin-top: 20px;">
+            <div style="flex:2; min-width:300px; background:#fff; padding:20px; border-radius:8px; border:1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <h3 style="margin-top:0; color:#475569; text-align:center;">📊 Faturamento (Últimos 7 Dias)</h3>
+                <canvas id="graficoFaturamento" height="100"></canvas>
+            </div>
+            <div style="flex:1; min-width:250px; background:#fff; padding:20px; border-radius:8px; border:1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <h3 style="margin-top:0; color:#475569; text-align:center;">🏆 Top 5 Produtos</h3>
+                <canvas id="graficoProdutos" height="200"></canvas>
+            </div>
         </div>
     </div>
 
@@ -154,46 +164,31 @@
         </div>
 
         <div class="form-grupo" style="margin-bottom: 10px;">
-            <div style="flex: 1;">
-                <label>Selecionar Cliente (Opcional)</label>
-                <select id="selectClienteVenda"><option value="Consumidor Final">Consumidor Final</option></select>
-            </div>
+            <div style="flex: 1;"><label>Cliente (Opcional)</label><select id="selectClienteVenda"><option value="Consumidor Final">Consumidor Final</option></select></div>
         </div>
 
         <div id="leitorCamera"></div>
 
         <div class="form-grupo" style="flex-direction: row; gap: 10px; flex-wrap: nowrap;">
-            <div style="flex: 1; min-width: unset;">
-                <input type="text" id="codigoInput" placeholder="Código, Nome ou Câmera 📷" disabled autofocus>
-            </div>
+            <div style="flex: 1; min-width: unset;"><input type="text" id="codigoInput" placeholder="Código, Nome ou Câmera 📷" disabled autofocus></div>
             <button class="btn-camera" id="btnCamera" onclick="alternarCamera('codigoInput')" disabled>📷</button>
         </div>
 
         <div class="table-responsive">
-            <table>
-                <thead><tr><th>Código</th><th>Produto</th><th>Qtd</th><th>Preço Un.</th><th>Subtotal</th></tr></thead>
-                <tbody id="listaCarrinho"></tbody>
-            </table>
+            <table><thead><tr><th>Código</th><th>Produto</th><th>Qtd</th><th>Preço Un.</th><th>Subtotal</th></tr></thead><tbody id="listaCarrinho"></tbody></table>
         </div>
-        <div style="text-align: right; font-size: 24px; font-weight: bold; color: #10b981; margin: 20px 0;">
-            Total: R$ <span id="valorTotal">0.00</span>
-        </div>
+        <div style="text-align: right; font-size: 24px; font-weight: bold; color: #10b981; margin: 20px 0;">Total: R$ <span id="valorTotal">0.00</span></div>
         
         <div class="botoes-caixa">
             <button class="btn-laranja" id="btnSalvarComanda" style="flex: 1;" onclick="abrirModalComandas()" disabled>Salvar na Comanda (F3)</button>
-            <button class="btn-azul" id="btnFinalizarVenda" style="flex: 1;" onclick="finalizarVenda()" disabled>Finalizar Venda Direta (F2)</button>
+            <button class="btn-azul" id="btnFinalizarVenda" style="flex: 1;" onclick="iniciarVendaDireta()" disabled>Finalizar Venda Direta (F2)</button>
         </div>
     </div>
 
     <div id="tela-comandas" class="tela">
         <h1>Comandas Abertas</h1>
         <div class="table-responsive">
-            <table>
-                <thead><tr><th>Nº Comanda</th><th>Cliente/Mesa</th><th>Resumo dos Itens</th><th>Total (R$)</th><th>Ações</th></tr></thead>
-                <tbody id="listaComandas">
-                    <tr><td colspan="5" style="text-align: center; color: #999;">Nenhuma comanda aberta.</td></tr>
-                </tbody>
-            </table>
+            <table><thead><tr><th>Nº Comanda</th><th>Cliente/Mesa</th><th>Resumo dos Itens</th><th>Total (R$)</th><th>Ações</th></tr></thead><tbody id="listaComandas"></tbody></table>
         </div>
     </div>
 
@@ -228,8 +223,20 @@
         </div>
 
         <div class="form-grupo">
-            <div><label>Lançamento Manual</label><select id="tipoMovimento"><option value="Entrada">Entrada</option><option value="Saida">Saída (Sangria/Despesa)</option></select></div>
-            <div><label>Descrição</label><input type="text" id="descMovimento" placeholder="Ex: Conta de luz"></div>
+            <div><label>Movimento</label><select id="tipoMovimento" onchange="mudarFormDespesa()"><option value="Entrada">Entrada</option><option value="Saida">Saída (Despesa)</option></select></div>
+            
+            <div id="boxCategoriaDespesa" style="display: none;">
+                <label>Categoria</label>
+                <select id="categoriaDespesa">
+                    <option value="Fornecedores">Fornecedores (Estoque)</option>
+                    <option value="Funcionários">Funcionários</option>
+                    <option value="Manutenção">Manutenção/Limpeza</option>
+                    <option value="Contas">Contas de Consumo</option>
+                    <option value="Outros">Outros</option>
+                </select>
+            </div>
+
+            <div><label>Descrição Extra</label><input type="text" id="descMovimento" placeholder="Ex: Compra de Água"></div>
             <div><label>Valor (R$)</label><input type="number" step="0.01" id="valorMovimento"></div>
             <button class="btn-verde" id="btnRegistrarLivro" style="margin-bottom: 2px;" onclick="registrarCaixa()" disabled>Registrar</button>
         </div>
@@ -248,13 +255,13 @@
             <div><label>Nome do Produto</label><input type="text" id="novoNome"></div>
             <div><label>Custo</label><input type="number" step="0.01" id="novoCusto"></div>
             <div><label>Venda</label><input type="number" step="0.01" id="novoPreco"></div>
-            <div><label>Qtd. Atual</label><input type="number" id="novaQtd"></div>
+            <div><label>Qtd</label><input type="number" id="novaQtd"></div>
             <div><label>Estoque Mín.</label><input type="number" id="novoMinimo" placeholder="Ex: 10"></div>
             <button class="btn-verde" style="margin-bottom: 2px;" onclick="salvarProdutoEstoque()" id="btnAdicionarEstoque">Salvar</button>
         </div>
         <div class="table-responsive">
             <table>
-                <thead><tr><th>Código</th><th>Produto</th><th>Custo (R$)</th><th>Venda (R$)</th><th>Qtd Atual</th><th>Est. Mínimo</th><th>Ações</th></tr></thead>
+                <thead><tr><th>Código</th><th>Produto</th><th>Custo</th><th>Venda</th><th>Qtd</th><th>Mínimo</th><th>Ações</th></tr></thead>
                 <tbody id="listaGestao"></tbody>
             </table>
         </div>
@@ -262,17 +269,13 @@
 
     <div id="tela-usuarios" class="tela">
         <h1>Gestão de Operadores</h1>
-        <p style="color: #666; margin-top: -5px;">Apenas o Administrador pode ver esta tela.</p>
         <div class="form-grupo">
-            <div><label>Novo Usuário (Login)</label><input type="text" id="novoUserLogin" placeholder="Ex: paulo"></div>
-            <div><label>Senha do Usuário</label><input type="text" id="novoUserSenha" placeholder="Ex: 123456"></div>
+            <div><label>Novo Usuário</label><input type="text" id="novoUserLogin" placeholder="Ex: paulo"></div>
+            <div><label>Senha</label><input type="text" id="novoUserSenha" placeholder="Ex: 123456"></div>
             <button class="btn-verde" style="margin-bottom: 2px;" onclick="adicionarUsuarioSistema()" id="btnAdicionarUser">Criar Operador</button>
         </div>
         <div class="table-responsive">
-            <table>
-                <thead><tr><th>Usuário de Acesso</th><th>Ação</th></tr></thead>
-                <tbody id="listaUsuariosGestao"></tbody>
-            </table>
+            <table><thead><tr><th>Usuário de Acesso</th><th>Ação</th></tr></thead><tbody id="listaUsuariosGestao"></tbody></table>
         </div>
     </div>
 </div>
@@ -287,14 +290,36 @@
     </div>
 </div>
 
+<div id="modalPagamento" class="modal-overlay">
+    <div class="modal-box" style="max-width: 400px;">
+        <h3 style="margin-bottom: 5px; color: #0f172a;">Caixa de Pagamento</h3>
+        <div style="font-size: 32px; font-weight: bold; margin-bottom: 20px; color: #10b981;">R$ <span id="pagTotalLabel">0.00</span></div>
+        
+        <div class="linha-pag"><label>💠 Pix:</label><input type="number" id="pagPix" placeholder="0.00" oninput="calcularRestantePagamento()"></div>
+        <div class="linha-pag"><label>💳 Crédito:</label><input type="number" id="pagCredito" placeholder="0.00" oninput="calcularRestantePagamento()"></div>
+        <div class="linha-pag"><label>💳 Débito:</label><input type="number" id="pagDebito" placeholder="0.00" oninput="calcularRestantePagamento()"></div>
+        <div class="linha-pag"><label>💵 Espécie:</label><input type="number" id="pagEspecie" placeholder="0.00" oninput="calcularRestantePagamento()"></div>
+
+        <div style="margin: 20px 0; font-size: 20px; font-weight: bold;">
+            <div id="boxStatusPagamento" style="color: #dc2626;">Falta: R$ <span id="pagRestanteLabel">0.00</span></div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+            <button class="btn-vermelho" style="flex:1;" onclick="fecharModalPagamento()">Cancelar</button>
+            <button class="btn-verde" style="flex:1;" id="btnConfirmarPagamento" onclick="confirmarPagamentoMisto()" disabled>Receber</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    // --- LINK OFICIAL DA API ---
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
-    let bancoDeProdutos = [], bancoComandas = [], bancoCaixaGlobal = [], bancoClientes = [], bancoUsuarios = [];
+    let bancoDeProdutos = [], bancoComandas = [], bancoCaixaGlobal = [], bancoClientes = [], bancoUsuarios = [], bancoVendas = [];
     let turnoAtual = null, carrinho = [], total = 0, leitorHtml5 = null;
-    let inputCameraAlvo = "codigoInput", idEditandoEstoque = null;
-    let operadorAtual = "";
+    let inputCameraAlvo = "codigoInput", idEditandoEstoque = null, operadorAtual = "";
+    
+    let chartFat = null, chartProd = null;
+    let acaoPagamentoPendente = null;
 
     window.onload = () => { carregarDadosIniciais(); };
 
@@ -303,34 +328,24 @@
             const resposta = await fetch(API_URL); const dados = await resposta.json();
             bancoDeProdutos = dados.produtos || []; bancoComandas = dados.comandas || [];
             bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || [];
-            bancoUsuarios = dados.usuarios || [];
+            bancoUsuarios = dados.usuarios || []; bancoVendas = dados.vendas || [];
             turnoAtual = (dados.turnos || []).find(t => t.Status === "Aberto");
             
-            let opSalvo = localStorage.getItem('arena_operador');
-            let nomeSalvo = localStorage.getItem('arena_operador_nome');
-            
+            let opSalvo = localStorage.getItem('arena_operador'); let nomeSalvo = localStorage.getItem('arena_operador_nome');
             if (opSalvo && bancoUsuarios.find(u => String(u.Login).toLowerCase() === opSalvo)) {
                 operadorAtual = nomeSalvo; document.getElementById('tela-login').style.display = 'none';
                 document.getElementById('operadorLogadoText').innerText = "Operador: " + operadorAtual;
                 if(opSalvo === "edilson") document.getElementById('menu-usuarios').style.display = 'block';
                 let tabSalva = localStorage.getItem('arena_tab') || 'tela-dashboard';
-                let menuBtn = document.querySelector(`.menu-item[onclick*="${tabSalva}"]`);
-                mudarTela(tabSalva, menuBtn);
+                mudarTela(tabSalva, document.querySelector(`.menu-item[onclick*="${tabSalva}"]`));
             } else {
                 mudarTela('tela-dashboard', null);
                 document.getElementById('status-login').innerText = "✅ Conectado! Pode fazer login.";
                 document.getElementById('status-login').style.color = "#10b981";
-                document.getElementById('loginUsuario').disabled = false;
-                document.getElementById('loginSenha').disabled = false;
-                document.getElementById('btnEntrar').disabled = false;
+                ['loginUsuario', 'loginSenha', 'btnEntrar'].forEach(id => document.getElementById(id).disabled = false);
             }
-
-            atualizarInterfaceTurno(); atualizarTabelaEstoque(); atualizarTabelaComandas(); 
-            atualizarDashboardECaixa(); atualizarListasClientes(); atualizarListaUsuarios();
-        } catch (erro) { 
-            document.getElementById('status-login').innerText = "Erro de conexão. Verifique a internet.";
-            document.getElementById('status-login').style.color = "#ef4444";
-        }
+            atualizarTodasAsTelas();
+        } catch (erro) { document.getElementById('status-login').innerHTML = "Erro de conexão.<br>Faça Deploy da Nova Versão no Google."; document.getElementById('status-login').style.color = "#ef4444"; }
     }
 
     function fazerLogin() {
@@ -345,7 +360,7 @@
             if(turnoAtual) document.getElementById('codigoInput').focus();
         } else { document.getElementById('msg-login').style.display = 'block'; }
     }
-    document.getElementById('loginSenha').addEventListener('keypress', function(e) { if(e.key === 'Enter') fazerLogin(); });
+    document.getElementById('loginSenha').addEventListener('keypress', e => { if(e.key === 'Enter') fazerLogin(); });
     function fazerLogout() { localStorage.removeItem('arena_operador'); localStorage.removeItem('arena_operador_nome'); location.reload(); }
 
     async function recarregarDadosSilencioso() {
@@ -353,205 +368,196 @@
         try {
             const resposta = await fetch(API_URL); const dados = await resposta.json();
             bancoDeProdutos = dados.produtos || []; bancoComandas = dados.comandas || [];
-            bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || []; bancoUsuarios = dados.usuarios || [];
+            bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || []; bancoUsuarios = dados.usuarios || []; bancoVendas = dados.vendas || [];
             turnoAtual = (dados.turnos || []).find(t => t.Status === "Aberto");
-            
-            atualizarInterfaceTurno(); document.getElementById('status-bar').innerText = "Sistema Online";
-            atualizarTabelaEstoque(); atualizarTabelaComandas(); atualizarDashboardECaixa(); atualizarListasClientes(); atualizarListaUsuarios();
+            document.getElementById('status-bar').innerText = "Sistema Online";
+            atualizarTodasAsTelas();
         } catch(e) { document.getElementById('status-bar').innerText = "Erro de conexão."; }
+    }
+
+    function atualizarTodasAsTelas() {
+        atualizarInterfaceTurno(); atualizarTabelaEstoque(); atualizarTabelaComandas(); 
+        atualizarDashboardECaixa(); atualizarListasClientes(); atualizarListaUsuarios();
+        desenharGraficos();
     }
 
     function mudarTela(idTela, elementoMenu) {
         document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('ativo'));
         document.getElementById(idTela).classList.add('ativa');
-        if(elementoMenu) { elementoMenu.classList.add('ativo'); } 
-        else { let el = document.querySelector(`.menu-item[onclick*="${idTela}"]`); if(el) el.classList.add('ativo'); }
+        if(elementoMenu) elementoMenu.classList.add('ativo'); else { let el = document.querySelector(`.menu-item[onclick*="${idTela}"]`); if(el) el.classList.add('ativo'); }
         localStorage.setItem('arena_tab', idTela);
-        if(leitorHtml5) fecharCamera();
-        if(idTela === 'tela-caixa' && turnoAtual) document.getElementById('codigoInput').focus();
+        if(leitorHtml5) fecharCamera(); if(idTela === 'tela-caixa' && turnoAtual) document.getElementById('codigoInput').focus();
     }
 
-    // --- CAIXA E VENDA ---
-    function pedirFormaPagamento() {
-        let op = prompt("Forma de Pagamento:\n1 - Cartão de Crédito\n2 - Cartão de Débito\n3 - Espécie\n4 - Pix\n\n(Digite apenas o número)");
-        if(op === "1") return "Crédito"; if(op === "2") return "Débito"; if(op === "3") return "Espécie"; if(op === "4") return "Pix"; return null;
-    }
-    function adicionarQuadra(nomeQuadra) {
-        let horas = prompt(`Quantas horas para a ${nomeQuadra}?`, "1"); if(!horas) return;
-        let valor = prompt(`Valor TOTAL a cobrar? (Ex: 80.00)`, "80.00"); if(!valor) return;
-        let precoObj = parseFloat(valor.replace(',','.'));
-        carrinho.push({ codigo: 'SERVICO', nome: `${nomeQuadra} (${parseInt(horas)}h)`, preco: precoObj, qtd: 1 });
-        total += precoObj; atualizarCarrinho();
-    }
-    document.getElementById('codigoInput').addEventListener('keypress', function(e) { if (e.key === 'Enter' && this.value.trim() !== "") { processarEntradaCodigo(this.value.trim()); this.value = ""; } });
-    function processarEntradaCodigo(termo) {
-        termo = termo.toLowerCase();
-        let prod = bancoDeProdutos.find(p => String(p.ID_Produto).toLowerCase() === termo || String(p.Nome_Produto).toLowerCase() === termo);
-        if (!prod) {
-            let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto).toLowerCase().includes(termo));
-            if (achados.length === 1) prod = achados[0]; else if (achados.length > 1) { alert("Múltiplos produtos encontrados. Digite o código exato."); return; }
+    // --- GRÁFICOS DO DASHBOARD ---
+    function desenharGraficos() {
+        let labelsDias = [], dadosFaturamento = [];
+        for(let i=6; i>=0; i--) {
+            let d = new Date(); d.setDate(d.getDate() - i);
+            labelsDias.push(d.toLocaleDateString('pt-BR').substring(0,5)); 
+            dadosFaturamento.push(0);
         }
-        if (prod) {
-            let preco = parseFloat(prod.Preco_Venda.toString().replace(',','.')) || 0;
-            let ext = carrinho.find(i => i.codigo === prod.ID_Produto);
-            if(ext) { ext.qtd += 1; } else { carrinho.push({ codigo: prod.ID_Produto, nome: prod.Nome_Produto, preco: preco, qtd: 1 }); }
-            total += preco; atualizarCarrinho();
-        } else { alert("Produto não encontrado!"); }
+        let hjFormatDateArray = [];
+        for(let i=6; i>=0; i--) { let d = new Date(); d.setDate(d.getDate() - i); hjFormatDateArray.push(d.toLocaleDateString('pt-BR')); }
+
+        bancoCaixaGlobal.forEach(m => {
+            if(m.Tipo === "Entrada" && (m.Descricao.includes("Venda") || m.Descricao.includes("Pgto Comanda"))) {
+                let dStr = m.Data_Hora.split(/[\s,]+/)[0]; 
+                let idx = hjFormatDateArray.indexOf(dStr);
+                if(idx !== -1) dadosFaturamento[idx] += parseFloat(m.Valor.toString().replace(',','.')) || 0;
+            }
+        });
+
+        if(chartFat) chartFat.destroy();
+        chartFat = new Chart(document.getElementById('graficoFaturamento'), {
+            type: 'bar', data: { labels: labelsDias, datasets: [{ label: 'Receita (R$)', data: dadosFaturamento, backgroundColor: '#0ea5e9', borderRadius: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        });
+
+        let contagemProdutos = {};
+        bancoVendas.forEach(v => {
+            if(!v.Itens_Vendidos) return;
+            let itensStr = v.Itens_Vendidos.split('(')[0];
+            itensStr.split(',').forEach(item => {
+                let match = item.trim().match(/(\d+)x\s(.+)/);
+                if(match) {
+                    let qtd = parseInt(match[1]); let nome = match[2].trim();
+                    if(nome !== "SERVICO" && !nome.includes("Quadra")) { contagemProdutos[nome] = (contagemProdutos[nome] || 0) + qtd; }
+                }
+            });
+        });
+
+        let prodOrder = Object.keys(contagemProdutos).map(k => ({nome: k, qtd: contagemProdutos[k]})).sort((a,b) => b.qtd - a.qtd).slice(0, 5);
+        
+        if(chartProd) chartProd.destroy();
+        chartProd = new Chart(document.getElementById('graficoProdutos'), {
+            type: 'doughnut', data: { labels: prodOrder.map(p => p.nome), datasets: [{ data: prodOrder.map(p => p.qtd), backgroundColor: ['#10b981', '#0ea5e9', '#eab308', '#f97316', '#8b5cf6'] }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
     }
-    function atualizarCarrinho() {
-        document.getElementById('listaCarrinho').innerHTML = carrinho.map(i => `<tr><td>${i.codigo}</td><td>${i.nome}</td><td>${i.qtd}</td><td>R$ ${i.preco.toFixed(2)}</td><td>R$ ${(i.preco * i.qtd).toFixed(2)}</td></tr>`).join('');
-        document.getElementById('valorTotal').innerText = total.toFixed(2);
+
+    // --- MODAL DE PAGAMENTO MISTO E FLUXO DE VENDA ---
+    function abrirModalPagamento(valorTotal, acaoObj) {
+        document.getElementById('pagTotalLabel').innerText = valorTotal.toFixed(2);
+        ['pagPix','pagCredito','pagDebito','pagEspecie'].forEach(id => document.getElementById(id).value = "");
+        acaoPagamentoPendente = acaoObj; calcularRestantePagamento();
+        document.getElementById('modalPagamento').style.display = 'flex';
+        document.getElementById('pagPix').focus();
     }
+    
+    function fecharModalPagamento() { document.getElementById('modalPagamento').style.display = 'none'; acaoPagamentoPendente = null; }
+
+    function calcularRestantePagamento() {
+        let total = acaoPagamentoPendente.valorTotal;
+        let p = parseFloat(document.getElementById('pagPix').value) || 0, c = parseFloat(document.getElementById('pagCredito').value) || 0;
+        let d = parseFloat(document.getElementById('pagDebito').value) || 0, e = parseFloat(document.getElementById('pagEspecie').value) || 0;
+        let restante = total - (p + c + d + e);
+        
+        let box = document.getElementById('boxStatusPagamento');
+        if (restante > 0.01) { box.style.color = "#dc2626"; box.innerHTML = `Falta: R$ <span id="pagRestanteLabel">${restante.toFixed(2)}</span>`; document.getElementById('btnConfirmarPagamento').disabled = true; } 
+        else if (restante < -0.01) { box.style.color = "#eab308"; box.innerHTML = `Troco: R$ <span id="pagRestanteLabel">${Math.abs(restante).toFixed(2)}</span>`; document.getElementById('btnConfirmarPagamento').disabled = false; } 
+        else { box.style.color = "#16a34a"; box.innerHTML = `Exato: R$ <span id="pagRestanteLabel">0.00</span>`; document.getElementById('btnConfirmarPagamento').disabled = false; }
+    }
+
+    function confirmarPagamentoMisto() {
+        let p = parseFloat(document.getElementById('pagPix').value) || 0, c = parseFloat(document.getElementById('pagCredito').value) || 0;
+        let d = parseFloat(document.getElementById('pagDebito').value) || 0, e = parseFloat(document.getElementById('pagEspecie').value) || 0;
+        let formas = [];
+        if(p > 0) formas.push(`Pix: ${p.toFixed(2)}`); if(c > 0) formas.push(`Crédito: ${c.toFixed(2)}`);
+        if(d > 0) formas.push(`Débito: ${d.toFixed(2)}`); if(e > 0) formas.push(`Espécie: ${e.toFixed(2)}`);
+        
+        fecharModalPagamento(); executarAcaoPagamento(formas.join(", "));
+    }
+
+    async function executarAcaoPagamento(formaPagStr) {
+        let acao = acaoPagamentoPendente;
+        if(acao.tipo === 'venda_direta') {
+            document.getElementById('btnFinalizarVenda').innerText = "Gravando..."; document.getElementById('btnFinalizarVenda').disabled = true;
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "venda", cliente: acao.cliente, total: acao.totalSalvo, carrinho: acao.carrinhoSalvo, operador: operadorAtual, forma_pagamento: formaPagStr }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+            carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso();
+            document.getElementById('btnFinalizarVenda').innerText = "Finalizar Venda Direta (F2)"; document.getElementById('btnFinalizarVenda').disabled = false;
+            if(confirm("Imprimir recibo térmico?")) imprimirCupao(acao.cliente, acao.carrinhoSalvo, acao.totalSalvo);
+            if(confirm("Enviar por WhatsApp?")) enviarWhatsApp(acao.cliente, acao.carrinhoSalvo, acao.totalSalvo);
+        } 
+        else if (acao.tipo === 'comanda') {
+            document.getElementById('status-bar').innerText = "Recebendo...";
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, forma_pagamento: formaPagStr + acao.msgExtra }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+            let iArr = JSON.parse(decodeURIComponent(acao.itensJsonStr)); recarregarDadosSilencioso();
+            if(confirm("Imprimir recibo térmico?")) imprimirCupao(acao.cliente, iArr, acao.totalSalvo);
+            if(confirm("Enviar por WhatsApp?")) enviarWhatsApp(acao.cliente, iArr, acao.totalSalvo);
+        }
+    }
+
+    function iniciarVendaDireta() {
+        if(!turnoAtual) return alert("Abra o caixa!"); if(carrinho.length === 0) return alert("Carrinho vazio!");
+        let clienteSel = document.getElementById('selectClienteVenda').value;
+        abrirModalPagamento(total, { tipo: 'venda_direta', cliente: clienteSel, carrinhoSalvo: [...carrinho], totalSalvo: total, valorTotal: total });
+    }
+
+    // --- QUADRAS E LEITURA ---
+    function adicionarQuadra(nomeQuadra) { let horas = prompt(`Quantas horas para a ${nomeQuadra}?`, "1"); if(!horas) return; let valor = prompt(`Valor TOTAL a cobrar?`, "80.00"); if(!valor) return; let precoObj = parseFloat(valor.replace(',','.')); carrinho.push({ codigo: 'SERVICO', nome: `${nomeQuadra} (${parseInt(horas)}h)`, preco: precoObj, qtd: 1 }); total += precoObj; atualizarCarrinho(); }
+    document.getElementById('codigoInput').addEventListener('keypress', function(e) { if (e.key === 'Enter' && this.value.trim() !== "") { processarEntradaCodigo(this.value.trim()); this.value = ""; } });
+    function processarEntradaCodigo(termo) { termo = termo.toLowerCase(); let prod = bancoDeProdutos.find(p => String(p.ID_Produto).toLowerCase() === termo || String(p.Nome_Produto).toLowerCase() === termo); if (!prod) { let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto).toLowerCase().includes(termo)); if (achados.length === 1) prod = achados[0]; else if (achados.length > 1) { alert("Múltiplos produtos encontrados. Digite o código exato."); return; } } if (prod) { let preco = parseFloat(prod.Preco_Venda.toString().replace(',','.')) || 0; let ext = carrinho.find(i => i.codigo === prod.ID_Produto); if(ext) { ext.qtd += 1; } else { carrinho.push({ codigo: prod.ID_Produto, nome: prod.Nome_Produto, preco: preco, qtd: 1 }); } total += preco; atualizarCarrinho(); } else { alert("Produto não encontrado!"); } }
+    function atualizarCarrinho() { document.getElementById('listaCarrinho').innerHTML = carrinho.map(i => `<tr><td>${i.codigo}</td><td>${i.nome}</td><td>${i.qtd}</td><td>R$ ${i.preco.toFixed(2)}</td><td>R$ ${(i.preco * i.qtd).toFixed(2)}</td></tr>`).join(''); document.getElementById('valorTotal').innerText = total.toFixed(2); }
     function alternarCamera(alvoId) { inputCameraAlvo = alvoId; let divCamera = document.getElementById('leitorCamera'); if (divCamera.style.display === "block") fecharCamera(); else abrirCamera(); }
     function abrirCamera() { let divCamera = document.getElementById('leitorCamera'); divCamera.style.display = "block"; if (!leitorHtml5) leitorHtml5 = new Html5Qrcode("leitorCamera"); leitorHtml5.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, (codigoLido) => { fecharCamera(); document.getElementById(inputCameraAlvo).value = codigoLido; if(inputCameraAlvo === 'codigoInput') processarEntradaCodigo(codigoLido); }, (erro) => {}).catch(err => { alert("Sem acesso à câmara."); divCamera.style.display = "none"; }); }
     function fecharCamera() { if(leitorHtml5) leitorHtml5.stop().then(() => { document.getElementById('leitorCamera').style.display = "none"; }).catch(e=>e); }
 
-    async function finalizarVenda() {
-        if(!turnoAtual) return alert("Abra o caixa!"); if(carrinho.length === 0) return alert("Carrinho vazio!");
-        let formaPag = pedirFormaPagamento(); if(!formaPag) return alert("Pagamento cancelado.");
-        let clienteSel = document.getElementById('selectClienteVenda').value;
-        document.getElementById('btnFinalizarVenda').innerText = "Gravando..."; document.getElementById('btnFinalizarVenda').disabled = true;
-        let cGuardado = [...carrinho], tGuardado = total;
-
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "venda", cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual, forma_pagamento: formaPag }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-        carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso();
-        document.getElementById('btnFinalizarVenda').innerText = "Finalizar Venda Direta (F2)"; document.getElementById('btnFinalizarVenda').disabled = false;
-        
-        if(confirm("Imprimir recibo térmico?")) imprimirCupao(clienteSel, cGuardado, tGuardado);
-        if(confirm("Enviar por WhatsApp?")) enviarWhatsApp(clienteSel, cGuardado, tGuardado);
-    }
-
-    // --- COMANDAS (COM DIVISÃO DE CONTA) ---
-    function abrirModalComandas() {
-        if(!turnoAtual) return alert("Abra o caixa!"); if(carrinho.length === 0) return alert("Carrinho vazio!");
-        let lista = document.getElementById('listaComandasModal');
-        lista.innerHTML = bancoComandas.length === 0 ? "<p>Nenhuma comanda aberta.</p>" : bancoComandas.map(c => `<button class="btn-comanda-item" onclick="adicionarNaComandaExistente('${c.ID_Comanda}', '${c.Cliente}')">👤 ${c.Cliente} (Comanda #${c.ID_Comanda})</button>`).join('');
-        document.getElementById('modalComandas').style.display = 'flex';
-    }
+    // --- COMANDAS ---
+    function abrirModalComandas() { if(!turnoAtual) return alert("Abra o caixa!"); if(carrinho.length === 0) return alert("Carrinho vazio!"); let lista = document.getElementById('listaComandasModal'); lista.innerHTML = bancoComandas.length === 0 ? "<p>Nenhuma comanda aberta.</p>" : bancoComandas.map(c => `<button class="btn-comanda-item" onclick="adicionarNaComandaExistente('${c.ID_Comanda}', '${c.Cliente}')">👤 ${c.Cliente} (Comanda #${c.ID_Comanda})</button>`).join(''); document.getElementById('modalComandas').style.display = 'flex'; }
     function fecharModalComandas() { document.getElementById('modalComandas').style.display = 'none'; }
-    async function criarNovaComandaModal() {
-        fecharModalComandas(); let nome = prompt("Nome do Cliente para a NOVA comanda?"); if(!nome) return;
-        document.getElementById('status-bar').innerText = "Abrindo Comanda...";
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_comanda", cliente: nome, total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-        alert("Comanda criada!"); carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso();
-    }
-    async function adicionarNaComandaExistente(idComanda, nomeCli) {
-        fecharModalComandas(); document.getElementById('status-bar').innerText = "Adicionando itens...";
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_item_comanda", id_comanda: idComanda, total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-        alert(`Itens adicionados!`); carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso();
-    }
-    function atualizarTabelaComandas() {
-        let tbody = document.getElementById('listaComandas');
-        if(bancoComandas.length === 0) { tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Nenhuma comanda aberta.</td></tr>`; return; }
-        tbody.innerHTML = bancoComandas.map(c => {
-            if(!c.ID_Comanda) return '';
-            let itensStr = "", itensObj = [];
-            try { itensObj = JSON.parse(c.Itens_JSON); itensStr = itensObj.map(i => `${i.qtd}x ${i.nome}`).join(', '); } catch(e) {}
-            let valor = parseFloat(c.Total.toString().replace(',','.')) || 0;
-            return `<tr><td>#${c.ID_Comanda}</td><td style="font-weight:bold;">${c.Cliente}</td><td>${itensStr}</td><td style="color:#10b981; font-weight:bold;">R$ ${valor.toFixed(2)}</td>
-            <td>
-                <button class="btn-verde" style="padding: 8px 12px; margin-bottom:2px;" onclick="cobrarComanda('${c.ID_Comanda}', '${c.Cliente}', '${encodeURIComponent(JSON.stringify(itensObj))}', ${valor})">Cobrar/Rachar</button>
-                <button class="btn-vermelho" style="padding: 8px 12px;" onclick="excluirComanda('${c.ID_Comanda}')">Excluir</button>
-            </td></tr>`;
-        }).join('');
-    }
+    async function criarNovaComandaModal() { fecharModalComandas(); let nome = prompt("Nome do Cliente para a NOVA comanda?"); if(!nome) return; document.getElementById('status-bar').innerText = "Abrindo Comanda..."; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_comanda", cliente: nome, total: total, carrinho: carrinho }) }); alert("Comanda criada!"); carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso(); }
+    async function adicionarNaComandaExistente(idComanda, nomeCli) { fecharModalComandas(); document.getElementById('status-bar').innerText = "Adicionando itens..."; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_item_comanda", id_comanda: idComanda, total: total, carrinho: carrinho }) }); alert(`Itens adicionados!`); carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso(); }
+    function atualizarTabelaComandas() { let tbody = document.getElementById('listaComandas'); if(bancoComandas.length === 0) { tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Nenhuma comanda aberta.</td></tr>`; return; } tbody.innerHTML = bancoComandas.map(c => { if(!c.ID_Comanda) return ''; let itensStr = "", itensObj = []; try { itensObj = JSON.parse(c.Itens_JSON); itensStr = itensObj.map(i => `${i.qtd}x ${i.nome}`).join(', '); } catch(e) {} let valor = parseFloat(c.Total.toString().replace(',','.')) || 0; return `<tr><td>#${c.ID_Comanda}</td><td style="font-weight:bold;">${c.Cliente}</td><td>${itensStr}</td><td style="color:#10b981; font-weight:bold;">R$ ${valor.toFixed(2)}</td><td><button class="btn-verde" style="padding: 8px 12px; margin-bottom:2px;" onclick="iniciarCobrancaComanda('${c.ID_Comanda}', '${c.Cliente}', '${encodeURIComponent(JSON.stringify(itensObj))}', ${valor})">Cobrar/Rachar</button><button class="btn-vermelho" style="padding: 8px 12px;" onclick="excluirComanda('${c.ID_Comanda}')">Excluir</button></td></tr>`; }).join(''); }
     
-    async function cobrarComanda(idComanda, cliente, itensJsonStr, totalVal) {
+    function iniciarCobrancaComanda(idComanda, cliente, itensJsonStr, totalVal) {
         if(!turnoAtual) return alert("Abra o caixa!");
-        
-        // --- LÓGICA DE RACHAR A CONTA ---
-        let numStr = prompt("Dividir a conta para quantas pessoas? (Deixe 1 para não dividir)", "1");
-        let numPessoas = parseInt(numStr) || 1;
-        let msgDivisao = "";
-        
-        if(numPessoas > 1) {
-            let valorDividido = (totalVal / numPessoas).toFixed(2);
-            msgDivisao = `\n\n🎾 CONTA DIVIDIDA PARA ${numPessoas} ATLETAS\n💰 CADA UM PAGA: R$ ${valorDividido}`;
-            alert(`Aviso de Pagamento:${msgDivisao}\n\nClique em OK para prosseguir com a forma de pagamento do valor total.`);
-        }
-
-        let formaPag = pedirFormaPagamento(); if(!formaPag) return alert("Cancelado.");
-        
+        let numPessoas = parseInt(prompt("Dividir a conta para quantas pessoas? (Deixe 1 para não dividir)", "1")) || 1;
         let msgDescricaoExtra = numPessoas > 1 ? ` (Dividido para ${numPessoas})` : "";
+        if(numPessoas > 1) alert(`🎾 DIVIDIDO PARA ${numPessoas} PESSOAS\n💰 CADA UM PAGA: R$ ${(totalVal / numPessoas).toFixed(2)}\n\nAvance para registrar como esse valor total foi pago.`);
+        
+        abrirModalPagamento(totalVal, { tipo: 'comanda', id_comanda: idComanda, cliente: cliente, itensJsonStr: itensJsonStr, totalSalvo: totalVal, valorTotal: totalVal, msgExtra: msgDescricaoExtra });
+    }
+    async function excluirComanda(idComanda) { if(confirm("Excluir e devolver itens ao estoque?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "excluir_comanda", id_comanda: idComanda }) }); recarregarDadosSilencioso(); } }
 
-        if(confirm(`Confirmar recebimento total de R$ ${totalVal.toFixed(2)} da comanda de ${cliente}?`)) {
-            document.getElementById('status-bar').innerText = "Recebendo...";
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "cobrar_comanda", id_comanda: idComanda, operador: operadorAtual, forma_pagamento: formaPag + msgDescricaoExtra }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-            let iArr = JSON.parse(decodeURIComponent(itensJsonStr)); recarregarDadosSilencioso();
-            if(confirm("Imprimir recibo?")) imprimirCupao(cliente, iArr, totalVal);
-            if(confirm("Enviar WhatsApp?")) enviarWhatsApp(cliente, iArr, totalVal);
-        }
-    }
-    
-    async function excluirComanda(idComanda) {
-        if(confirm("ATENÇÃO: Deseja apagar esta comanda e devolver os itens ao estoque?")) {
-            document.getElementById('status-bar').innerText = "Excluindo...";
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "excluir_comanda", id_comanda: idComanda }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-            recarregarDadosSilencioso();
-        }
-    }
-
-    // --- ESTOQUE E ALERTA ---
-    function atualizarTabelaEstoque() { 
-        document.getElementById('listaGestao').innerHTML = bancoDeProdutos.map(p => { 
-            if(!p.ID_Produto) return ''; 
-            return `<tr><td>${p.ID_Produto}</td><td>${p.Nome_Produto}</td><td>R$ ${p.Preco_Custo}</td><td>R$ ${p.Preco_Venda}</td><td style="font-weight:bold;">${p.Quantidade}</td><td>${p.Estoque_Minimo || 0}</td><td style="display:flex; gap:5px;"><button class="btn-amarelo" onclick="prepararEdicaoEstoque('${p.ID_Produto}')">Editar</button><button class="btn-vermelho" onclick="removerProduto('${p.ID_Produto}')">Apagar</button></td></tr>`; 
-        }).join(''); 
-    }
-    
-    function prepararEdicaoEstoque(id) { 
-        let p = bancoDeProdutos.find(x => String(x.ID_Produto) === String(id)); if(!p) return; 
-        document.getElementById('novoId').value = p.ID_Produto; document.getElementById('novoNome').value = p.Nome_Produto; document.getElementById('novoCusto').value = p.Preco_Custo; document.getElementById('novoPreco').value = p.Preco_Venda; document.getElementById('novaQtd').value = p.Quantidade; document.getElementById('novoMinimo').value = p.Estoque_Minimo || 0; idEditandoEstoque = id; document.getElementById('btnAdicionarEstoque').innerText = "Atualizar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-amarelo"; window.scrollTo(0, 0); 
-    }
-    
-    async function salvarProdutoEstoque() { 
-        let id = document.getElementById('novoId').value, nome = document.getElementById('novoNome').value; 
-        let custo = document.getElementById('novoCusto').value, preco = document.getElementById('novoPreco').value, qtd = document.getElementById('novaQtd').value, min = document.getElementById('novoMinimo').value || 0; 
-        if(!id || !nome || !preco || !qtd) return alert("Preencha Código, Nome, Venda e Qtd!"); 
-        let acaoReq = idEditandoEstoque ? "editar_produto" : "adicionar"; document.getElementById('btnAdicionarEstoque').innerText = "Salvando..."; 
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: acaoReq, id_antigo: idEditandoEstoque, id: id, nome: nome, custo: custo, preco: preco, quantidade: qtd, estoque_minimo: min }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); 
-        document.getElementById('novoId').value = ""; document.getElementById('novoNome').value = ""; document.getElementById('novoCusto').value = ""; document.getElementById('novoPreco').value = ""; document.getElementById('novaQtd').value = ""; document.getElementById('novoMinimo').value = ""; idEditandoEstoque = null; document.getElementById('btnAdicionarEstoque').innerText = "Salvar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-verde"; recarregarDadosSilencioso(); 
-    }
-    async function removerProduto(id) { if(confirm("Apagar produto?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover", id: id }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); recarregarDadosSilencioso(); } }
+    // --- ESTOQUE ---
+    function atualizarTabelaEstoque() { document.getElementById('listaGestao').innerHTML = bancoDeProdutos.map(p => { if(!p.ID_Produto) return ''; return `<tr><td>${p.ID_Produto}</td><td>${p.Nome_Produto}</td><td>R$ ${p.Preco_Custo}</td><td>R$ ${p.Preco_Venda}</td><td style="font-weight:bold;">${p.Quantidade}</td><td>${p.Estoque_Minimo || 0}</td><td style="display:flex; gap:5px;"><button class="btn-amarelo" onclick="prepararEdicaoEstoque('${p.ID_Produto}')">Editar</button><button class="btn-vermelho" onclick="removerProduto('${p.ID_Produto}')">Apagar</button></td></tr>`; }).join(''); }
+    function prepararEdicaoEstoque(id) { let p = bancoDeProdutos.find(x => String(x.ID_Produto) === String(id)); if(!p) return; document.getElementById('novoId').value = p.ID_Produto; document.getElementById('novoNome').value = p.Nome_Produto; document.getElementById('novoCusto').value = p.Preco_Custo; document.getElementById('novoPreco').value = p.Preco_Venda; document.getElementById('novaQtd').value = p.Quantidade; document.getElementById('novoMinimo').value = p.Estoque_Minimo || 0; idEditandoEstoque = id; document.getElementById('btnAdicionarEstoque').innerText = "Atualizar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-amarelo"; window.scrollTo(0, 0); }
+    async function salvarProdutoEstoque() { let id = document.getElementById('novoId').value, nome = document.getElementById('novoNome').value; let custo = document.getElementById('novoCusto').value, preco = document.getElementById('novoPreco').value, qtd = document.getElementById('novaQtd').value, min = document.getElementById('novoMinimo').value || 0; if(!id || !nome || !preco || !qtd) return alert("Preencha Código, Nome, Venda e Qtd!"); let acaoReq = idEditandoEstoque ? "editar_produto" : "adicionar"; document.getElementById('btnAdicionarEstoque').innerText = "Salvando..."; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: acaoReq, id_antigo: idEditandoEstoque, id: id, nome: nome, custo: custo, preco: preco, quantidade: qtd, estoque_minimo: min }) }); document.getElementById('novoId').value = ""; document.getElementById('novoNome').value = ""; document.getElementById('novoCusto').value = ""; document.getElementById('novoPreco').value = ""; document.getElementById('novaQtd').value = ""; document.getElementById('novoMinimo').value = ""; idEditandoEstoque = null; document.getElementById('btnAdicionarEstoque').innerText = "Salvar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-verde"; recarregarDadosSilencioso(); }
+    async function removerProduto(id) { if(confirm("Apagar produto?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover", id: id }) }); recarregarDadosSilencioso(); } }
 
     // --- LIVRO CAIXA E DASHBOARD ---
-    function parseDataBR(dataStr) {
-        if(!dataStr) return new Date(0);
-        let partes = dataStr.split(/[\s,]+/); 
-        let dma = partes[0].split('/'); 
-        if(dma.length === 3) return new Date(`${dma[2]}-${dma[1]}-${dma[0]}T12:00:00`);
-        return new Date(0);
+    function mudarFormDespesa() {
+        let t = document.getElementById('tipoMovimento').value;
+        if(t === "Saida") document.getElementById('boxCategoriaDespesa').style.display = "block";
+        else document.getElementById('boxCategoriaDespesa').style.display = "none";
     }
 
+    function parseDataBR(dataStr) { if(!dataStr) return new Date(0); let partes = dataStr.split(/[\s,]+/); let dma = partes[0].split('/'); if(dma.length === 3) return new Date(`${dma[2]}-${dma[1]}-${dma[0]}T12:00:00`); return new Date(0); }
+    
     function atualizarDashboardECaixa() {
         let sTurno = 0, vHoje = 0, hj = new Date().toLocaleDateString('pt-BR'); 
-        
         bancoCaixaGlobal.forEach(m => { 
-            if(!m.ID_Transacao) return; 
-            let v = parseFloat(m.Valor.toString().replace(',','.'))||0; 
+            if(!m.ID_Transacao) return; let v = parseFloat(m.Valor.toString().replace(',','.'))||0; 
             if(turnoAtual && m.ID_Transacao >= turnoAtual.ID_Turno) { if(m.Tipo==="Entrada") sTurno+=v; if(m.Tipo==="Saida") sTurno-=v; } 
             if(m.Data_Hora && m.Data_Hora.includes(hj) && m.Tipo==="Entrada" && (m.Descricao.includes("Venda") || m.Descricao.includes("Pgto Comanda"))) { vHoje+=v; } 
         });
-        document.getElementById('dash-saldo').innerText = "R$ " + sTurno.toFixed(2); 
-        document.getElementById('dash-vendas').innerText = "R$ " + vHoje.toFixed(2); 
+        document.getElementById('dash-saldo').innerText = "R$ " + sTurno.toFixed(2); document.getElementById('dash-vendas').innerText = "R$ " + vHoje.toFixed(2); 
 
-        // Verificação de Alerta de Estoque
         let itensBaixos = bancoDeProdutos.filter(p => p.ID_Produto && p.ID_Produto !== 'SERVICO' && parseInt(p.Quantidade) <= parseInt(p.Estoque_Minimo || 0));
         let alertaBox = document.getElementById('alerta-estoque');
         if(itensBaixos.length > 0) {
             alertaBox.style.display = 'block';
-            alertaBox.innerHTML = `<h3 style="color:#b91c1c; margin-top:0;">⚠️ Alerta de Estoque</h3>` + itensBaixos.map(i => `<div>- <b>${i.Nome_Produto}</b> (Restam: ${i.Quantidade})</div>`).join('');
-        } else {
-            alertaBox.style.display = 'none';
-        }
+            alertaBox.innerHTML = `<h3 style="color:#b91c1c; margin-top:0;">⚠️ Alerta de Reposição de Estoque</h3>` + itensBaixos.map(i => `<div>- <b>${i.Nome_Produto}</b> (Restam: ${i.Quantidade})</div>`).join('');
+        } else { alertaBox.style.display = 'none'; }
 
         filtrarLivroCaixa();
     }
 
     function filtrarLivroCaixa() {
-        let dtIniVal = document.getElementById('filtroDataInicio').value; let dtFimVal = document.getElementById('filtroDataFim').value;
-        let dIni = dtIniVal ? new Date(dtIniVal + "T00:00:00") : null; let dFim = dtFimVal ? new Date(dtFimVal + "T23:59:59") : null;
+        let dIni = document.getElementById('filtroDataInicio').value ? new Date(document.getElementById('filtroDataInicio').value + "T00:00:00") : null; 
+        let dFim = document.getElementById('filtroDataFim').value ? new Date(document.getElementById('filtroDataFim').value + "T23:59:59") : null;
         let htmlTabela = ""; let somaEntradas = 0; let somaSaidas = 0;
 
         bancoCaixaGlobal.slice().reverse().forEach(m => {
@@ -576,20 +582,21 @@
 
     function limparFiltroCaixa() { document.getElementById('filtroDataInicio').value = ""; document.getElementById('filtroDataFim').value = ""; filtrarLivroCaixa(); }
     async function excluirItemCaixa(idTrans) { if(confirm("Apagar este registro do Caixa?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "excluir_caixa", id_transacao: idTrans }) }); recarregarDadosSilencioso(); } }
-    async function registrarCaixa() { let t = document.getElementById('tipoMovimento').value, d = document.getElementById('descMovimento').value, v = document.getElementById('valorMovimento').value; if(d&&v) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "caixa", tipo: t, descricao: d, valor: v, operador: operadorAtual }) }); document.getElementById('descMovimento').value=""; document.getElementById('valorMovimento').value=""; recarregarDadosSilencioso(); } }
     
-    // --- FECHAMENTO VIA WHATSAPP ---
+    async function registrarCaixa() { 
+        let t = document.getElementById('tipoMovimento').value, d = document.getElementById('descMovimento').value, v = document.getElementById('valorMovimento').value; 
+        if(t === "Saida") d = `[${document.getElementById('categoriaDespesa').value}] ` + d;
+        if(d&&v) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "caixa", tipo: t, descricao: d, valor: v, operador: operadorAtual }) }); document.getElementById('descMovimento').value=""; document.getElementById('valorMovimento').value=""; recarregarDadosSilencioso(); } 
+    }
+    
     async function acaoCaixa() { 
-        if(!turnoAtual) { 
-            let f = prompt("Troco inicial na gaveta:", "0"); 
-            if(f!==null) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_caixa", fundo: parseFloat(f.replace(',','.'))||0, operador: operadorAtual }) }); recarregarDadosSilencioso(); } 
+        if(!turnoAtual) { let f = prompt("Troco inicial na gaveta:", "0"); if(f!==null) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_caixa", fundo: parseFloat(f.replace(',','.'))||0, operador: operadorAtual }) }); recarregarDadosSilencioso(); } 
         } else { 
             let esp = 0, totalEntradas = 0, totalSaidas = 0; 
             bancoCaixaGlobal.forEach(m => { 
                 if(m.ID_Transacao >= turnoAtual.ID_Turno) { 
                     let v = parseFloat(m.Valor.toString().replace(',','.'))||0; 
-                    if(m.Tipo==="Entrada") { esp+=v; totalEntradas+=v; }
-                    if(m.Tipo==="Saida") { esp-=v; totalSaidas+=v; }
+                    if(m.Tipo==="Entrada") { esp+=v; totalEntradas+=v; } if(m.Tipo==="Saida") { esp-=v; totalSaidas+=v; }
                 } 
             }); 
             let apStr = prompt("Valor na gaveta:", "0"); 
@@ -598,10 +605,8 @@
                 if(confirm(`Esperado: R$ ${esp.toFixed(2)}\nContado: R$ ${ap.toFixed(2)}\nConfirmar fechamento?`)) { 
                     await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "fechar_caixa", valor_apurado: ap, diferenca: dif }) }); 
                     recarregarDadosSilencioso(); 
-                    
-                    // Dispara o Relatório do WhatsApp
-                    if(confirm("Deseja enviar o resumo do Fechamento de Caixa para o WhatsApp do gerente/grupo?")) {
-                        let textoFechamento = `*📊 FECHAMENTO DE CAIXA*%0A*Operador:* ${operadorAtual}%0A*Data:* ${new Date().toLocaleString('pt-BR')}%0A----------------%0A*Total Entradas:* R$ ${totalEntradas.toFixed(2)}%0A*Total Saídas:* R$ ${totalSaidas.toFixed(2)}%0A----------------%0A*Esperado (Sistema):* R$ ${esp.toFixed(2)}%0A*Apurado (Gaveta):* R$ ${ap.toFixed(2)}%0A*Diferença:* R$ ${dif.toFixed(2)}%0A----------------%0A*Turno Encerrado.*`;
+                    if(confirm("Enviar resumo do Fechamento de Caixa para o WhatsApp do grupo?")) {
+                        let textoFechamento = `*📊 FECHAMENTO DE CAIXA*%0A*Operador:* ${operadorAtual}%0A*Data:* ${new Date().toLocaleString('pt-BR')}%0A----------------%0A*Total Entradas:* R$ ${totalEntradas.toFixed(2)}%0A*Total Saídas (Despesas):* R$ ${totalSaidas.toFixed(2)}%0A----------------%0A*Esperado (Sistema):* R$ ${esp.toFixed(2)}%0A*Apurado (Gaveta):* R$ ${ap.toFixed(2)}%0A*Diferença:* R$ ${dif.toFixed(2)}%0A----------------%0A*Turno Encerrado.*`;
                         window.open(`https://wa.me/?text=${textoFechamento}`, '_blank');
                     }
                 } 
@@ -611,10 +616,10 @@
     
     function atualizarInterfaceTurno() { let s = turnoAtual ? ["#10b981", "ABERTO", "Fechar Caixa", "btn-vermelho", "none", false] : ["#ef4444", "FECHADO", "Abrir Caixa", "btn-verde", "block", true]; document.getElementById('card-status-caixa').style.borderColor = s[0]; document.getElementById('texto-status-caixa').style.color = s[0]; document.getElementById('texto-status-caixa').innerText = s[1]; document.getElementById('btnAcaoCaixa').innerText = s[2]; document.getElementById('btnAcaoCaixa').className = s[3]; document.getElementById('alerta-caixa').style.display = s[4]; ['codigoInput','btnCamera','btnSalvarComanda','btnFinalizarVenda','btnRegistrarLivro'].forEach(id => document.getElementById(id).disabled = s[5]); }
 
-    // --- OUTROS ---
+    // --- USUÁRIOS E CLIENTES ---
     function atualizarListaUsuarios() { let tbody = document.getElementById('listaUsuariosGestao'); tbody.innerHTML = ""; bancoUsuarios.forEach(u => { if(!u.Login) return; let btnApagar = String(u.Login).toLowerCase() === 'edilson' ? `<span style="color:#94a3b8; font-size:12px;">Admin Fixo</span>` : `<button class="btn-vermelho" onclick="removerUsuarioSistema('${u.Login}')">Excluir</button>`; tbody.innerHTML += `<tr><td style="font-weight:bold;">${u.Login}</td><td>${btnApagar}</td></tr>`; }); }
-    async function adicionarUsuarioSistema() { let l = document.getElementById('novoUserLogin').value.trim(); let s = document.getElementById('novoUserSenha').value.trim(); if(!l || !s) return alert("Preencha Login e Senha!"); if(bancoUsuarios.find(u => String(u.Login).toLowerCase() === l.toLowerCase())) return alert("Este login já existe!"); document.getElementById('btnAdicionarUser').innerText = "Gravando..."; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_usuario", login: l, senha: s }) }); document.getElementById('novoUserLogin').value = ""; document.getElementById('novoUserSenha').value = ""; document.getElementById('btnAdicionarUser').innerText = "Criar Operador"; recarregarDadosSilencioso(); }
-    async function removerUsuarioSistema(login) { if(confirm(`Deseja remover o acesso de ${login}?`)) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_usuario", login: login }) }); recarregarDadosSilencioso(); } }
+    async function adicionarUsuarioSistema() { let l = document.getElementById('novoUserLogin').value.trim(); let s = document.getElementById('novoUserSenha').value.trim(); if(!l || !s) return alert("Preencha Login e Senha!"); if(bancoUsuarios.find(u => String(u.Login).toLowerCase() === l.toLowerCase())) return alert("Login já existe!"); document.getElementById('btnAdicionarUser').innerText = "Gravando..."; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_usuario", login: l, senha: s }) }); document.getElementById('novoUserLogin').value = ""; document.getElementById('novoUserSenha').value = ""; document.getElementById('btnAdicionarUser').innerText = "Criar Operador"; recarregarDadosSilencioso(); }
+    async function removerUsuarioSistema(login) { if(confirm(`Remover acesso de ${login}?`)) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_usuario", login: login }) }); recarregarDadosSilencioso(); } }
 
     async function adicionarCliente() { let id = document.getElementById('novoIdCli').value, nome = document.getElementById('novoNomeCli').value, tel = document.getElementById('novoTelCli').value; if(!id || !nome) return alert("Preencha ID e Nome!"); await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_cliente", id: id, nome: nome, telefone: tel }) }); recarregarDadosSilencioso(); }
     async function removerCliente(id) { if(confirm("Apagar cliente?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_cliente", id: id }) }); recarregarDadosSilencioso(); } }
@@ -623,7 +628,7 @@
     function enviarWhatsApp(clienteNome, itensCart, valorT) { let resumo = itensCart.map(i => `${i.qtd}x ${i.nome}`).join('%0A'); let texto = `*ARENA VITALE*%0AOlá ${clienteNome}, aqui está o resumo da sua compra:%0A%0A${resumo}%0A%0A*Total: R$ ${valorT.toFixed(2)}*%0A%0AObrigado!`; window.open(`https://wa.me/?text=${texto}`, '_blank'); }
     function imprimirCupao(clienteNome, itensCart, valorT) { let cupao = document.getElementById('cupao-impressao'); let data = new Date().toLocaleString('pt-BR'); let itensHtml = itensCart.map(i => `<div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.preco * i.qtd).toFixed(2)}</span></div>`).join(''); cupao.innerHTML = `<div style="text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 5px;">ARENA VITALE</div><div style="text-align: center; font-size: 10px; margin-bottom: 10px;">Russas - CE</div><div style="text-align: center; font-size: 12px; margin-bottom: 10px;">Recibo Não Fiscal</div><div>Data: ${data}</div><div>Operador: ${operadorAtual}</div><div>Cliente: ${clienteNome}</div><hr style="border-top: 1px dashed #000; margin: 5px 0;">${itensHtml}<hr style="border-top: 1px dashed #000; margin: 5px 0;"><div style="text-align: right; font-weight: bold; font-size: 14px;">TOTAL: R$ ${valorT.toFixed(2)}</div><div style="text-align: center; margin-top: 15px; font-size: 10px;">Obrigado e volte sempre!</div>`; window.print(); }
 
-    document.addEventListener('keydown', e => { if(turnoAtual && document.getElementById('tela-login').style.display === 'none') { if(e.key==='F2'){e.preventDefault();finalizarVenda();} if(e.key==='F3'){e.preventDefault();abrirModalComandas();} } });
+    document.addEventListener('keydown', e => { if(turnoAtual && document.getElementById('tela-login').style.display === 'none') { if(e.key==='F2'){e.preventDefault();iniciarVendaDireta();} if(e.key==='F3'){e.preventDefault();abrirModalComandas();} } });
 </script>
 
 </body>
