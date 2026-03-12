@@ -34,7 +34,7 @@
         .menu-item { padding: 15px 20px; cursor: pointer; font-size: 16px; border-left: 4px solid transparent; transition: 0.3s; }
         .menu-item:hover { background-color: #334155; }
         .menu-item.ativo { background-color: #0f172a; border-left-color: #38bdf8; font-weight: bold; }
-        #menu-usuarios { color: #eab308; } /* Cor especial para aba secreta */
+        #menu-usuarios { color: #eab308; } 
         
         .main-content { flex: 1; padding: 30px; overflow-y: auto; position: relative; }
         .tela { display: none; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -45,6 +45,7 @@
         .card h3 { margin: 0; color: #64748b; font-size: 16px; }
         .card .valor { font-size: 28px; font-weight: bold; color: #0f172a; margin-top: 10px; }
 
+        /* TABELAS E FORMULÁRIOS */
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; min-width: 500px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
@@ -53,6 +54,7 @@
         .form-grupo div { flex: 1; display: flex; flex-direction: column; min-width: 120px; }
         .form-grupo input, .form-grupo select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 16px; }
         
+        /* BOTÕES */
         button { cursor: pointer; border: none; border-radius: 5px; padding: 12px 20px; font-weight: bold; color: white; font-size: 15px; transition: 0.2s; }
         .btn-azul { background-color: #0ea5e9; } .btn-azul:hover:not(:disabled) { background-color: #0284c7; }
         .btn-verde { background-color: #10b981; } .btn-verde:hover:not(:disabled) { background-color: #059669; }
@@ -73,6 +75,7 @@
         
         #alerta-caixa { display: none; background: #fee2e2; color: #991b1b; padding: 15px; text-align: center; font-weight: bold; border-radius: 5px; margin-bottom: 20px; border: 2px solid #ef4444; }
 
+        /* MODAL COMANDAS */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
         .modal-box { background: #fff; padding: 25px; border-radius: 8px; width: 90%; max-width: 500px; text-align: center; }
         .lista-comandas-modal { max-height: 300px; overflow-y: auto; margin: 20px 0; text-align: left; }
@@ -95,7 +98,7 @@
 <div id="tela-login">
     <div class="login-box">
         <h2>🔒 Acesso ao Sistema</h2>
-        <div id="status-login">Sincronizando com o Google Sheets... Aguarde.</div>
+        <div id="status-login">Restaurando a sua sessão... Aguarde.</div>
         <div id="msg-login">Usuário ou senha incorretos!</div>
         <input type="text" id="loginUsuario" placeholder="Usuário (Ex: edilson)" autocomplete="off" disabled>
         <input type="password" id="loginSenha" placeholder="Senha" autocomplete="off" disabled>
@@ -115,6 +118,8 @@
     <div class="menu-item" onclick="mudarTela('tela-livro', this)">💵 Livro de Caixa</div>
     <div class="menu-item" onclick="mudarTela('tela-estoque', this)">📦 Estoque</div>
     <div class="menu-item" id="menu-usuarios" onclick="mudarTela('tela-usuarios', this)" style="display: none;">⚙️ Usuários</div>
+    
+    <div class="menu-item" style="color: #ef4444; border-top: 1px solid #334155; margin-top: 20px;" onclick="fazerLogout()">🚪 Sair do Sistema</div>
 </div>
 
 <div class="main-content">
@@ -201,8 +206,24 @@
 
     <div id="tela-livro" class="tela">
         <h1>Livro de Caixa</h1>
+
+        <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #cbd5e1;">
+            <h3 style="margin-top: 0; font-size: 16px; color: #334155;">📅 Filtrar por Período</h3>
+            <div class="form-grupo" style="margin-bottom: 0;">
+                <div><label>Data Início</label><input type="date" id="filtroDataInicio"></div>
+                <div><label>Data Fim</label><input type="date" id="filtroDataFim"></div>
+                <button class="btn-azul" onclick="filtrarLivroCaixa()" style="margin-bottom: 2px;">Buscar</button>
+                <button class="btn-amarelo" onclick="limparFiltroCaixa()" style="margin-bottom: 2px;">Limpar</button>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top: 15px; font-weight: bold; font-size: 14px; flex-wrap:wrap; gap:10px;">
+                <span style="color:#16a34a;">Entradas: <span id="resumo-filtro-entradas">R$ 0.00</span></span>
+                <span style="color:#dc2626;">Saídas: <span id="resumo-filtro-saidas">R$ 0.00</span></span>
+                <span style="color:#0f172a; font-size: 16px;">Saldo do Período: <span id="resumo-filtro-saldo">R$ 0.00</span></span>
+            </div>
+        </div>
+
         <div class="form-grupo">
-            <div><label>Tipo</label><select id="tipoMovimento"><option value="Entrada">Entrada</option><option value="Saida">Saída (Sangria/Despesa)</option></select></div>
+            <div><label>Lançamento Manual</label><select id="tipoMovimento"><option value="Entrada">Entrada</option><option value="Saida">Saída (Sangria/Despesa)</option></select></div>
             <div><label>Descrição</label><input type="text" id="descMovimento" placeholder="Ex: Conta de luz"></div>
             <div><label>Valor (R$)</label><input type="number" step="0.01" id="valorMovimento"></div>
             <button class="btn-verde" id="btnRegistrarLivro" style="margin-bottom: 2px;" onclick="registrarCaixa()" disabled>Registrar</button>
@@ -261,14 +282,16 @@
 </div>
 
 <script>
+    // --- LINK OFICIAL DA API ---
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
+    // --- VARIÁVEIS GLOBAIS ---
     let bancoDeProdutos = [], bancoComandas = [], bancoCaixaGlobal = [], bancoClientes = [], bancoUsuarios = [];
     let turnoAtual = null, carrinho = [], total = 0, leitorHtml5 = null;
     let inputCameraAlvo = "codigoInput", idEditandoEstoque = null;
     let operadorAtual = "";
 
-    // INICIA O DOWNLOAD DA PLANILHA ASSIM QUE ABRE O SITE
+    // --- INICIALIZAÇÃO E MEMÓRIA DE SESSÃO (LOCALSTORAGE) ---
     window.onload = () => { carregarDadosIniciais(); };
 
     async function carregarDadosIniciais() {
@@ -280,14 +303,33 @@
             bancoUsuarios = dados.usuarios || [];
             turnoAtual = (dados.turnos || []).find(t => t.Status === "Aberto");
             
-            // Libera a tela de login
-            document.getElementById('status-login').innerText = "✅ Conectado! Pode fazer login.";
-            document.getElementById('status-login').style.color = "#10b981";
-            document.getElementById('loginUsuario').disabled = false;
-            document.getElementById('loginSenha').disabled = false;
-            document.getElementById('btnEntrar').disabled = false;
+            // Verifica a Memória do Navegador para Login Automático
+            let opSalvo = localStorage.getItem('arena_operador');
+            let nomeSalvo = localStorage.getItem('arena_operador_nome');
             
-            // Prepara os dados visuais por trás da tela de login
+            if (opSalvo && bancoUsuarios.find(u => String(u.Login).toLowerCase() === opSalvo)) {
+                // Recupera a sessão sem precisar digitar a senha
+                operadorAtual = nomeSalvo;
+                document.getElementById('tela-login').style.display = 'none';
+                document.getElementById('operadorLogadoText').innerText = "Operador: " + operadorAtual;
+                
+                if(opSalvo === "edilson") document.getElementById('menu-usuarios').style.display = 'block';
+
+                // Restaura a Aba que estava sendo usada
+                let tabSalva = localStorage.getItem('arena_tab') || 'tela-dashboard';
+                let menuBtn = document.querySelector(`.menu-item[onclick*="${tabSalva}"]`);
+                mudarTela(tabSalva, menuBtn);
+                
+            } else {
+                // Primeira vez abrindo ou deslogado
+                mudarTela('tela-dashboard', null);
+                document.getElementById('status-login').innerText = "✅ Conectado! Pode fazer login.";
+                document.getElementById('status-login').style.color = "#10b981";
+                document.getElementById('loginUsuario').disabled = false;
+                document.getElementById('loginSenha').disabled = false;
+                document.getElementById('btnEntrar').disabled = false;
+            }
+
             atualizarInterfaceTurno(); atualizarTabelaEstoque(); atualizarTabelaComandas(); 
             atualizarDashboardECaixa(); atualizarListasClientes(); atualizarListaUsuarios();
         } catch (erro) { 
@@ -296,7 +338,7 @@
         }
     }
 
-    // --- SISTEMA DE LOGIN (VALIDA COM A PLANILHA) ---
+    // --- SISTEMA DE LOGIN MANUAL ---
     function fazerLogin() {
         let userTyped = document.getElementById('loginUsuario').value.trim().toLowerCase();
         let passTyped = document.getElementById('loginSenha').value.trim();
@@ -305,15 +347,17 @@
         
         if(userEncontrado) {
             operadorAtual = userTyped.charAt(0).toUpperCase() + userTyped.slice(1);
+            
+            // Salva na memória do navegador
+            localStorage.setItem('arena_operador', userTyped);
+            localStorage.setItem('arena_operador_nome', operadorAtual);
+
             document.getElementById('tela-login').style.display = 'none';
             document.getElementById('operadorLogadoText').innerText = "Operador: " + operadorAtual;
             
-            // Regra do Edilson (Admin)
-            if(userTyped === "edilson") {
-                document.getElementById('menu-usuarios').style.display = 'block';
-            } else {
-                document.getElementById('menu-usuarios').style.display = 'none';
-            }
+            if(userTyped === "edilson") document.getElementById('menu-usuarios').style.display = 'block';
+            else document.getElementById('menu-usuarios').style.display = 'none';
+            
             if(turnoAtual) document.getElementById('codigoInput').focus();
         } else {
             document.getElementById('msg-login').style.display = 'block';
@@ -321,7 +365,12 @@
     }
     document.getElementById('loginSenha').addEventListener('keypress', function(e) { if(e.key === 'Enter') fazerLogin(); });
 
-    // Função menor para recarregar dados silenciosamente enquanto o sistema está a ser usado
+    function fazerLogout() {
+        localStorage.removeItem('arena_operador');
+        localStorage.removeItem('arena_operador_nome');
+        location.reload(); // Recarrega a página para voltar à tela de login
+    }
+
     async function recarregarDadosSilencioso() {
         document.getElementById('status-bar').innerText = "Sincronizando...";
         try {
@@ -335,62 +384,33 @@
         } catch(e) { document.getElementById('status-bar').innerText = "Erro de conexão."; }
     }
 
-    // --- ABA DE USUÁRIOS (ADMIN) ---
-    function atualizarListaUsuarios() {
-        let tbody = document.getElementById('listaUsuariosGestao');
-        tbody.innerHTML = "";
-        bancoUsuarios.forEach(u => {
-            if(!u.Login) return;
-            // Impede que o Edilson apague o próprio acesso por engano
-            let btnApagar = String(u.Login).toLowerCase() === 'edilson' ? 
-                `<span style="color:#94a3b8; font-size:12px;">Admin Fixo</span>` : 
-                `<button class="btn-vermelho" onclick="removerUsuarioSistema('${u.Login}')">Excluir</button>`;
-            
-            tbody.innerHTML += `<tr><td style="font-weight:bold;">${u.Login}</td><td>${btnApagar}</td></tr>`;
-        });
-    }
-
-    async function adicionarUsuarioSistema() {
-        let l = document.getElementById('novoUserLogin').value.trim();
-        let s = document.getElementById('novoUserSenha').value.trim();
-        if(!l || !s) return alert("Preencha Login e Senha!");
-        
-        // Verifica se já existe
-        if(bancoUsuarios.find(u => String(u.Login).toLowerCase() === l.toLowerCase())) return alert("Este login já existe!");
-
-        document.getElementById('btnAdicionarUser').innerText = "Gravando...";
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_usuario", login: l, senha: s }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-        document.getElementById('novoUserLogin').value = ""; document.getElementById('novoUserSenha').value = "";
-        document.getElementById('btnAdicionarUser').innerText = "Criar Operador";
-        recarregarDadosSilencioso();
-    }
-
-    async function removerUsuarioSistema(login) {
-        if(confirm(`Tem a certeza que quer remover o acesso de ${login}?`)) {
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_usuario", login: login }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-            recarregarDadosSilencioso();
-        }
-    }
-
-    // --- NAVEGAÇÃO ---
+    // --- NAVEGAÇÃO E MEMÓRIA DE ABA ---
     function mudarTela(idTela, elementoMenu) {
         document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('ativo'));
         document.getElementById(idTela).classList.add('ativa');
-        elementoMenu.classList.add('ativo');
+        
+        if(elementoMenu) {
+            elementoMenu.classList.add('ativo');
+        } else {
+            let el = document.querySelector(`.menu-item[onclick*="${idTela}"]`);
+            if(el) el.classList.add('ativo');
+        }
+
+        // Salva a tela atual na memória para quando recarregar a página
+        localStorage.setItem('arena_tab', idTela);
+
         if(leitorHtml5) fecharCamera();
         if(idTela === 'tela-caixa' && turnoAtual) document.getElementById('codigoInput').focus();
     }
 
-    // --- FUNÇÕES AUXILIARES DE VENDA ---
+    // --- FUNCIONALIDADES DO CAIXA E ESTOQUE ---
     function pedirFormaPagamento() {
         let op = prompt("Forma de Pagamento:\n1 - Cartão de Crédito\n2 - Cartão de Débito\n3 - Espécie\n4 - Pix\n\n(Digite apenas o número)");
-        if(op === "1") return "Crédito"; if(op === "2") return "Débito";
-        if(op === "3") return "Espécie"; if(op === "4") return "Pix";
+        if(op === "1") return "Crédito"; if(op === "2") return "Débito"; if(op === "3") return "Espécie"; if(op === "4") return "Pix";
         return null;
     }
 
-    // --- QUADRAS E CARRINHO ---
     function adicionarQuadra(nomeQuadra) {
         let horas = prompt(`Quantas horas para a ${nomeQuadra}?`, "1"); if(!horas) return;
         let valor = prompt(`Valor TOTAL a cobrar pelo tempo? (Ex: 80.00)`, "80.00"); if(!valor) return;
@@ -423,16 +443,14 @@
         document.getElementById('valorTotal').innerText = total.toFixed(2);
     }
 
-    // --- CÂMERA ---
     function alternarCamera(alvoId) { inputCameraAlvo = alvoId; let divCamera = document.getElementById('leitorCamera'); if (divCamera.style.display === "block") fecharCamera(); else abrirCamera(); }
     function abrirCamera() { let divCamera = document.getElementById('leitorCamera'); divCamera.style.display = "block"; if (!leitorHtml5) leitorHtml5 = new Html5Qrcode("leitorCamera"); leitorHtml5.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, (codigoLido) => { fecharCamera(); document.getElementById(inputCameraAlvo).value = codigoLido; if(inputCameraAlvo === 'codigoInput') processarEntradaCodigo(codigoLido); }, (erro) => {}).catch(err => { alert("Sem acesso à câmara."); divCamera.style.display = "none"; }); }
     function fecharCamera() { if(leitorHtml5) leitorHtml5.stop().then(() => { document.getElementById('leitorCamera').style.display = "none"; }).catch(e=>e); }
 
-    // --- VENDAS DIRETA ---
+    // --- COMANDAS E VENDAS ---
     async function finalizarVenda() {
         if(!turnoAtual) return alert("Abra o caixa!"); if(carrinho.length === 0) return alert("Carrinho vazio!");
         let formaPag = pedirFormaPagamento(); if(!formaPag) return alert("Pagamento cancelado.");
-        
         let clienteSel = document.getElementById('selectClienteVenda').value;
         document.getElementById('btnFinalizarVenda').innerText = "Gravando..."; document.getElementById('btnFinalizarVenda').disabled = true;
         let cGuardado = [...carrinho], tGuardado = total;
@@ -445,7 +463,6 @@
         if(confirm("Enviar por WhatsApp?")) enviarWhatsApp(clienteSel, cGuardado, tGuardado);
     }
 
-    // --- COMANDAS ---
     function abrirModalComandas() {
         if(!turnoAtual) return alert("Abra o caixa!"); if(carrinho.length === 0) return alert("Carrinho vazio!");
         let lista = document.getElementById('listaComandasModal');
@@ -453,20 +470,17 @@
         document.getElementById('modalComandas').style.display = 'flex';
     }
     function fecharModalComandas() { document.getElementById('modalComandas').style.display = 'none'; }
-
     async function criarNovaComandaModal() {
         fecharModalComandas(); let nome = prompt("Nome do Cliente para a NOVA comanda?"); if(!nome) return;
         document.getElementById('status-bar').innerText = "Abrindo Comanda...";
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_comanda", cliente: nome, total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
         alert("Comanda criada!"); carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso();
     }
-
     async function adicionarNaComandaExistente(idComanda, nomeCli) {
         fecharModalComandas(); document.getElementById('status-bar').innerText = "Adicionando itens...";
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_item_comanda", id_comanda: idComanda, total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
         alert(`Itens adicionados!`); carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso();
     }
-
     function atualizarTabelaComandas() {
         let tbody = document.getElementById('listaComandas');
         if(bancoComandas.length === 0) { tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Nenhuma comanda aberta.</td></tr>`; return; }
@@ -482,7 +496,6 @@
             </td></tr>`;
         }).join('');
     }
-
     async function cobrarComanda(idComanda, cliente, itensJsonStr, totalVal) {
         if(!turnoAtual) return alert("Abra o caixa!");
         let formaPag = pedirFormaPagamento(); if(!formaPag) return alert("Cancelado.");
@@ -494,7 +507,6 @@
             if(confirm("Enviar WhatsApp?")) enviarWhatsApp(cliente, iArr, totalVal);
         }
     }
-
     async function excluirComanda(idComanda) {
         if(confirm("ATENÇÃO: Deseja apagar esta comanda e devolver os itens ao estoque?")) {
             document.getElementById('status-bar').innerText = "Excluindo...";
@@ -503,55 +515,82 @@
         }
     }
 
-    // --- ESTOQUE EDITÁVEL ---
-    function atualizarTabelaEstoque() {
-        document.getElementById('listaGestao').innerHTML = bancoDeProdutos.map(p => {
-            if(!p.ID_Produto) return '';
-            return `<tr><td>${p.ID_Produto}</td><td>${p.Nome_Produto}</td><td>R$ ${p.Preco_Custo}</td><td>R$ ${p.Preco_Venda}</td><td style="font-weight:bold;">${p.Quantidade}</td>
-            <td style="display:flex; gap:5px;">
-                <button class="btn-amarelo" onclick="prepararEdicaoEstoque('${p.ID_Produto}')">Editar</button>
-                <button class="btn-vermelho" onclick="removerProduto('${p.ID_Produto}')">Apagar</button>
-            </td></tr>`;
-        }).join('');
-    }
+    // --- FILTROS DO LIVRO DE CAIXA E DASHBOARD ---
     
-    function prepararEdicaoEstoque(id) {
-        let p = bancoDeProdutos.find(x => String(x.ID_Produto) === String(id)); if(!p) return;
-        document.getElementById('novoId').value = p.ID_Produto; document.getElementById('novoNome').value = p.Nome_Produto;
-        document.getElementById('novoCusto').value = p.Preco_Custo; document.getElementById('novoPreco').value = p.Preco_Venda;
-        document.getElementById('novaQtd').value = p.Quantidade; idEditandoEstoque = id;
-        document.getElementById('btnAdicionarEstoque').innerText = "Atualizar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-amarelo";
-        window.scrollTo(0, 0);
+    // Transforma a data do Google "DD/MM/AAAA, HH:MM:SS" numa data legível para o código
+    function parseDataBR(dataStr) {
+        if(!dataStr) return new Date(0);
+        let partes = dataStr.split(/[\s,]+/); 
+        let dma = partes[0].split('/'); 
+        if(dma.length === 3) return new Date(`${dma[2]}-${dma[1]}-${dma[0]}T12:00:00`);
+        return new Date(0);
     }
-    
-    async function salvarProdutoEstoque() {
-        let id = document.getElementById('novoId').value, nome = document.getElementById('novoNome').value;
-        let custo = document.getElementById('novoCusto').value, preco = document.getElementById('novoPreco').value, qtd = document.getElementById('novaQtd').value;
-        if(!id || !nome || !preco || !qtd) return alert("Preencha tudo!");
-        let acaoReq = idEditandoEstoque ? "editar_produto" : "adicionar";
-        document.getElementById('btnAdicionarEstoque').innerText = "Salvando...";
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: acaoReq, id_antigo: idEditandoEstoque, id: id, nome: nome, custo: custo, preco: preco, quantidade: qtd }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-        document.getElementById('novoId').value = ""; document.getElementById('novoNome').value = ""; document.getElementById('novoCusto').value = ""; document.getElementById('novoPreco').value = ""; document.getElementById('novaQtd').value = "";
-        idEditandoEstoque = null; document.getElementById('btnAdicionarEstoque').innerText = "Salvar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-verde"; recarregarDadosSilencioso();
-    }
-    async function removerProduto(id) { if(confirm("Apagar produto?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover", id: id }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); recarregarDadosSilencioso(); } }
 
-    // --- CAIXA (LIVRO, DASHBOARD E TURNOS) ---
     function atualizarDashboardECaixa() {
         let sTurno = 0, vHoje = 0, hj = new Date().toLocaleDateString('pt-BR'); 
-        document.getElementById('listaCaixa').innerHTML = bancoCaixaGlobal.slice().reverse().map(m => { 
-            if(!m.ID_Transacao) return ''; let v = parseFloat(m.Valor.toString().replace(',','.'))||0; 
-            if(turnoAtual && m.ID_Transacao >= turnoAtual.ID_Turno) { if(m.Tipo==="Entrada") sTurno+=v; if(m.Tipo==="Saida") sTurno-=v; } 
-            if(m.Data_Hora.includes(hj) && m.Tipo==="Entrada" && m.Descricao.includes("Venda")) vHoje+=v; 
-            
+        
+        // Atualiza Dashboard Principal
+        bancoCaixaGlobal.forEach(m => { 
+            if(!m.ID_Transacao) return; 
+            let v = parseFloat(m.Valor.toString().replace(',','.'))||0; 
+            if(turnoAtual && m.ID_Transacao >= turnoAtual.ID_Turno) { 
+                if(m.Tipo==="Entrada") sTurno+=v; 
+                if(m.Tipo==="Saida") sTurno-=v; 
+            } 
+            if(m.Data_Hora && m.Data_Hora.includes(hj) && m.Tipo==="Entrada" && (m.Descricao.includes("Venda") || m.Descricao.includes("Pgto Comanda"))) {
+                vHoje+=v; 
+            } 
+        });
+        document.getElementById('dash-saldo').innerText = "R$ " + sTurno.toFixed(2); 
+        document.getElementById('dash-vendas').innerText = "R$ " + vHoje.toFixed(2); 
+
+        // Roda a construção da tabela aplicando os filtros de Data (se houverem)
+        filtrarLivroCaixa();
+    }
+
+    function filtrarLivroCaixa() {
+        let dtIniVal = document.getElementById('filtroDataInicio').value;
+        let dtFimVal = document.getElementById('filtroDataFim').value;
+        
+        let dIni = dtIniVal ? new Date(dtIniVal + "T00:00:00") : null;
+        let dFim = dtFimVal ? new Date(dtFimVal + "T23:59:59") : null;
+
+        let htmlTabela = "";
+        let somaEntradasFiltro = 0;
+        let somaSaidasFiltro = 0;
+
+        let caixaInvertido = bancoCaixaGlobal.slice().reverse();
+
+        caixaInvertido.forEach(m => {
+            if(!m.ID_Transacao) return;
+
+            // Lógica do Filtro de Datas
+            let recordDate = parseDataBR(m.Data_Hora);
+            if (dIni && recordDate < dIni) return;
+            if (dFim && recordDate > dFim) return;
+
+            let v = parseFloat(m.Valor.toString().replace(',','.'))||0; 
             let pTempo = m.Data_Hora.split(m.Data_Hora.includes(',') ? ',' : ' '); 
             let hData = pTempo.length > 1 ? `${pTempo[1].trim()} - ${pTempo[0].trim()}` : m.Data_Hora;
-            
-            let c = m.Tipo==='Entrada'?'val-entrada':'val-saida'; 
-            return `<tr><td>${hData}</td><td class="${c}">${m.Tipo}</td><td>${m.Descricao}</td><td class="${c}">R$ ${v.toFixed(2)}</td>
+            let c = m.Tipo==='Entrada' ? 'val-entrada' : 'val-saida'; 
+
+            if(m.Tipo === 'Entrada') somaEntradasFiltro += v;
+            if(m.Tipo === 'Saida') somaSaidasFiltro += v;
+
+            htmlTabela += `<tr><td>${hData}</td><td class="${c}">${m.Tipo}</td><td>${m.Descricao}</td><td class="${c}">R$ ${v.toFixed(2)}</td>
             <td><button class="btn-vermelho" style="padding: 5px 10px; font-size:12px;" onclick="excluirItemCaixa('${m.ID_Transacao}')">X Excluir</button></td></tr>`; 
-        }).join(''); 
-        document.getElementById('dash-saldo').innerText = "R$ " + sTurno.toFixed(2); document.getElementById('dash-vendas').innerText = "R$ " + vHoje.toFixed(2); 
+        });
+
+        document.getElementById('listaCaixa').innerHTML = htmlTabela;
+        document.getElementById('resumo-filtro-entradas').innerText = "R$ " + somaEntradasFiltro.toFixed(2);
+        document.getElementById('resumo-filtro-saidas').innerText = "R$ " + somaSaidasFiltro.toFixed(2);
+        document.getElementById('resumo-filtro-saldo').innerText = "R$ " + (somaEntradasFiltro - somaSaidasFiltro).toFixed(2);
+    }
+
+    function limparFiltroCaixa() {
+        document.getElementById('filtroDataInicio').value = "";
+        document.getElementById('filtroDataFim').value = "";
+        filtrarLivroCaixa();
     }
     
     async function excluirItemCaixa(idTrans) {
@@ -573,16 +612,23 @@
     
     function atualizarInterfaceTurno() { let s = turnoAtual ? ["#10b981", "ABERTO", "Fechar Caixa", "btn-vermelho", "none", false] : ["#ef4444", "FECHADO", "Abrir Caixa", "btn-verde", "block", true]; document.getElementById('card-status-caixa').style.borderColor = s[0]; document.getElementById('texto-status-caixa').style.color = s[0]; document.getElementById('texto-status-caixa').innerText = s[1]; document.getElementById('btnAcaoCaixa').innerText = s[2]; document.getElementById('btnAcaoCaixa').className = s[3]; document.getElementById('alerta-caixa').style.display = s[4]; ['codigoInput','btnCamera','btnSalvarComanda','btnFinalizarVenda','btnRegistrarLivro'].forEach(id => document.getElementById(id).disabled = s[5]); }
 
-    // --- CLIENTES ---
+    // --- OUTROS (Estoque, Usuários, Clientes) ---
+    function atualizarTabelaEstoque() { document.getElementById('listaGestao').innerHTML = bancoDeProdutos.map(p => { if(!p.ID_Produto) return ''; return `<tr><td>${p.ID_Produto}</td><td>${p.Nome_Produto}</td><td>R$ ${p.Preco_Custo}</td><td>R$ ${p.Preco_Venda}</td><td style="font-weight:bold;">${p.Quantidade}</td><td style="display:flex; gap:5px;"><button class="btn-amarelo" onclick="prepararEdicaoEstoque('${p.ID_Produto}')">Editar</button><button class="btn-vermelho" onclick="removerProduto('${p.ID_Produto}')">Apagar</button></td></tr>`; }).join(''); }
+    function prepararEdicaoEstoque(id) { let p = bancoDeProdutos.find(x => String(x.ID_Produto) === String(id)); if(!p) return; document.getElementById('novoId').value = p.ID_Produto; document.getElementById('novoNome').value = p.Nome_Produto; document.getElementById('novoCusto').value = p.Preco_Custo; document.getElementById('novoPreco').value = p.Preco_Venda; document.getElementById('novaQtd').value = p.Quantidade; idEditandoEstoque = id; document.getElementById('btnAdicionarEstoque').innerText = "Atualizar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-amarelo"; window.scrollTo(0, 0); }
+    async function salvarProdutoEstoque() { let id = document.getElementById('novoId').value, nome = document.getElementById('novoNome').value; let custo = document.getElementById('novoCusto').value, preco = document.getElementById('novoPreco').value, qtd = document.getElementById('novaQtd').value; if(!id || !nome || !preco || !qtd) return alert("Preencha tudo!"); let acaoReq = idEditandoEstoque ? "editar_produto" : "adicionar"; document.getElementById('btnAdicionarEstoque').innerText = "Salvando..."; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: acaoReq, id_antigo: idEditandoEstoque, id: id, nome: nome, custo: custo, preco: preco, quantidade: qtd }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); document.getElementById('novoId').value = ""; document.getElementById('novoNome').value = ""; document.getElementById('novoCusto').value = ""; document.getElementById('novoPreco').value = ""; document.getElementById('novaQtd').value = ""; idEditandoEstoque = null; document.getElementById('btnAdicionarEstoque').innerText = "Salvar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-verde"; recarregarDadosSilencioso(); }
+    async function removerProduto(id) { if(confirm("Apagar produto?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover", id: id }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); recarregarDadosSilencioso(); } }
+
+    function atualizarListaUsuarios() { let tbody = document.getElementById('listaUsuariosGestao'); tbody.innerHTML = ""; bancoUsuarios.forEach(u => { if(!u.Login) return; let btnApagar = String(u.Login).toLowerCase() === 'edilson' ? `<span style="color:#94a3b8; font-size:12px;">Admin Fixo</span>` : `<button class="btn-vermelho" onclick="removerUsuarioSistema('${u.Login}')">Excluir</button>`; tbody.innerHTML += `<tr><td style="font-weight:bold;">${u.Login}</td><td>${btnApagar}</td></tr>`; }); }
+    async function adicionarUsuarioSistema() { let l = document.getElementById('novoUserLogin').value.trim(); let s = document.getElementById('novoUserSenha').value.trim(); if(!l || !s) return alert("Preencha Login e Senha!"); if(bancoUsuarios.find(u => String(u.Login).toLowerCase() === l.toLowerCase())) return alert("Este login já existe!"); document.getElementById('btnAdicionarUser').innerText = "Gravando..."; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_usuario", login: l, senha: s }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); document.getElementById('novoUserLogin').value = ""; document.getElementById('novoUserSenha').value = ""; document.getElementById('btnAdicionarUser').innerText = "Criar Operador"; recarregarDadosSilencioso(); }
+    async function removerUsuarioSistema(login) { if(confirm(`Deseja remover o acesso de ${login}?`)) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_usuario", login: login }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); recarregarDadosSilencioso(); } }
+
     async function adicionarCliente() { let id = document.getElementById('novoIdCli').value, nome = document.getElementById('novoNomeCli').value, tel = document.getElementById('novoTelCli').value; if(!id || !nome) return alert("Preencha ID e Nome!"); await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_cliente", id: id, nome: nome, telefone: tel }) }); recarregarDadosSilencioso(); }
     async function removerCliente(id) { if(confirm("Apagar cliente?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_cliente", id: id }) }); recarregarDadosSilencioso(); } }
     function atualizarListasClientes() { let tbody = document.getElementById('listaClientesGestao'); let selectVenda = document.getElementById('selectClienteVenda'); tbody.innerHTML = ""; selectVenda.innerHTML = '<option value="Consumidor Final">Consumidor Final</option>'; bancoClientes.forEach(c => { if(!c.ID_Cliente) return; tbody.innerHTML += `<tr><td>${c.ID_Cliente}</td><td>${c.Nome}</td><td>${c.Telefone}</td><td><button class="btn-vermelho" onclick="removerCliente('${c.ID_Cliente}')">Apagar</button></td></tr>`; selectVenda.innerHTML += `<option value="${c.Nome}">${c.Nome}</option>`; }); }
 
-    // --- RECIBOS E WHATSAPP ---
     function enviarWhatsApp(clienteNome, itensCart, valorT) { let resumo = itensCart.map(i => `${i.qtd}x ${i.nome}`).join('%0A'); let texto = `*ARENA VITALE*%0AOlá ${clienteNome}, aqui está o resumo da sua compra:%0A%0A${resumo}%0A%0A*Total: R$ ${valorT.toFixed(2)}*%0A%0AObrigado!`; window.open(`https://wa.me/?text=${texto}`, '_blank'); }
     function imprimirCupao(clienteNome, itensCart, valorT) { let cupao = document.getElementById('cupao-impressao'); let data = new Date().toLocaleString('pt-BR'); let itensHtml = itensCart.map(i => `<div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.preco * i.qtd).toFixed(2)}</span></div>`).join(''); cupao.innerHTML = `<div style="text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 5px;">ARENA VITALE</div><div style="text-align: center; font-size: 10px; margin-bottom: 10px;">Russas - CE</div><div style="text-align: center; font-size: 12px; margin-bottom: 10px;">Recibo Não Fiscal</div><div>Data: ${data}</div><div>Operador: ${operadorAtual}</div><div>Cliente: ${clienteNome}</div><hr style="border-top: 1px dashed #000; margin: 5px 0;">${itensHtml}<hr style="border-top: 1px dashed #000; margin: 5px 0;"><div style="text-align: right; font-weight: bold; font-size: 14px;">TOTAL: R$ ${valorT.toFixed(2)}</div><div style="text-align: center; margin-top: 15px; font-size: 10px;">Obrigado e volte sempre!</div>`; window.print(); }
 
-    // --- ATALHOS DE TECLADO ---
     document.addEventListener('keydown', e => { if(turnoAtual && document.getElementById('tela-login').style.display === 'none') { if(e.key==='F2'){e.preventDefault();finalizarVenda();} if(e.key==='F3'){e.preventDefault();abrirModalComandas();} } });
 </script>
 
