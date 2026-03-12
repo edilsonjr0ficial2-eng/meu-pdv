@@ -9,7 +9,6 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { margin: 0; background-color: #f4f7f6; display: flex; height: 100vh; overflow: hidden; }
         
-        /* Oculta o talão térmico no ecrã normal e formata para impressão */
         @media screen { #cupao-impressao { display: none; } }
         @media print { 
             body * { visibility: hidden; display: none !important; } 
@@ -20,11 +19,13 @@
         /* TELA DE LOGIN */
         #tela-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e293b; display: flex; justify-content: center; align-items: center; z-index: 9999; flex-direction: column; }
         .login-box { background: #fff; padding: 40px; border-radius: 10px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .login-box h2 { color: #0f172a; margin-top: 0; margin-bottom: 25px; }
+        .login-box h2 { color: #0f172a; margin-top: 0; margin-bottom: 10px; }
         .login-box input { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 16px; }
-        .login-box button { width: 100%; padding: 15px; background: #0ea5e9; color: white; border: none; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; }
-        .login-box button:hover { background: #0284c7; }
+        .login-box button { width: 100%; padding: 15px; background: #0ea5e9; color: white; border: none; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s;}
+        .login-box button:hover:not(:disabled) { background: #0284c7; }
+        .login-box button:disabled { background: #94a3b8; cursor: not-allowed; }
         #msg-login { color: #ef4444; font-weight: bold; margin-bottom: 15px; display: none; }
+        #status-login { color: #0ea5e9; font-weight: bold; margin-bottom: 15px; }
 
         /* MENU LATERAL */
         .sidebar { width: 250px; background-color: #1e293b; color: white; display: flex; flex-direction: column; padding-top: 20px; transition: 0.3s; }
@@ -33,8 +34,8 @@
         .menu-item { padding: 15px 20px; cursor: pointer; font-size: 16px; border-left: 4px solid transparent; transition: 0.3s; }
         .menu-item:hover { background-color: #334155; }
         .menu-item.ativo { background-color: #0f172a; border-left-color: #38bdf8; font-weight: bold; }
+        #menu-usuarios { color: #eab308; } /* Cor especial para aba secreta */
         
-        /* ÁREA PRINCIPAL E CARDS */
         .main-content { flex: 1; padding: 30px; overflow-y: auto; position: relative; }
         .tela { display: none; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .tela.ativa { display: block; }
@@ -44,7 +45,6 @@
         .card h3 { margin: 0; color: #64748b; font-size: 16px; }
         .card .valor { font-size: 28px; font-weight: bold; color: #0f172a; margin-top: 10px; }
 
-        /* TABELAS E FORMULÁRIOS */
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; min-width: 500px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
@@ -53,18 +53,18 @@
         .form-grupo div { flex: 1; display: flex; flex-direction: column; min-width: 120px; }
         .form-grupo input, .form-grupo select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 16px; }
         
-        /* BOTÕES */
         button { cursor: pointer; border: none; border-radius: 5px; padding: 12px 20px; font-weight: bold; color: white; font-size: 15px; transition: 0.2s; }
-        .btn-azul { background-color: #0ea5e9; } .btn-azul:hover { background-color: #0284c7; }
-        .btn-verde { background-color: #10b981; } .btn-verde:hover { background-color: #059669; }
-        .btn-vermelho { background-color: #ef4444; } .btn-vermelho:hover { background-color: #dc2626; }
-        .btn-laranja { background-color: #f97316; } .btn-laranja:hover { background-color: #ea580c; }
-        .btn-amarelo { background-color: #eab308; color: black; } .btn-amarelo:hover { background-color: #ca8a04; }
+        .btn-azul { background-color: #0ea5e9; } .btn-azul:hover:not(:disabled) { background-color: #0284c7; }
+        .btn-verde { background-color: #10b981; } .btn-verde:hover:not(:disabled) { background-color: #059669; }
+        .btn-vermelho { background-color: #ef4444; } .btn-vermelho:hover:not(:disabled) { background-color: #dc2626; }
+        .btn-laranja { background-color: #f97316; } .btn-laranja:hover:not(:disabled) { background-color: #ea580c; }
+        .btn-amarelo { background-color: #eab308; color: black; } .btn-amarelo:hover:not(:disabled) { background-color: #ca8a04; }
         
         #status-bar { background: #e0f2fe; color: #0369a1; padding: 10px; text-align: center; font-weight: bold; border-radius: 5px; margin-bottom: 20px; }
         .botoes-caixa { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        .val-entrada { color: #16a34a; font-weight: bold; }
+        .val-saida { color: #dc2626; font-weight: bold; }
         
-        /* QUADRAS E CÂMERA */
         .botoes-quadra { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .btn-quadra { flex: 1; background-color: #14b8a6; font-size: 16px; padding: 15px; display: flex; justify-content: center; align-items: center; gap: 8px;}
         .btn-quadra:hover { background-color: #0d9488; }
@@ -73,13 +73,11 @@
         
         #alerta-caixa { display: none; background: #fee2e2; color: #991b1b; padding: 15px; text-align: center; font-weight: bold; border-radius: 5px; margin-bottom: 20px; border: 2px solid #ef4444; }
 
-        /* MODAL COMANDAS */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
         .modal-box { background: #fff; padding: 25px; border-radius: 8px; width: 90%; max-width: 500px; text-align: center; }
         .lista-comandas-modal { max-height: 300px; overflow-y: auto; margin: 20px 0; text-align: left; }
         .btn-comanda-item { display: block; width: 100%; margin-bottom: 10px; padding: 15px; background: #f1f5f9; color: #333; border: 1px solid #cbd5e1; text-align: left; font-size: 16px; border-radius: 5px; }
 
-        /* RESPONSIVIDADE MOBILE */
         @media (max-width: 768px) {
             body { flex-direction: column; } 
             .sidebar { width: 100%; padding-top: 0; flex-direction: row; overflow-x: auto; white-space: nowrap; align-items: center; justify-content: flex-start; }
@@ -97,10 +95,11 @@
 <div id="tela-login">
     <div class="login-box">
         <h2>🔒 Acesso ao Sistema</h2>
+        <div id="status-login">Sincronizando com o Google Sheets... Aguarde.</div>
         <div id="msg-login">Usuário ou senha incorretos!</div>
-        <input type="text" id="loginUsuario" placeholder="Usuário (Ex: edilson)" autocomplete="off">
-        <input type="password" id="loginSenha" placeholder="Senha" autocomplete="off">
-        <button onclick="fazerLogin()">Entrar</button>
+        <input type="text" id="loginUsuario" placeholder="Usuário (Ex: edilson)" autocomplete="off" disabled>
+        <input type="password" id="loginSenha" placeholder="Senha" autocomplete="off" disabled>
+        <button id="btnEntrar" onclick="fazerLogin()" disabled>Entrar</button>
     </div>
 </div>
 
@@ -115,10 +114,11 @@
     <div class="menu-item" onclick="mudarTela('tela-clientes', this)">👥 Clientes</div>
     <div class="menu-item" onclick="mudarTela('tela-livro', this)">💵 Livro de Caixa</div>
     <div class="menu-item" onclick="mudarTela('tela-estoque', this)">📦 Estoque</div>
+    <div class="menu-item" id="menu-usuarios" onclick="mudarTela('tela-usuarios', this)" style="display: none;">⚙️ Usuários</div>
 </div>
 
 <div class="main-content">
-    <div id="status-bar">Conectando ao banco de dados...</div>
+    <div id="status-bar">Sistema Online</div>
 
     <div id="tela-dashboard" class="tela ativa">
         <h1>Resumo do Dia</h1>
@@ -232,6 +232,22 @@
             </table>
         </div>
     </div>
+
+    <div id="tela-usuarios" class="tela">
+        <h1>Gestão de Operadores</h1>
+        <p style="color: #666; margin-top: -5px;">Apenas o Administrador pode ver esta tela.</p>
+        <div class="form-grupo">
+            <div><label>Novo Usuário (Login)</label><input type="text" id="novoUserLogin" placeholder="Ex: paulo"></div>
+            <div><label>Senha do Usuário</label><input type="text" id="novoUserSenha" placeholder="Ex: 123456"></div>
+            <button class="btn-verde" style="margin-bottom: 2px;" onclick="adicionarUsuarioSistema()" id="btnAdicionarUser">Criar Operador</button>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead><tr><th>Usuário de Acesso</th><th>Ação</th></tr></thead>
+                <tbody id="listaUsuariosGestao"></tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <div id="modalComandas" class="modal-overlay">
@@ -245,36 +261,116 @@
 </div>
 
 <script>
-    // --- LINK OFICIAL DA API DO GOOGLE SHEETS ---
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
-    // --- SISTEMA DE LOGIN ---
-    const USUARIOS_PERMITIDOS = {
-        "edilson": "078795",
-        "paulo": "enzo123",
-        "sheila": "enzoisa"
-    };
+    let bancoDeProdutos = [], bancoComandas = [], bancoCaixaGlobal = [], bancoClientes = [], bancoUsuarios = [];
+    let turnoAtual = null, carrinho = [], total = 0, leitorHtml5 = null;
+    let inputCameraAlvo = "codigoInput", idEditandoEstoque = null;
     let operadorAtual = "";
 
+    // INICIA O DOWNLOAD DA PLANILHA ASSIM QUE ABRE O SITE
+    window.onload = () => { carregarDadosIniciais(); };
+
+    async function carregarDadosIniciais() {
+        try {
+            const resposta = await fetch(API_URL); 
+            const dados = await resposta.json();
+            bancoDeProdutos = dados.produtos || []; bancoComandas = dados.comandas || [];
+            bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || [];
+            bancoUsuarios = dados.usuarios || [];
+            turnoAtual = (dados.turnos || []).find(t => t.Status === "Aberto");
+            
+            // Libera a tela de login
+            document.getElementById('status-login').innerText = "✅ Conectado! Pode fazer login.";
+            document.getElementById('status-login').style.color = "#10b981";
+            document.getElementById('loginUsuario').disabled = false;
+            document.getElementById('loginSenha').disabled = false;
+            document.getElementById('btnEntrar').disabled = false;
+            
+            // Prepara os dados visuais por trás da tela de login
+            atualizarInterfaceTurno(); atualizarTabelaEstoque(); atualizarTabelaComandas(); 
+            atualizarDashboardECaixa(); atualizarListasClientes(); atualizarListaUsuarios();
+        } catch (erro) { 
+            document.getElementById('status-login').innerText = "Erro de conexão. Verifique a internet.";
+            document.getElementById('status-login').style.color = "#ef4444";
+        }
+    }
+
+    // --- SISTEMA DE LOGIN (VALIDA COM A PLANILHA) ---
     function fazerLogin() {
-        let user = document.getElementById('loginUsuario').value.trim().toLowerCase();
-        let pass = document.getElementById('loginSenha').value.trim();
+        let userTyped = document.getElementById('loginUsuario').value.trim().toLowerCase();
+        let passTyped = document.getElementById('loginSenha').value.trim();
         
-        if(USUARIOS_PERMITIDOS[user] && USUARIOS_PERMITIDOS[user] === pass) {
-            operadorAtual = user.charAt(0).toUpperCase() + user.slice(1);
+        let userEncontrado = bancoUsuarios.find(u => String(u.Login).toLowerCase() === userTyped && String(u.Senha) === passTyped);
+        
+        if(userEncontrado) {
+            operadorAtual = userTyped.charAt(0).toUpperCase() + userTyped.slice(1);
             document.getElementById('tela-login').style.display = 'none';
             document.getElementById('operadorLogadoText').innerText = "Operador: " + operadorAtual;
-            carregarDados();
+            
+            // Regra do Edilson (Admin)
+            if(userTyped === "edilson") {
+                document.getElementById('menu-usuarios').style.display = 'block';
+            } else {
+                document.getElementById('menu-usuarios').style.display = 'none';
+            }
+            if(turnoAtual) document.getElementById('codigoInput').focus();
         } else {
             document.getElementById('msg-login').style.display = 'block';
         }
     }
     document.getElementById('loginSenha').addEventListener('keypress', function(e) { if(e.key === 'Enter') fazerLogin(); });
 
-    // --- VARIÁVEIS GLOBAIS ---
-    let bancoDeProdutos = [], bancoComandas = [], bancoCaixaGlobal = [], bancoClientes = [];
-    let turnoAtual = null, carrinho = [], total = 0, leitorHtml5 = null;
-    let inputCameraAlvo = "codigoInput", idEditandoEstoque = null;
+    // Função menor para recarregar dados silenciosamente enquanto o sistema está a ser usado
+    async function recarregarDadosSilencioso() {
+        document.getElementById('status-bar').innerText = "Sincronizando...";
+        try {
+            const resposta = await fetch(API_URL); const dados = await resposta.json();
+            bancoDeProdutos = dados.produtos || []; bancoComandas = dados.comandas || [];
+            bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || []; bancoUsuarios = dados.usuarios || [];
+            turnoAtual = (dados.turnos || []).find(t => t.Status === "Aberto");
+            
+            atualizarInterfaceTurno(); document.getElementById('status-bar').innerText = "Sistema Online";
+            atualizarTabelaEstoque(); atualizarTabelaComandas(); atualizarDashboardECaixa(); atualizarListasClientes(); atualizarListaUsuarios();
+        } catch(e) { document.getElementById('status-bar').innerText = "Erro de conexão."; }
+    }
+
+    // --- ABA DE USUÁRIOS (ADMIN) ---
+    function atualizarListaUsuarios() {
+        let tbody = document.getElementById('listaUsuariosGestao');
+        tbody.innerHTML = "";
+        bancoUsuarios.forEach(u => {
+            if(!u.Login) return;
+            // Impede que o Edilson apague o próprio acesso por engano
+            let btnApagar = String(u.Login).toLowerCase() === 'edilson' ? 
+                `<span style="color:#94a3b8; font-size:12px;">Admin Fixo</span>` : 
+                `<button class="btn-vermelho" onclick="removerUsuarioSistema('${u.Login}')">Excluir</button>`;
+            
+            tbody.innerHTML += `<tr><td style="font-weight:bold;">${u.Login}</td><td>${btnApagar}</td></tr>`;
+        });
+    }
+
+    async function adicionarUsuarioSistema() {
+        let l = document.getElementById('novoUserLogin').value.trim();
+        let s = document.getElementById('novoUserSenha').value.trim();
+        if(!l || !s) return alert("Preencha Login e Senha!");
+        
+        // Verifica se já existe
+        if(bancoUsuarios.find(u => String(u.Login).toLowerCase() === l.toLowerCase())) return alert("Este login já existe!");
+
+        document.getElementById('btnAdicionarUser').innerText = "Gravando...";
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_usuario", login: l, senha: s }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+        document.getElementById('novoUserLogin').value = ""; document.getElementById('novoUserSenha').value = "";
+        document.getElementById('btnAdicionarUser').innerText = "Criar Operador";
+        recarregarDadosSilencioso();
+    }
+
+    async function removerUsuarioSistema(login) {
+        if(confirm(`Tem a certeza que quer remover o acesso de ${login}?`)) {
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_usuario", login: login }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+            recarregarDadosSilencioso();
+        }
+    }
 
     // --- NAVEGAÇÃO ---
     function mudarTela(idTela, elementoMenu) {
@@ -286,23 +382,7 @@
         if(idTela === 'tela-caixa' && turnoAtual) document.getElementById('codigoInput').focus();
     }
 
-    // --- CARREGAMENTO DO BANCO DE DADOS ---
-    async function carregarDados() {
-        let status = document.getElementById('status-bar');
-        status.innerText = "Sincronizando banco de dados...";
-        try {
-            const resposta = await fetch(API_URL); const dados = await resposta.json();
-            bancoDeProdutos = dados.produtos || []; bancoComandas = dados.comandas || [];
-            bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || [];
-            turnoAtual = (dados.turnos || []).find(t => t.Status === "Aberto");
-            
-            atualizarInterfaceTurno();
-            status.innerText = "Sistema Online"; status.style.backgroundColor = "#dcfce7"; status.style.color = "#166534";
-            atualizarTabelaEstoque(); atualizarTabelaComandas(); atualizarDashboardECaixa(); atualizarListasClientes();
-        } catch (erro) { status.innerText = "Erro de conexão."; status.style.backgroundColor = "#fee2e2"; status.style.color = "#991b1b"; }
-    }
-
-    // --- FUNÇÕES AUXILIARES ---
+    // --- FUNÇÕES AUXILIARES DE VENDA ---
     function pedirFormaPagamento() {
         let op = prompt("Forma de Pagamento:\n1 - Cartão de Crédito\n2 - Cartão de Débito\n3 - Espécie\n4 - Pix\n\n(Digite apenas o número)");
         if(op === "1") return "Crédito"; if(op === "2") return "Débito";
@@ -310,7 +390,7 @@
         return null;
     }
 
-    // --- QUADRAS E CARRINHO (CAIXA) ---
+    // --- QUADRAS E CARRINHO ---
     function adicionarQuadra(nomeQuadra) {
         let horas = prompt(`Quantas horas para a ${nomeQuadra}?`, "1"); if(!horas) return;
         let valor = prompt(`Valor TOTAL a cobrar pelo tempo? (Ex: 80.00)`, "80.00"); if(!valor) return;
@@ -358,7 +438,7 @@
         let cGuardado = [...carrinho], tGuardado = total;
 
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "venda", cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual, forma_pagamento: formaPag }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-        carrinho = []; total = 0; atualizarCarrinho(); carregarDados();
+        carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso();
         document.getElementById('btnFinalizarVenda').innerText = "Finalizar Venda Direta (F2)"; document.getElementById('btnFinalizarVenda').disabled = false;
         
         if(confirm("Imprimir recibo térmico?")) imprimirCupao(clienteSel, cGuardado, tGuardado);
@@ -378,13 +458,13 @@
         fecharModalComandas(); let nome = prompt("Nome do Cliente para a NOVA comanda?"); if(!nome) return;
         document.getElementById('status-bar').innerText = "Abrindo Comanda...";
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_comanda", cliente: nome, total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-        alert("Comanda criada!"); carrinho = []; total = 0; atualizarCarrinho(); carregarDados();
+        alert("Comanda criada!"); carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso();
     }
 
     async function adicionarNaComandaExistente(idComanda, nomeCli) {
         fecharModalComandas(); document.getElementById('status-bar').innerText = "Adicionando itens...";
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_item_comanda", id_comanda: idComanda, total: total, carrinho: carrinho }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-        alert(`Itens adicionados!`); carrinho = []; total = 0; atualizarCarrinho(); carregarDados();
+        alert(`Itens adicionados!`); carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso();
     }
 
     function atualizarTabelaComandas() {
@@ -409,7 +489,7 @@
         if(confirm(`Confirmar recebimento de ${cliente}?`)) {
             document.getElementById('status-bar').innerText = "Recebendo...";
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "cobrar_comanda", id_comanda: idComanda, operador: operadorAtual, forma_pagamento: formaPag }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-            let iArr = JSON.parse(decodeURIComponent(itensJsonStr)); carregarDados();
+            let iArr = JSON.parse(decodeURIComponent(itensJsonStr)); recarregarDadosSilencioso();
             if(confirm("Imprimir recibo?")) imprimirCupao(cliente, iArr, totalVal);
             if(confirm("Enviar WhatsApp?")) enviarWhatsApp(cliente, iArr, totalVal);
         }
@@ -419,11 +499,11 @@
         if(confirm("ATENÇÃO: Deseja apagar esta comanda e devolver os itens ao estoque?")) {
             document.getElementById('status-bar').innerText = "Excluindo...";
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "excluir_comanda", id_comanda: idComanda }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-            carregarDados();
+            recarregarDadosSilencioso();
         }
     }
 
-    // --- ESTOQUE ---
+    // --- ESTOQUE EDITÁVEL ---
     function atualizarTabelaEstoque() {
         document.getElementById('listaGestao').innerHTML = bancoDeProdutos.map(p => {
             if(!p.ID_Produto) return '';
@@ -452,9 +532,9 @@
         document.getElementById('btnAdicionarEstoque').innerText = "Salvando...";
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: acaoReq, id_antigo: idEditandoEstoque, id: id, nome: nome, custo: custo, preco: preco, quantidade: qtd }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
         document.getElementById('novoId').value = ""; document.getElementById('novoNome').value = ""; document.getElementById('novoCusto').value = ""; document.getElementById('novoPreco').value = ""; document.getElementById('novaQtd').value = "";
-        idEditandoEstoque = null; document.getElementById('btnAdicionarEstoque').innerText = "Salvar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-verde"; carregarDados();
+        idEditandoEstoque = null; document.getElementById('btnAdicionarEstoque').innerText = "Salvar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-verde"; recarregarDadosSilencioso();
     }
-    async function removerProduto(id) { if(confirm("Apagar produto?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover", id: id }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); carregarDados(); } }
+    async function removerProduto(id) { if(confirm("Apagar produto?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover", id: id }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); recarregarDadosSilencioso(); } }
 
     // --- CAIXA (LIVRO, DASHBOARD E TURNOS) ---
     function atualizarDashboardECaixa() {
@@ -464,7 +544,6 @@
             if(turnoAtual && m.ID_Transacao >= turnoAtual.ID_Turno) { if(m.Tipo==="Entrada") sTurno+=v; if(m.Tipo==="Saida") sTurno-=v; } 
             if(m.Data_Hora.includes(hj) && m.Tipo==="Entrada" && m.Descricao.includes("Venda")) vHoje+=v; 
             
-            // Separação segura para colocar Hora antes da Data no Livro de Caixa
             let pTempo = m.Data_Hora.split(m.Data_Hora.includes(',') ? ',' : ' '); 
             let hData = pTempo.length > 1 ? `${pTempo[1].trim()} - ${pTempo[0].trim()}` : m.Data_Hora;
             
@@ -476,27 +555,27 @@
     }
     
     async function excluirItemCaixa(idTrans) {
-        if(confirm("Apagar este registro do Caixa?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "excluir_caixa", id_transacao: idTrans }) }); carregarDados(); }
+        if(confirm("Apagar este registro do Caixa?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "excluir_caixa", id_transacao: idTrans }) }); recarregarDadosSilencioso(); }
     }
     
     async function registrarCaixa() { 
         let t = document.getElementById('tipoMovimento').value, d = document.getElementById('descMovimento').value, v = document.getElementById('valorMovimento').value; 
-        if(d&&v) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "caixa", tipo: t, descricao: d, valor: v, operador: operadorAtual }) }); document.getElementById('descMovimento').value=""; document.getElementById('valorMovimento').value=""; carregarDados(); } 
+        if(d&&v) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "caixa", tipo: t, descricao: d, valor: v, operador: operadorAtual }) }); document.getElementById('descMovimento').value=""; document.getElementById('valorMovimento').value=""; recarregarDadosSilencioso(); } 
     }
     
     async function acaoCaixa() { 
-        if(!turnoAtual) { let f = prompt("Troco inicial:", "0"); if(f!==null) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_caixa", fundo: parseFloat(f.replace(',','.'))||0, operador: operadorAtual }) }); carregarDados(); } 
+        if(!turnoAtual) { let f = prompt("Troco inicial:", "0"); if(f!==null) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_caixa", fundo: parseFloat(f.replace(',','.'))||0, operador: operadorAtual }) }); recarregarDadosSilencioso(); } 
         } else { 
             let esp = 0; bancoCaixaGlobal.forEach(m => { if(m.ID_Transacao >= turnoAtual.ID_Turno) { let v = parseFloat(m.Valor.toString().replace(',','.'))||0; if(m.Tipo==="Entrada") esp+=v; if(m.Tipo==="Saida") esp-=v; } }); 
-            let apStr = prompt("Valor na gaveta:", "0"); if(apStr!==null) { let ap = parseFloat(apStr.replace(',','.'))||0; let dif = ap - esp; if(confirm(`Esperado: R$ ${esp.toFixed(2)}\nContado: R$ ${ap.toFixed(2)}\nConfirmar fechamento?`)) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "fechar_caixa", valor_apurado: ap, diferenca: dif }) }); carregarDados(); } } 
+            let apStr = prompt("Valor na gaveta:", "0"); if(apStr!==null) { let ap = parseFloat(apStr.replace(',','.'))||0; let dif = ap - esp; if(confirm(`Esperado: R$ ${esp.toFixed(2)}\nContado: R$ ${ap.toFixed(2)}\nConfirmar fechamento?`)) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "fechar_caixa", valor_apurado: ap, diferenca: dif }) }); recarregarDadosSilencioso(); } } 
         } 
     }
     
     function atualizarInterfaceTurno() { let s = turnoAtual ? ["#10b981", "ABERTO", "Fechar Caixa", "btn-vermelho", "none", false] : ["#ef4444", "FECHADO", "Abrir Caixa", "btn-verde", "block", true]; document.getElementById('card-status-caixa').style.borderColor = s[0]; document.getElementById('texto-status-caixa').style.color = s[0]; document.getElementById('texto-status-caixa').innerText = s[1]; document.getElementById('btnAcaoCaixa').innerText = s[2]; document.getElementById('btnAcaoCaixa').className = s[3]; document.getElementById('alerta-caixa').style.display = s[4]; ['codigoInput','btnCamera','btnSalvarComanda','btnFinalizarVenda','btnRegistrarLivro'].forEach(id => document.getElementById(id).disabled = s[5]); }
 
     // --- CLIENTES ---
-    async function adicionarCliente() { let id = document.getElementById('novoIdCli').value, nome = document.getElementById('novoNomeCli').value, tel = document.getElementById('novoTelCli').value; if(!id || !nome) return alert("Preencha ID e Nome!"); await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_cliente", id: id, nome: nome, telefone: tel }) }); carregarDados(); }
-    async function removerCliente(id) { if(confirm("Apagar cliente?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_cliente", id: id }) }); carregarDados(); } }
+    async function adicionarCliente() { let id = document.getElementById('novoIdCli').value, nome = document.getElementById('novoNomeCli').value, tel = document.getElementById('novoTelCli').value; if(!id || !nome) return alert("Preencha ID e Nome!"); await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_cliente", id: id, nome: nome, telefone: tel }) }); recarregarDadosSilencioso(); }
+    async function removerCliente(id) { if(confirm("Apagar cliente?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_cliente", id: id }) }); recarregarDadosSilencioso(); } }
     function atualizarListasClientes() { let tbody = document.getElementById('listaClientesGestao'); let selectVenda = document.getElementById('selectClienteVenda'); tbody.innerHTML = ""; selectVenda.innerHTML = '<option value="Consumidor Final">Consumidor Final</option>'; bancoClientes.forEach(c => { if(!c.ID_Cliente) return; tbody.innerHTML += `<tr><td>${c.ID_Cliente}</td><td>${c.Nome}</td><td>${c.Telefone}</td><td><button class="btn-vermelho" onclick="removerCliente('${c.ID_Cliente}')">Apagar</button></td></tr>`; selectVenda.innerHTML += `<option value="${c.Nome}">${c.Nome}</option>`; }); }
 
     // --- RECIBOS E WHATSAPP ---
