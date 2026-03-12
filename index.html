@@ -40,12 +40,15 @@
         .tela { display: none; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .tela.ativa { display: block; }
         h1 { color: #333; margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; font-size: 24px; }
+        
+        /* ALERTA DE ESTOQUE */
+        #alerta-estoque { display: none; background: #fef2f2; border: 2px solid #f87171; padding: 15px; margin-bottom: 20px; border-radius: 8px; color: #b91c1c; }
+        
         .dashboard-cards { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
         .card { flex: 1; min-width: 200px; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; }
         .card h3 { margin: 0; color: #64748b; font-size: 16px; }
         .card .valor { font-size: 28px; font-weight: bold; color: #0f172a; margin-top: 10px; }
 
-        /* TABELAS E FORMULÁRIOS */
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; min-width: 500px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
@@ -127,6 +130,9 @@
 
     <div id="tela-dashboard" class="tela ativa">
         <h1>Resumo do Dia</h1>
+        
+        <div id="alerta-estoque"></div>
+
         <div class="dashboard-cards">
             <div class="card" id="card-status-caixa" style="background: #e0f2fe; border-color: #7dd3fc;">
                 <h3>Status do Caixa</h3>
@@ -206,7 +212,6 @@
 
     <div id="tela-livro" class="tela">
         <h1>Livro de Caixa</h1>
-
         <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #cbd5e1;">
             <h3 style="margin-top: 0; font-size: 16px; color: #334155;">📅 Filtrar por Período</h3>
             <div class="form-grupo" style="margin-bottom: 0;">
@@ -241,14 +246,15 @@
                 <button class="btn-camera" style="margin-bottom: 0; align-self: flex-end;" onclick="alternarCamera('novoId')">📷</button>
             </div>
             <div><label>Nome do Produto</label><input type="text" id="novoNome"></div>
-            <div><label>Preço Custo</label><input type="number" step="0.01" id="novoCusto"></div>
-            <div><label>Preço Venda</label><input type="number" step="0.01" id="novoPreco"></div>
-            <div><label>Quantidade</label><input type="number" id="novaQtd"></div>
-            <button class="btn-verde" style="margin-bottom: 2px;" onclick="salvarProdutoEstoque()" id="btnAdicionarEstoque">Salvar Produto</button>
+            <div><label>Custo</label><input type="number" step="0.01" id="novoCusto"></div>
+            <div><label>Venda</label><input type="number" step="0.01" id="novoPreco"></div>
+            <div><label>Qtd. Atual</label><input type="number" id="novaQtd"></div>
+            <div><label>Estoque Mín.</label><input type="number" id="novoMinimo" placeholder="Ex: 10"></div>
+            <button class="btn-verde" style="margin-bottom: 2px;" onclick="salvarProdutoEstoque()" id="btnAdicionarEstoque">Salvar</button>
         </div>
         <div class="table-responsive">
             <table>
-                <thead><tr><th>Código</th><th>Produto</th><th>Custo (R$)</th><th>Venda (R$)</th><th>Qtd</th><th>Ações</th></tr></thead>
+                <thead><tr><th>Código</th><th>Produto</th><th>Custo (R$)</th><th>Venda (R$)</th><th>Qtd Atual</th><th>Est. Mínimo</th><th>Ações</th></tr></thead>
                 <tbody id="listaGestao"></tbody>
             </table>
         </div>
@@ -285,43 +291,32 @@
     // --- LINK OFICIAL DA API ---
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
-    // --- VARIÁVEIS GLOBAIS ---
     let bancoDeProdutos = [], bancoComandas = [], bancoCaixaGlobal = [], bancoClientes = [], bancoUsuarios = [];
     let turnoAtual = null, carrinho = [], total = 0, leitorHtml5 = null;
     let inputCameraAlvo = "codigoInput", idEditandoEstoque = null;
     let operadorAtual = "";
 
-    // --- INICIALIZAÇÃO E MEMÓRIA DE SESSÃO (LOCALSTORAGE) ---
     window.onload = () => { carregarDadosIniciais(); };
 
     async function carregarDadosIniciais() {
         try {
-            const resposta = await fetch(API_URL); 
-            const dados = await resposta.json();
+            const resposta = await fetch(API_URL); const dados = await resposta.json();
             bancoDeProdutos = dados.produtos || []; bancoComandas = dados.comandas || [];
             bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || [];
             bancoUsuarios = dados.usuarios || [];
             turnoAtual = (dados.turnos || []).find(t => t.Status === "Aberto");
             
-            // Verifica a Memória do Navegador para Login Automático
             let opSalvo = localStorage.getItem('arena_operador');
             let nomeSalvo = localStorage.getItem('arena_operador_nome');
             
             if (opSalvo && bancoUsuarios.find(u => String(u.Login).toLowerCase() === opSalvo)) {
-                // Recupera a sessão sem precisar digitar a senha
-                operadorAtual = nomeSalvo;
-                document.getElementById('tela-login').style.display = 'none';
+                operadorAtual = nomeSalvo; document.getElementById('tela-login').style.display = 'none';
                 document.getElementById('operadorLogadoText').innerText = "Operador: " + operadorAtual;
-                
                 if(opSalvo === "edilson") document.getElementById('menu-usuarios').style.display = 'block';
-
-                // Restaura a Aba que estava sendo usada
                 let tabSalva = localStorage.getItem('arena_tab') || 'tela-dashboard';
                 let menuBtn = document.querySelector(`.menu-item[onclick*="${tabSalva}"]`);
                 mudarTela(tabSalva, menuBtn);
-                
             } else {
-                // Primeira vez abrindo ou deslogado
                 mudarTela('tela-dashboard', null);
                 document.getElementById('status-login').innerText = "✅ Conectado! Pode fazer login.";
                 document.getElementById('status-login').style.color = "#10b981";
@@ -338,38 +333,20 @@
         }
     }
 
-    // --- SISTEMA DE LOGIN MANUAL ---
     function fazerLogin() {
         let userTyped = document.getElementById('loginUsuario').value.trim().toLowerCase();
         let passTyped = document.getElementById('loginSenha').value.trim();
-        
         let userEncontrado = bancoUsuarios.find(u => String(u.Login).toLowerCase() === userTyped && String(u.Senha) === passTyped);
-        
         if(userEncontrado) {
             operadorAtual = userTyped.charAt(0).toUpperCase() + userTyped.slice(1);
-            
-            // Salva na memória do navegador
-            localStorage.setItem('arena_operador', userTyped);
-            localStorage.setItem('arena_operador_nome', operadorAtual);
-
-            document.getElementById('tela-login').style.display = 'none';
-            document.getElementById('operadorLogadoText').innerText = "Operador: " + operadorAtual;
-            
-            if(userTyped === "edilson") document.getElementById('menu-usuarios').style.display = 'block';
-            else document.getElementById('menu-usuarios').style.display = 'none';
-            
+            localStorage.setItem('arena_operador', userTyped); localStorage.setItem('arena_operador_nome', operadorAtual);
+            document.getElementById('tela-login').style.display = 'none'; document.getElementById('operadorLogadoText').innerText = "Operador: " + operadorAtual;
+            if(userTyped === "edilson") document.getElementById('menu-usuarios').style.display = 'block'; else document.getElementById('menu-usuarios').style.display = 'none';
             if(turnoAtual) document.getElementById('codigoInput').focus();
-        } else {
-            document.getElementById('msg-login').style.display = 'block';
-        }
+        } else { document.getElementById('msg-login').style.display = 'block'; }
     }
     document.getElementById('loginSenha').addEventListener('keypress', function(e) { if(e.key === 'Enter') fazerLogin(); });
-
-    function fazerLogout() {
-        localStorage.removeItem('arena_operador');
-        localStorage.removeItem('arena_operador_nome');
-        location.reload(); // Recarrega a página para voltar à tela de login
-    }
+    function fazerLogout() { localStorage.removeItem('arena_operador'); localStorage.removeItem('arena_operador_nome'); location.reload(); }
 
     async function recarregarDadosSilencioso() {
         document.getElementById('status-bar').innerText = "Sincronizando...";
@@ -384,45 +361,30 @@
         } catch(e) { document.getElementById('status-bar').innerText = "Erro de conexão."; }
     }
 
-    // --- NAVEGAÇÃO E MEMÓRIA DE ABA ---
     function mudarTela(idTela, elementoMenu) {
         document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('ativo'));
         document.getElementById(idTela).classList.add('ativa');
-        
-        if(elementoMenu) {
-            elementoMenu.classList.add('ativo');
-        } else {
-            let el = document.querySelector(`.menu-item[onclick*="${idTela}"]`);
-            if(el) el.classList.add('ativo');
-        }
-
-        // Salva a tela atual na memória para quando recarregar a página
+        if(elementoMenu) { elementoMenu.classList.add('ativo'); } 
+        else { let el = document.querySelector(`.menu-item[onclick*="${idTela}"]`); if(el) el.classList.add('ativo'); }
         localStorage.setItem('arena_tab', idTela);
-
         if(leitorHtml5) fecharCamera();
         if(idTela === 'tela-caixa' && turnoAtual) document.getElementById('codigoInput').focus();
     }
 
-    // --- FUNCIONALIDADES DO CAIXA E ESTOQUE ---
+    // --- CAIXA E VENDA ---
     function pedirFormaPagamento() {
         let op = prompt("Forma de Pagamento:\n1 - Cartão de Crédito\n2 - Cartão de Débito\n3 - Espécie\n4 - Pix\n\n(Digite apenas o número)");
-        if(op === "1") return "Crédito"; if(op === "2") return "Débito"; if(op === "3") return "Espécie"; if(op === "4") return "Pix";
-        return null;
+        if(op === "1") return "Crédito"; if(op === "2") return "Débito"; if(op === "3") return "Espécie"; if(op === "4") return "Pix"; return null;
     }
-
     function adicionarQuadra(nomeQuadra) {
         let horas = prompt(`Quantas horas para a ${nomeQuadra}?`, "1"); if(!horas) return;
-        let valor = prompt(`Valor TOTAL a cobrar pelo tempo? (Ex: 80.00)`, "80.00"); if(!valor) return;
+        let valor = prompt(`Valor TOTAL a cobrar? (Ex: 80.00)`, "80.00"); if(!valor) return;
         let precoObj = parseFloat(valor.replace(',','.'));
         carrinho.push({ codigo: 'SERVICO', nome: `${nomeQuadra} (${parseInt(horas)}h)`, preco: precoObj, qtd: 1 });
         total += precoObj; atualizarCarrinho();
     }
-
-    document.getElementById('codigoInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter' && this.value.trim() !== "") { processarEntradaCodigo(this.value.trim()); this.value = ""; }
-    });
-
+    document.getElementById('codigoInput').addEventListener('keypress', function(e) { if (e.key === 'Enter' && this.value.trim() !== "") { processarEntradaCodigo(this.value.trim()); this.value = ""; } });
     function processarEntradaCodigo(termo) {
         termo = termo.toLowerCase();
         let prod = bancoDeProdutos.find(p => String(p.ID_Produto).toLowerCase() === termo || String(p.Nome_Produto).toLowerCase() === termo);
@@ -437,17 +399,14 @@
             total += preco; atualizarCarrinho();
         } else { alert("Produto não encontrado!"); }
     }
-
     function atualizarCarrinho() {
         document.getElementById('listaCarrinho').innerHTML = carrinho.map(i => `<tr><td>${i.codigo}</td><td>${i.nome}</td><td>${i.qtd}</td><td>R$ ${i.preco.toFixed(2)}</td><td>R$ ${(i.preco * i.qtd).toFixed(2)}</td></tr>`).join('');
         document.getElementById('valorTotal').innerText = total.toFixed(2);
     }
-
     function alternarCamera(alvoId) { inputCameraAlvo = alvoId; let divCamera = document.getElementById('leitorCamera'); if (divCamera.style.display === "block") fecharCamera(); else abrirCamera(); }
     function abrirCamera() { let divCamera = document.getElementById('leitorCamera'); divCamera.style.display = "block"; if (!leitorHtml5) leitorHtml5 = new Html5Qrcode("leitorCamera"); leitorHtml5.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, (codigoLido) => { fecharCamera(); document.getElementById(inputCameraAlvo).value = codigoLido; if(inputCameraAlvo === 'codigoInput') processarEntradaCodigo(codigoLido); }, (erro) => {}).catch(err => { alert("Sem acesso à câmara."); divCamera.style.display = "none"; }); }
     function fecharCamera() { if(leitorHtml5) leitorHtml5.stop().then(() => { document.getElementById('leitorCamera').style.display = "none"; }).catch(e=>e); }
 
-    // --- COMANDAS E VENDAS ---
     async function finalizarVenda() {
         if(!turnoAtual) return alert("Abra o caixa!"); if(carrinho.length === 0) return alert("Carrinho vazio!");
         let formaPag = pedirFormaPagamento(); if(!formaPag) return alert("Pagamento cancelado.");
@@ -463,6 +422,7 @@
         if(confirm("Enviar por WhatsApp?")) enviarWhatsApp(clienteSel, cGuardado, tGuardado);
     }
 
+    // --- COMANDAS (COM DIVISÃO DE CONTA) ---
     function abrirModalComandas() {
         if(!turnoAtual) return alert("Abra o caixa!"); if(carrinho.length === 0) return alert("Carrinho vazio!");
         let lista = document.getElementById('listaComandasModal');
@@ -491,22 +451,39 @@
             let valor = parseFloat(c.Total.toString().replace(',','.')) || 0;
             return `<tr><td>#${c.ID_Comanda}</td><td style="font-weight:bold;">${c.Cliente}</td><td>${itensStr}</td><td style="color:#10b981; font-weight:bold;">R$ ${valor.toFixed(2)}</td>
             <td>
-                <button class="btn-verde" style="padding: 8px 12px; margin-bottom:2px;" onclick="cobrarComanda('${c.ID_Comanda}', '${c.Cliente}', '${encodeURIComponent(JSON.stringify(itensObj))}', ${valor})">Cobrar</button>
+                <button class="btn-verde" style="padding: 8px 12px; margin-bottom:2px;" onclick="cobrarComanda('${c.ID_Comanda}', '${c.Cliente}', '${encodeURIComponent(JSON.stringify(itensObj))}', ${valor})">Cobrar/Rachar</button>
                 <button class="btn-vermelho" style="padding: 8px 12px;" onclick="excluirComanda('${c.ID_Comanda}')">Excluir</button>
             </td></tr>`;
         }).join('');
     }
+    
     async function cobrarComanda(idComanda, cliente, itensJsonStr, totalVal) {
         if(!turnoAtual) return alert("Abra o caixa!");
+        
+        // --- LÓGICA DE RACHAR A CONTA ---
+        let numStr = prompt("Dividir a conta para quantas pessoas? (Deixe 1 para não dividir)", "1");
+        let numPessoas = parseInt(numStr) || 1;
+        let msgDivisao = "";
+        
+        if(numPessoas > 1) {
+            let valorDividido = (totalVal / numPessoas).toFixed(2);
+            msgDivisao = `\n\n🎾 CONTA DIVIDIDA PARA ${numPessoas} ATLETAS\n💰 CADA UM PAGA: R$ ${valorDividido}`;
+            alert(`Aviso de Pagamento:${msgDivisao}\n\nClique em OK para prosseguir com a forma de pagamento do valor total.`);
+        }
+
         let formaPag = pedirFormaPagamento(); if(!formaPag) return alert("Cancelado.");
-        if(confirm(`Confirmar recebimento de ${cliente}?`)) {
+        
+        let msgDescricaoExtra = numPessoas > 1 ? ` (Dividido para ${numPessoas})` : "";
+
+        if(confirm(`Confirmar recebimento total de R$ ${totalVal.toFixed(2)} da comanda de ${cliente}?`)) {
             document.getElementById('status-bar').innerText = "Recebendo...";
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "cobrar_comanda", id_comanda: idComanda, operador: operadorAtual, forma_pagamento: formaPag }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "cobrar_comanda", id_comanda: idComanda, operador: operadorAtual, forma_pagamento: formaPag + msgDescricaoExtra }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
             let iArr = JSON.parse(decodeURIComponent(itensJsonStr)); recarregarDadosSilencioso();
             if(confirm("Imprimir recibo?")) imprimirCupao(cliente, iArr, totalVal);
             if(confirm("Enviar WhatsApp?")) enviarWhatsApp(cliente, iArr, totalVal);
         }
     }
+    
     async function excluirComanda(idComanda) {
         if(confirm("ATENÇÃO: Deseja apagar esta comanda e devolver os itens ao estoque?")) {
             document.getElementById('status-bar').innerText = "Excluindo...";
@@ -515,9 +492,30 @@
         }
     }
 
-    // --- FILTROS DO LIVRO DE CAIXA E DASHBOARD ---
+    // --- ESTOQUE E ALERTA ---
+    function atualizarTabelaEstoque() { 
+        document.getElementById('listaGestao').innerHTML = bancoDeProdutos.map(p => { 
+            if(!p.ID_Produto) return ''; 
+            return `<tr><td>${p.ID_Produto}</td><td>${p.Nome_Produto}</td><td>R$ ${p.Preco_Custo}</td><td>R$ ${p.Preco_Venda}</td><td style="font-weight:bold;">${p.Quantidade}</td><td>${p.Estoque_Minimo || 0}</td><td style="display:flex; gap:5px;"><button class="btn-amarelo" onclick="prepararEdicaoEstoque('${p.ID_Produto}')">Editar</button><button class="btn-vermelho" onclick="removerProduto('${p.ID_Produto}')">Apagar</button></td></tr>`; 
+        }).join(''); 
+    }
     
-    // Transforma a data do Google "DD/MM/AAAA, HH:MM:SS" numa data legível para o código
+    function prepararEdicaoEstoque(id) { 
+        let p = bancoDeProdutos.find(x => String(x.ID_Produto) === String(id)); if(!p) return; 
+        document.getElementById('novoId').value = p.ID_Produto; document.getElementById('novoNome').value = p.Nome_Produto; document.getElementById('novoCusto').value = p.Preco_Custo; document.getElementById('novoPreco').value = p.Preco_Venda; document.getElementById('novaQtd').value = p.Quantidade; document.getElementById('novoMinimo').value = p.Estoque_Minimo || 0; idEditandoEstoque = id; document.getElementById('btnAdicionarEstoque').innerText = "Atualizar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-amarelo"; window.scrollTo(0, 0); 
+    }
+    
+    async function salvarProdutoEstoque() { 
+        let id = document.getElementById('novoId').value, nome = document.getElementById('novoNome').value; 
+        let custo = document.getElementById('novoCusto').value, preco = document.getElementById('novoPreco').value, qtd = document.getElementById('novaQtd').value, min = document.getElementById('novoMinimo').value || 0; 
+        if(!id || !nome || !preco || !qtd) return alert("Preencha Código, Nome, Venda e Qtd!"); 
+        let acaoReq = idEditandoEstoque ? "editar_produto" : "adicionar"; document.getElementById('btnAdicionarEstoque').innerText = "Salvando..."; 
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: acaoReq, id_antigo: idEditandoEstoque, id: id, nome: nome, custo: custo, preco: preco, quantidade: qtd, estoque_minimo: min }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); 
+        document.getElementById('novoId').value = ""; document.getElementById('novoNome').value = ""; document.getElementById('novoCusto').value = ""; document.getElementById('novoPreco').value = ""; document.getElementById('novaQtd').value = ""; document.getElementById('novoMinimo').value = ""; idEditandoEstoque = null; document.getElementById('btnAdicionarEstoque').innerText = "Salvar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-verde"; recarregarDadosSilencioso(); 
+    }
+    async function removerProduto(id) { if(confirm("Apagar produto?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover", id: id }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); recarregarDadosSilencioso(); } }
+
+    // --- LIVRO CAIXA E DASHBOARD ---
     function parseDataBR(dataStr) {
         if(!dataStr) return new Date(0);
         let partes = dataStr.split(/[\s,]+/); 
@@ -529,98 +527,94 @@
     function atualizarDashboardECaixa() {
         let sTurno = 0, vHoje = 0, hj = new Date().toLocaleDateString('pt-BR'); 
         
-        // Atualiza Dashboard Principal
         bancoCaixaGlobal.forEach(m => { 
             if(!m.ID_Transacao) return; 
             let v = parseFloat(m.Valor.toString().replace(',','.'))||0; 
-            if(turnoAtual && m.ID_Transacao >= turnoAtual.ID_Turno) { 
-                if(m.Tipo==="Entrada") sTurno+=v; 
-                if(m.Tipo==="Saida") sTurno-=v; 
-            } 
-            if(m.Data_Hora && m.Data_Hora.includes(hj) && m.Tipo==="Entrada" && (m.Descricao.includes("Venda") || m.Descricao.includes("Pgto Comanda"))) {
-                vHoje+=v; 
-            } 
+            if(turnoAtual && m.ID_Transacao >= turnoAtual.ID_Turno) { if(m.Tipo==="Entrada") sTurno+=v; if(m.Tipo==="Saida") sTurno-=v; } 
+            if(m.Data_Hora && m.Data_Hora.includes(hj) && m.Tipo==="Entrada" && (m.Descricao.includes("Venda") || m.Descricao.includes("Pgto Comanda"))) { vHoje+=v; } 
         });
         document.getElementById('dash-saldo').innerText = "R$ " + sTurno.toFixed(2); 
         document.getElementById('dash-vendas').innerText = "R$ " + vHoje.toFixed(2); 
 
-        // Roda a construção da tabela aplicando os filtros de Data (se houverem)
+        // Verificação de Alerta de Estoque
+        let itensBaixos = bancoDeProdutos.filter(p => p.ID_Produto && p.ID_Produto !== 'SERVICO' && parseInt(p.Quantidade) <= parseInt(p.Estoque_Minimo || 0));
+        let alertaBox = document.getElementById('alerta-estoque');
+        if(itensBaixos.length > 0) {
+            alertaBox.style.display = 'block';
+            alertaBox.innerHTML = `<h3 style="color:#b91c1c; margin-top:0;">⚠️ Alerta de Estoque</h3>` + itensBaixos.map(i => `<div>- <b>${i.Nome_Produto}</b> (Restam: ${i.Quantidade})</div>`).join('');
+        } else {
+            alertaBox.style.display = 'none';
+        }
+
         filtrarLivroCaixa();
     }
 
     function filtrarLivroCaixa() {
-        let dtIniVal = document.getElementById('filtroDataInicio').value;
-        let dtFimVal = document.getElementById('filtroDataFim').value;
-        
-        let dIni = dtIniVal ? new Date(dtIniVal + "T00:00:00") : null;
-        let dFim = dtFimVal ? new Date(dtFimVal + "T23:59:59") : null;
+        let dtIniVal = document.getElementById('filtroDataInicio').value; let dtFimVal = document.getElementById('filtroDataFim').value;
+        let dIni = dtIniVal ? new Date(dtIniVal + "T00:00:00") : null; let dFim = dtFimVal ? new Date(dtFimVal + "T23:59:59") : null;
+        let htmlTabela = ""; let somaEntradas = 0; let somaSaidas = 0;
 
-        let htmlTabela = "";
-        let somaEntradasFiltro = 0;
-        let somaSaidasFiltro = 0;
-
-        let caixaInvertido = bancoCaixaGlobal.slice().reverse();
-
-        caixaInvertido.forEach(m => {
+        bancoCaixaGlobal.slice().reverse().forEach(m => {
             if(!m.ID_Transacao) return;
-
-            // Lógica do Filtro de Datas
             let recordDate = parseDataBR(m.Data_Hora);
-            if (dIni && recordDate < dIni) return;
-            if (dFim && recordDate > dFim) return;
+            if (dIni && recordDate < dIni) return; if (dFim && recordDate > dFim) return;
 
             let v = parseFloat(m.Valor.toString().replace(',','.'))||0; 
             let pTempo = m.Data_Hora.split(m.Data_Hora.includes(',') ? ',' : ' '); 
             let hData = pTempo.length > 1 ? `${pTempo[1].trim()} - ${pTempo[0].trim()}` : m.Data_Hora;
             let c = m.Tipo==='Entrada' ? 'val-entrada' : 'val-saida'; 
 
-            if(m.Tipo === 'Entrada') somaEntradasFiltro += v;
-            if(m.Tipo === 'Saida') somaSaidasFiltro += v;
-
-            htmlTabela += `<tr><td>${hData}</td><td class="${c}">${m.Tipo}</td><td>${m.Descricao}</td><td class="${c}">R$ ${v.toFixed(2)}</td>
-            <td><button class="btn-vermelho" style="padding: 5px 10px; font-size:12px;" onclick="excluirItemCaixa('${m.ID_Transacao}')">X Excluir</button></td></tr>`; 
+            if(m.Tipo === 'Entrada') somaEntradas += v; if(m.Tipo === 'Saida') somaSaidas += v;
+            htmlTabela += `<tr><td>${hData}</td><td class="${c}">${m.Tipo}</td><td>${m.Descricao}</td><td class="${c}">R$ ${v.toFixed(2)}</td><td><button class="btn-vermelho" style="padding: 5px 10px; font-size:12px;" onclick="excluirItemCaixa('${m.ID_Transacao}')">X Excluir</button></td></tr>`; 
         });
 
         document.getElementById('listaCaixa').innerHTML = htmlTabela;
-        document.getElementById('resumo-filtro-entradas').innerText = "R$ " + somaEntradasFiltro.toFixed(2);
-        document.getElementById('resumo-filtro-saidas').innerText = "R$ " + somaSaidasFiltro.toFixed(2);
-        document.getElementById('resumo-filtro-saldo').innerText = "R$ " + (somaEntradasFiltro - somaSaidasFiltro).toFixed(2);
+        document.getElementById('resumo-filtro-entradas').innerText = "R$ " + somaEntradas.toFixed(2);
+        document.getElementById('resumo-filtro-saidas').innerText = "R$ " + somaSaidas.toFixed(2);
+        document.getElementById('resumo-filtro-saldo').innerText = "R$ " + (somaEntradas - somaSaidas).toFixed(2);
     }
 
-    function limparFiltroCaixa() {
-        document.getElementById('filtroDataInicio').value = "";
-        document.getElementById('filtroDataFim').value = "";
-        filtrarLivroCaixa();
-    }
+    function limparFiltroCaixa() { document.getElementById('filtroDataInicio').value = ""; document.getElementById('filtroDataFim').value = ""; filtrarLivroCaixa(); }
+    async function excluirItemCaixa(idTrans) { if(confirm("Apagar este registro do Caixa?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "excluir_caixa", id_transacao: idTrans }) }); recarregarDadosSilencioso(); } }
+    async function registrarCaixa() { let t = document.getElementById('tipoMovimento').value, d = document.getElementById('descMovimento').value, v = document.getElementById('valorMovimento').value; if(d&&v) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "caixa", tipo: t, descricao: d, valor: v, operador: operadorAtual }) }); document.getElementById('descMovimento').value=""; document.getElementById('valorMovimento').value=""; recarregarDadosSilencioso(); } }
     
-    async function excluirItemCaixa(idTrans) {
-        if(confirm("Apagar este registro do Caixa?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "excluir_caixa", id_transacao: idTrans }) }); recarregarDadosSilencioso(); }
-    }
-    
-    async function registrarCaixa() { 
-        let t = document.getElementById('tipoMovimento').value, d = document.getElementById('descMovimento').value, v = document.getElementById('valorMovimento').value; 
-        if(d&&v) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "caixa", tipo: t, descricao: d, valor: v, operador: operadorAtual }) }); document.getElementById('descMovimento').value=""; document.getElementById('valorMovimento').value=""; recarregarDadosSilencioso(); } 
-    }
-    
+    // --- FECHAMENTO VIA WHATSAPP ---
     async function acaoCaixa() { 
-        if(!turnoAtual) { let f = prompt("Troco inicial:", "0"); if(f!==null) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_caixa", fundo: parseFloat(f.replace(',','.'))||0, operador: operadorAtual }) }); recarregarDadosSilencioso(); } 
+        if(!turnoAtual) { 
+            let f = prompt("Troco inicial na gaveta:", "0"); 
+            if(f!==null) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_caixa", fundo: parseFloat(f.replace(',','.'))||0, operador: operadorAtual }) }); recarregarDadosSilencioso(); } 
         } else { 
-            let esp = 0; bancoCaixaGlobal.forEach(m => { if(m.ID_Transacao >= turnoAtual.ID_Turno) { let v = parseFloat(m.Valor.toString().replace(',','.'))||0; if(m.Tipo==="Entrada") esp+=v; if(m.Tipo==="Saida") esp-=v; } }); 
-            let apStr = prompt("Valor na gaveta:", "0"); if(apStr!==null) { let ap = parseFloat(apStr.replace(',','.'))||0; let dif = ap - esp; if(confirm(`Esperado: R$ ${esp.toFixed(2)}\nContado: R$ ${ap.toFixed(2)}\nConfirmar fechamento?`)) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "fechar_caixa", valor_apurado: ap, diferenca: dif }) }); recarregarDadosSilencioso(); } } 
+            let esp = 0, totalEntradas = 0, totalSaidas = 0; 
+            bancoCaixaGlobal.forEach(m => { 
+                if(m.ID_Transacao >= turnoAtual.ID_Turno) { 
+                    let v = parseFloat(m.Valor.toString().replace(',','.'))||0; 
+                    if(m.Tipo==="Entrada") { esp+=v; totalEntradas+=v; }
+                    if(m.Tipo==="Saida") { esp-=v; totalSaidas+=v; }
+                } 
+            }); 
+            let apStr = prompt("Valor na gaveta:", "0"); 
+            if(apStr!==null) { 
+                let ap = parseFloat(apStr.replace(',','.'))||0; let dif = ap - esp; 
+                if(confirm(`Esperado: R$ ${esp.toFixed(2)}\nContado: R$ ${ap.toFixed(2)}\nConfirmar fechamento?`)) { 
+                    await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "fechar_caixa", valor_apurado: ap, diferenca: dif }) }); 
+                    recarregarDadosSilencioso(); 
+                    
+                    // Dispara o Relatório do WhatsApp
+                    if(confirm("Deseja enviar o resumo do Fechamento de Caixa para o WhatsApp do gerente/grupo?")) {
+                        let textoFechamento = `*📊 FECHAMENTO DE CAIXA*%0A*Operador:* ${operadorAtual}%0A*Data:* ${new Date().toLocaleString('pt-BR')}%0A----------------%0A*Total Entradas:* R$ ${totalEntradas.toFixed(2)}%0A*Total Saídas:* R$ ${totalSaidas.toFixed(2)}%0A----------------%0A*Esperado (Sistema):* R$ ${esp.toFixed(2)}%0A*Apurado (Gaveta):* R$ ${ap.toFixed(2)}%0A*Diferença:* R$ ${dif.toFixed(2)}%0A----------------%0A*Turno Encerrado.*`;
+                        window.open(`https://wa.me/?text=${textoFechamento}`, '_blank');
+                    }
+                } 
+            } 
         } 
     }
     
     function atualizarInterfaceTurno() { let s = turnoAtual ? ["#10b981", "ABERTO", "Fechar Caixa", "btn-vermelho", "none", false] : ["#ef4444", "FECHADO", "Abrir Caixa", "btn-verde", "block", true]; document.getElementById('card-status-caixa').style.borderColor = s[0]; document.getElementById('texto-status-caixa').style.color = s[0]; document.getElementById('texto-status-caixa').innerText = s[1]; document.getElementById('btnAcaoCaixa').innerText = s[2]; document.getElementById('btnAcaoCaixa').className = s[3]; document.getElementById('alerta-caixa').style.display = s[4]; ['codigoInput','btnCamera','btnSalvarComanda','btnFinalizarVenda','btnRegistrarLivro'].forEach(id => document.getElementById(id).disabled = s[5]); }
 
-    // --- OUTROS (Estoque, Usuários, Clientes) ---
-    function atualizarTabelaEstoque() { document.getElementById('listaGestao').innerHTML = bancoDeProdutos.map(p => { if(!p.ID_Produto) return ''; return `<tr><td>${p.ID_Produto}</td><td>${p.Nome_Produto}</td><td>R$ ${p.Preco_Custo}</td><td>R$ ${p.Preco_Venda}</td><td style="font-weight:bold;">${p.Quantidade}</td><td style="display:flex; gap:5px;"><button class="btn-amarelo" onclick="prepararEdicaoEstoque('${p.ID_Produto}')">Editar</button><button class="btn-vermelho" onclick="removerProduto('${p.ID_Produto}')">Apagar</button></td></tr>`; }).join(''); }
-    function prepararEdicaoEstoque(id) { let p = bancoDeProdutos.find(x => String(x.ID_Produto) === String(id)); if(!p) return; document.getElementById('novoId').value = p.ID_Produto; document.getElementById('novoNome').value = p.Nome_Produto; document.getElementById('novoCusto').value = p.Preco_Custo; document.getElementById('novoPreco').value = p.Preco_Venda; document.getElementById('novaQtd').value = p.Quantidade; idEditandoEstoque = id; document.getElementById('btnAdicionarEstoque').innerText = "Atualizar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-amarelo"; window.scrollTo(0, 0); }
-    async function salvarProdutoEstoque() { let id = document.getElementById('novoId').value, nome = document.getElementById('novoNome').value; let custo = document.getElementById('novoCusto').value, preco = document.getElementById('novoPreco').value, qtd = document.getElementById('novaQtd').value; if(!id || !nome || !preco || !qtd) return alert("Preencha tudo!"); let acaoReq = idEditandoEstoque ? "editar_produto" : "adicionar"; document.getElementById('btnAdicionarEstoque').innerText = "Salvando..."; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: acaoReq, id_antigo: idEditandoEstoque, id: id, nome: nome, custo: custo, preco: preco, quantidade: qtd }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); document.getElementById('novoId').value = ""; document.getElementById('novoNome').value = ""; document.getElementById('novoCusto').value = ""; document.getElementById('novoPreco').value = ""; document.getElementById('novaQtd').value = ""; idEditandoEstoque = null; document.getElementById('btnAdicionarEstoque').innerText = "Salvar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-verde"; recarregarDadosSilencioso(); }
-    async function removerProduto(id) { if(confirm("Apagar produto?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover", id: id }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); recarregarDadosSilencioso(); } }
-
+    // --- OUTROS ---
     function atualizarListaUsuarios() { let tbody = document.getElementById('listaUsuariosGestao'); tbody.innerHTML = ""; bancoUsuarios.forEach(u => { if(!u.Login) return; let btnApagar = String(u.Login).toLowerCase() === 'edilson' ? `<span style="color:#94a3b8; font-size:12px;">Admin Fixo</span>` : `<button class="btn-vermelho" onclick="removerUsuarioSistema('${u.Login}')">Excluir</button>`; tbody.innerHTML += `<tr><td style="font-weight:bold;">${u.Login}</td><td>${btnApagar}</td></tr>`; }); }
-    async function adicionarUsuarioSistema() { let l = document.getElementById('novoUserLogin').value.trim(); let s = document.getElementById('novoUserSenha').value.trim(); if(!l || !s) return alert("Preencha Login e Senha!"); if(bancoUsuarios.find(u => String(u.Login).toLowerCase() === l.toLowerCase())) return alert("Este login já existe!"); document.getElementById('btnAdicionarUser').innerText = "Gravando..."; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_usuario", login: l, senha: s }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); document.getElementById('novoUserLogin').value = ""; document.getElementById('novoUserSenha').value = ""; document.getElementById('btnAdicionarUser').innerText = "Criar Operador"; recarregarDadosSilencioso(); }
-    async function removerUsuarioSistema(login) { if(confirm(`Deseja remover o acesso de ${login}?`)) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_usuario", login: login }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); recarregarDadosSilencioso(); } }
+    async function adicionarUsuarioSistema() { let l = document.getElementById('novoUserLogin').value.trim(); let s = document.getElementById('novoUserSenha').value.trim(); if(!l || !s) return alert("Preencha Login e Senha!"); if(bancoUsuarios.find(u => String(u.Login).toLowerCase() === l.toLowerCase())) return alert("Este login já existe!"); document.getElementById('btnAdicionarUser').innerText = "Gravando..."; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_usuario", login: l, senha: s }) }); document.getElementById('novoUserLogin').value = ""; document.getElementById('novoUserSenha').value = ""; document.getElementById('btnAdicionarUser').innerText = "Criar Operador"; recarregarDadosSilencioso(); }
+    async function removerUsuarioSistema(login) { if(confirm(`Deseja remover o acesso de ${login}?`)) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_usuario", login: login }) }); recarregarDadosSilencioso(); } }
 
     async function adicionarCliente() { let id = document.getElementById('novoIdCli').value, nome = document.getElementById('novoNomeCli').value, tel = document.getElementById('novoTelCli').value; if(!id || !nome) return alert("Preencha ID e Nome!"); await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_cliente", id: id, nome: nome, telefone: tel }) }); recarregarDadosSilencioso(); }
     async function removerCliente(id) { if(confirm("Apagar cliente?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_cliente", id: id }) }); recarregarDadosSilencioso(); } }
