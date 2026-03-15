@@ -7,7 +7,6 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* FIX PARA iPHONE: -webkit-appearance e 100dvh */
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background-color: #f4f7f6; display: flex; height: 100vh; height: 100dvh; overflow: hidden; -webkit-font-smoothing: antialiased; }
         
@@ -18,7 +17,6 @@
             #cupao-impressao { position: absolute; left: 0; top: 0; width: 58mm; padding: 0; margin: 0; font-family: monospace; font-size: 12px; color: #000; } 
         }
 
-        /* TELA DE LOGIN */
         #tela-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e293b; display: flex; justify-content: center; align-items: center; z-index: 999999; flex-direction: column; }
         .login-box { background: #fff; padding: 40px; border-radius: 10px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .login-box h2 { color: #0f172a; margin-top: 0; margin-bottom: 10px; }
@@ -32,7 +30,6 @@
         #caixa-login-loading { display: none; color: white; text-align: center; }
         #caixa-login-loading h2 { color: #38bdf8; margin-bottom: 5px; }
 
-        /* MENU LATERAL */
         .sidebar { width: 250px; background-color: #1e293b; color: white; display: flex; flex-direction: column; padding-top: 20px; transition: 0.3s; flex-shrink: 0; }
         .sidebar h2 { text-align: center; margin-bottom: 5px; font-size: 22px; color: #38bdf8; }
         #operadorLogadoText { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 25px; }
@@ -60,9 +57,7 @@
         .form-grupo { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-end; flex-wrap: wrap; }
         .form-grupo div { flex: 1; display: flex; flex-direction: column; min-width: 120px; }
         .form-grupo input, .form-grupo select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 16px; -webkit-appearance: none; appearance: none; background-color: #fff;}
-        .form-grupo select { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="%23475569" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
         
-        /* BOTÕES IOS FIX */
         button { cursor: pointer; border: none; border-radius: 5px; padding: 12px 20px; font-weight: bold; color: white; font-size: 15px; transition: 0.2s; -webkit-appearance: none; appearance: none; }
         .btn-azul { background-color: #0ea5e9; } .btn-azul:hover:not(:disabled) { background-color: #0284c7; }
         .btn-verde { background-color: #10b981; } .btn-verde:hover:not(:disabled) { background-color: #059669; }
@@ -83,7 +78,6 @@
         
         #alerta-caixa { display: none; background: #fee2e2; color: #991b1b; padding: 15px; text-align: center; font-weight: bold; border-radius: 5px; margin-bottom: 20px; border: 2px solid #ef4444; }
 
-        /* MODAIS */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
         .modal-box { background: #fff; padding: 25px; border-radius: 8px; width: 90%; max-width: 500px; text-align: center; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch;}
         .lista-comandas-modal { max-height: 300px; overflow-y: auto; margin: 20px 0; text-align: left; -webkit-overflow-scrolling: touch; }
@@ -135,7 +129,7 @@
     <div class="menu-item" onclick="mudarTela('tela-livro', this)">💵 Livro de Caixa</div>
     <div class="menu-item" onclick="mudarTela('tela-estoque', this)">📦 Estoque</div>
     <div class="menu-item" id="menu-usuarios" onclick="mudarTela('tela-usuarios', this)" style="display: none;">⚙️ Usuários</div>
-    <div class="menu-item" style="color: #ef4444; margin-top: 20px;" onclick="fazerLogout()">🚪 Sair</div>
+    <div class="menu-item" style="color: #ef4444; margin-top: 20px;" onclick="fazerLogout()">🚪 Sair do Sistema</div>
 </div>
 
 <div class="main-content">
@@ -144,7 +138,6 @@
     <div id="tela-dashboard" class="tela ativa">
         <h1>Visão Geral da Arena</h1>
         <div id="alerta-estoque"></div>
-
         <div class="dashboard-cards">
             <div class="card" id="card-status-caixa" style="background: #e0f2fe; border-color: #7dd3fc;">
                 <h3>Status do Caixa</h3>
@@ -154,7 +147,6 @@
             <div class="card"><h3>Vendas Hoje</h3><div class="valor" id="dash-vendas">R$ 0,00</div></div>
             <div class="card"><h3>Saldo Atual na Gaveta</h3><div class="valor" id="dash-saldo">R$ 0,00</div></div>
         </div>
-
         <div style="display:flex; gap:20px; flex-wrap:wrap; margin-top: 20px;">
             <div style="flex:2; min-width:300px; background:#fff; padding:20px; border-radius:8px; border:1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                 <h3 style="margin-top:0; color:#475569; text-align:center;">📊 Faturamento (Últimos 7 Dias)</h3>
@@ -170,28 +162,22 @@
     <div id="tela-caixa" class="tela">
         <h1>Frente de Caixa</h1>
         <div id="alerta-caixa">⚠️ O CAIXA ESTÁ FECHADO! Vá ao Dashboard para Abrir o Caixa.</div>
-        
         <div class="botoes-quadra">
             <button type="button" class="btn-quadra" onclick="adicionarQuadra('Quadra Chicashoes')">🎾 Quadra Chicashoes</button>
             <button type="button" class="btn-quadra" onclick="adicionarQuadra('Quadra padaria do Helder')">🎾 Quadra padaria do Helder</button>
         </div>
-
         <div class="form-grupo" style="margin-bottom: 10px;">
             <div style="flex: 1;"><label>Cliente (Opcional)</label><select id="selectClienteVenda"><option value="Consumidor Final">Consumidor Final</option></select></div>
         </div>
-
         <div id="leitorCamera"></div>
-
         <div class="form-grupo" style="flex-direction: row; gap: 10px; flex-wrap: nowrap;">
             <div style="flex: 1; min-width: unset;"><input type="text" id="codigoInput" placeholder="Código, Nome ou Câmera 📷" disabled autocomplete="off"></div>
             <button type="button" class="btn-camera" id="btnCamera" onclick="alternarCamera('codigoInput')" disabled>📷</button>
         </div>
-
         <div class="table-responsive">
             <table><thead><tr><th>Código</th><th>Produto</th><th>Qtd</th><th>Preço Un.</th><th>Subtotal</th><th>Ação</th></tr></thead><tbody id="listaCarrinho"></tbody></table>
         </div>
         <div style="text-align: right; font-size: 24px; font-weight: bold; color: #10b981; margin: 20px 0;">Total: R$ <span id="valorTotal">0.00</span></div>
-        
         <div class="botoes-caixa">
             <button type="button" class="btn-laranja" id="btnSalvarComanda" style="flex: 1;" onclick="abrirModalComandas()" disabled>Salvar na Comanda (F3)</button>
             <button type="button" class="btn-azul" id="btnFinalizarVenda" style="flex: 1;" onclick="iniciarVendaDireta()" disabled>Finalizar Venda Direta (F2)</button>
@@ -237,7 +223,6 @@
 
         <div class="form-grupo">
             <div><label>Movimento</label><select id="tipoMovimento" onchange="mudarFormDespesa()"><option value="Entrada">Entrada</option><option value="Saida">Saída (Despesa)</option></select></div>
-            
             <div id="boxCategoriaDespesa" style="display: none;">
                 <label>Categoria</label>
                 <select id="categoriaDespesa">
@@ -248,7 +233,6 @@
                     <option value="Outros">Outros</option>
                 </select>
             </div>
-
             <div><label>Descrição Extra</label><input type="text" id="descMovimento" placeholder="Ex: Compra de Água" autocomplete="off"></div>
             <div><label>Valor (R$)</label><input type="text" inputmode="decimal" id="valorMovimento" placeholder="Ex: 5,50" autocomplete="off"></div>
             <button type="button" class="btn-verde" id="btnRegistrarLivro" style="margin-bottom: 2px;" onclick="registrarCaixa()" disabled>Registrar</button>
@@ -337,6 +321,10 @@
     async function reqPOST(dados) {
         return await fetch(API_URL, { method: 'POST', body: JSON.stringify(dados), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
     }
+
+    document.getElementById('loginSenha').addEventListener('keypress', e => { 
+        if(e.key === 'Enter') { e.preventDefault(); fazerLogin(); } 
+    });
 
     window.onload = () => {
         let opSalvo = localStorage.getItem('arena_operador');
@@ -482,7 +470,7 @@
         document.getElementById('pagPix').focus();
     }
     
-    function fecharModalPagamento() { document.getElementById('modalPagamento').style.display = 'none'; acaoPagamentoPendente = null; }
+    function fecharModalPagamento() { document.getElementById('modalPagamento').style.display = 'none'; }
 
     function calcularRestantePagamento() {
         let totalRequerido = acaoPagamentoPendente.valorTotal; 
@@ -518,11 +506,16 @@
         if(p > 0) formas.push(`Pix: ${p.toFixed(2)}`); if(c > 0) formas.push(`Crédito: ${c.toFixed(2)}`);
         if(d > 0) formas.push(`Débito: ${d.toFixed(2)}`); if(e > 0) formas.push(`Espécie: ${e.toFixed(2)}`);
         
-        fecharModalPagamento(); executarAcaoPagamento(formas.join(" + "), totalPago);
+        // ENVIA A AÇÃO PRIMEIRO
+        executarAcaoPagamento(formas.join(" + "), totalPago);
+        
+        // DEPOIS FECHA O MODAL
+        fecharModalPagamento(); 
     }
 
     async function executarAcaoPagamento(formaPagStr, totalPagoFinal) {
         let acao = acaoPagamentoPendente;
+        
         if(acao.tipo === 'venda_direta') {
             document.getElementById('btnFinalizarVenda').innerText = "Gravando..."; document.getElementById('btnFinalizarVenda').disabled = true;
             await reqPOST({ acao: "venda", cliente: acao.cliente, total: acao.totalSalvo, carrinho: acao.carrinhoSalvo, operador: operadorAtual, forma_pagamento: formaPagStr });
@@ -723,6 +716,8 @@
 
     function enviarWhatsApp(clienteNome, itensCart, valorT) { let resumo = itensCart.map(i => `${i.qtd}x ${i.nome}`).join('%0A'); let texto = `*ARENA VITALE*%0AOlá ${clienteNome}, aqui está o resumo da sua compra:%0A%0A${resumo}%0A%0A*Total: R$ ${valorT.toFixed(2)}*%0A%0AObrigado!`; window.open(`https://wa.me/?text=${texto}`, '_blank'); }
     function imprimirCupao(clienteNome, itensCart, valorT) { let cupao = document.getElementById('cupao-impressao'); let data = new Date().toLocaleString('pt-BR'); let itensHtml = itensCart.map(i => `<div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.preco * i.qtd).toFixed(2)}</span></div>`).join(''); cupao.innerHTML = `<div style="text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 5px;">ARENA VITALE</div><div style="text-align: center; font-size: 10px; margin-bottom: 10px;">Russas - CE</div><div style="text-align: center; font-size: 12px; margin-bottom: 10px;">Recibo Não Fiscal</div><div>Data: ${data}</div><div>Operador: ${operadorAtual}</div><div>Cliente: ${clienteNome}</div><hr style="border-top: 1px dashed #000; margin: 5px 0;">${itensHtml}<hr style="border-top: 1px dashed #000; margin: 5px 0;"><div style="text-align: right; font-weight: bold; font-size: 14px;">TOTAL: R$ ${valorT.toFixed(2)}</div><div style="text-align: center; margin-top: 15px; font-size: 10px;">Obrigado e volte sempre!</div>`; window.print(); }
+
+    document.addEventListener('keydown', e => { if(turnoAtual && document.getElementById('tela-login').style.display === 'none') { if(e.key==='F2'){e.preventDefault();iniciarVendaDireta();} if(e.key==='F3'){e.preventDefault();abrirModalComandas();} } });
 </script>
 
 </body>
