@@ -234,6 +234,7 @@
 
         <div class="form-grupo">
             <div><label>Movimento</label><select id="tipoMovimento" onchange="mudarFormDespesa()"><option value="Entrada">Entrada</option><option value="Saida">Saída (Despesa)</option></select></div>
+            
             <div id="boxCategoriaDespesa" style="display: none;">
                 <label>Categoria</label>
                 <select id="categoriaDespesa">
@@ -244,6 +245,7 @@
                     <option value="Outros">Outros</option>
                 </select>
             </div>
+
             <div><label>Descrição Extra</label><input type="text" id="descMovimento" placeholder="Ex: Compra de Água" autocomplete="off"></div>
             <div><label>Valor (R$)</label><input type="text" inputmode="decimal" id="valorMovimento" placeholder="Ex: 5,50" autocomplete="off"></div>
             <button type="button" class="btn-verde" id="btnRegistrarLivro" style="margin-bottom: 2px;" onclick="registrarCaixa()" disabled>Registrar</button>
@@ -320,7 +322,7 @@
 </div>
 
 <script>
-    // --- SEU LINK OFICIAL ---
+    // --- SEU LINK OFICIAL INTACTO ---
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
     let bancoDeProdutos = [], bancoComandas = [], bancoCaixaGlobal = [], bancoClientes = [], bancoUsuarios = [], bancoVendas = [];
@@ -471,12 +473,8 @@
         ['pagPix','pagCredito','pagDebito','pagEspecie'].forEach(id => document.getElementById(id).value = "");
         acaoPagamentoPendente = acaoObj; 
         
-        // Muda o título se for Parcial
-        if(acaoObj.tipo === 'comanda_parcial') {
-            document.getElementById('pagTituloModal').innerText = "Pagamento Parcial";
-        } else {
-            document.getElementById('pagTituloModal').innerText = "Caixa de Pagamento";
-        }
+        if(acaoObj.tipo === 'comanda_parcial') { document.getElementById('pagTituloModal').innerText = "Pagamento Parcial"; } 
+        else { document.getElementById('pagTituloModal').innerText = "Caixa de Pagamento"; }
         
         calcularRestantePagamento();
         document.getElementById('modalPagamento').style.display = 'flex';
@@ -486,7 +484,8 @@
     function fecharModalPagamento() { document.getElementById('modalPagamento').style.display = 'none'; acaoPagamentoPendente = null; }
 
     function calcularRestantePagamento() {
-        let totalComanda = acaoPagamentoPendente.valorTotal;
+        let totalRequerido = acaoPagamentoPendente.valorTotal; // No parcial, este valor é exatamente o que o cliente disse que ia dar de entrada.
+        
         let p = parseFloat(document.getElementById('pagPix').value.replace(',', '.')) || 0;
         let c = parseFloat(document.getElementById('pagCredito').value.replace(',', '.')) || 0;
         let d = parseFloat(document.getElementById('pagDebito').value.replace(',', '.')) || 0;
@@ -495,26 +494,19 @@
         
         let box = document.getElementById('boxStatusPagamento');
         
-        if(acaoPagamentoPendente.tipo === 'comanda_parcial') {
-            let restanteNaComanda = totalComanda - totalPagoAgora;
-            
-            if(totalPagoAgora > 0 && totalPagoAgora < totalComanda) {
-                box.style.color = "#10b981"; 
-                box.innerHTML = `Abatendo: R$ ${totalPagoAgora.toFixed(2)} <br><span style="font-size:14px;color:#64748b;">Ficará devendo: R$ ${restanteNaComanda.toFixed(2)}</span>`; 
-                document.getElementById('btnConfirmarPagamento').disabled = false;
-            } else if (totalPagoAgora >= totalComanda) {
-                box.style.color = "#dc2626"; 
-                box.innerHTML = `Valor quita a comanda.<br><span style="font-size:14px;">Para isso, feche e use "Cobrar Todo".</span>`; 
-                document.getElementById('btnConfirmarPagamento').disabled = true;
-            } else {
-                box.style.color = "#dc2626"; box.innerHTML = `Insira o valor parcial`; document.getElementById('btnConfirmarPagamento').disabled = true;
-            }
-        } else {
-            // Lógica Normal (Venda Direta / Cobrar Todo)
-            let falta = totalComanda - totalPagoAgora;
-            if (falta > 0.01) { box.style.color = "#dc2626"; box.innerHTML = `Falta: R$ <span id="pagRestanteLabel">${falta.toFixed(2)}</span>`; document.getElementById('btnConfirmarPagamento').disabled = true; } 
-            else if (falta < -0.01) { box.style.color = "#eab308"; box.innerHTML = `Troco: R$ <span id="pagRestanteLabel">${Math.abs(falta).toFixed(2)}</span>`; document.getElementById('btnConfirmarPagamento').disabled = false; } 
-            else { box.style.color = "#16a34a"; box.innerHTML = `Exato: R$ <span id="pagRestanteLabel">0.00</span>`; document.getElementById('btnConfirmarPagamento').disabled = false; }
+        // A LÓGICA AGORA É IGUAL PARA TODOS (Venda Direta, Cobrar Todo ou Parcial).
+        // Se a pessoa disse que ia dar de entrada 11.66, a janela quer receber os 11.66 exatos ou dar troco.
+        let falta = totalRequerido - totalPagoAgora;
+        
+        if (falta > 0.01) { 
+            box.style.color = "#dc2626"; box.innerHTML = `Falta: R$ <span id="pagRestanteLabel">${falta.toFixed(2)}</span>`; 
+            document.getElementById('btnConfirmarPagamento').disabled = true; 
+        } else if (falta < -0.01) { 
+            box.style.color = "#eab308"; box.innerHTML = `Troco: R$ <span id="pagRestanteLabel">${Math.abs(falta).toFixed(2)}</span>`; 
+            document.getElementById('btnConfirmarPagamento').disabled = false; 
+        } else { 
+            box.style.color = "#16a34a"; box.innerHTML = `Exato: R$ <span id="pagRestanteLabel">0.00</span>`; 
+            document.getElementById('btnConfirmarPagamento').disabled = false; 
         }
     }
 
@@ -550,10 +542,14 @@
             if(confirm("Enviar por WhatsApp?")) enviarWhatsApp(acao.cliente, iArr, acao.totalSalvo);
         }
         else if (acao.tipo === 'comanda_parcial') {
+            // O target agora é bater o valor que foi prometido abater na comanda
+            // O valor a descontar da comanda é o acao.valorTotal (sem o troco, se houver).
+            let valorAbatidoReal = acao.valorTotal; 
+            
             document.getElementById('status-bar').innerText = "Recebendo Parcial...";
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "pagamento_parcial_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, forma_pagamento: formaPagStr, valor_pago: totalPagoFinal }) });
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "pagamento_parcial_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, forma_pagamento: formaPagStr, valor_pago: valorAbatidoReal }) });
             recarregarDadosSilencioso();
-            alert(`Pagamento parcial de R$ ${totalPagoFinal.toFixed(2)} recebido com sucesso!\nA comanda continua aberta com o restante do saldo.`);
+            alert(`Pagamento parcial de R$ ${valorAbatidoReal.toFixed(2)} registado!\nA comanda continua em aberto com o restante do saldo.`);
         }
     }
 
@@ -581,7 +577,8 @@
     
     // EXCLUIR ITEM DO CARRINHO (Botão X)
     function removerItemCarrinho(index) {
-        total -= (carrinho[index].preco * carrinho[index].qtd); carrinho.splice(index, 1); atualizarCarrinho();
+        let confirmacao = confirm(`Deseja remover ${carrinho[index].nome} da venda atual?`);
+        if(confirmacao) { total -= (carrinho[index].preco * carrinho[index].qtd); carrinho.splice(index, 1); atualizarCarrinho(); }
     }
 
     function atualizarCarrinho() { 
@@ -593,7 +590,7 @@
     function abrirCamera() { let divCamera = document.getElementById('leitorCamera'); divCamera.style.display = "block"; if (!leitorHtml5) leitorHtml5 = new Html5Qrcode("leitorCamera"); leitorHtml5.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, (codigoLido) => { fecharCamera(); document.getElementById(inputCameraAlvo).value = codigoLido; if(inputCameraAlvo === 'codigoInput') processarEntradaCodigo(codigoLido); }, (erro) => {}).catch(err => { alert("Sem acesso à câmara."); divCamera.style.display = "none"; }); }
     function fecharCamera() { if(leitorHtml5) leitorHtml5.stop().then(() => { document.getElementById('leitorCamera').style.display = "none"; }).catch(e=>e); }
 
-    // --- COMANDAS E PAGAMENTO PARCIAL ---
+    // --- COMANDAS ---
     function abrirModalComandas() { if(!turnoAtual) return alert("Abra o caixa!"); if(carrinho.length === 0) return alert("Carrinho vazio!"); let lista = document.getElementById('listaComandasModal'); lista.innerHTML = bancoComandas.length === 0 ? "<p>Nenhuma comanda aberta.</p>" : bancoComandas.map(c => `<button type="button" class="btn-comanda-item" onclick="adicionarNaComandaExistente('${c.ID_Comanda}', '${c.Cliente}')">👤 ${c.Cliente} (Comanda #${c.ID_Comanda})</button>`).join(''); document.getElementById('modalComandas').style.display = 'flex'; }
     function fecharModalComandas() { document.getElementById('modalComandas').style.display = 'none'; }
     async function criarNovaComandaModal() { fecharModalComandas(); let nome = prompt("Nome do Cliente para a NOVA comanda?"); if(!nome) return; document.getElementById('status-bar').innerText = "Abrindo Comanda..."; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_comanda", cliente: nome, total: total, carrinho: carrinho }) }); alert("Comanda criada!"); carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso(); }
@@ -618,14 +615,21 @@
     
     function iniciarPagamentoParcial(idComanda, cliente, totalVal) {
         if(!turnoAtual) return alert("Abra o caixa!");
-        abrirModalPagamento(totalVal, { tipo: 'comanda_parcial', id_comanda: idComanda, cliente: cliente, valorTotal: totalVal });
+        let promptVal = prompt(`A comanda de ${cliente} tem saldo de R$ ${totalVal.toFixed(2)}.\n\nQuanto ele vai adiantar (pagar agora)?`, "0,00");
+        if(promptVal === null) return;
+        let valorA_Pagar = parseFloat(promptVal.replace(',','.'));
+        if(!valorA_Pagar || isNaN(valorA_Pagar) || valorA_Pagar <= 0) return;
+        if(valorA_Pagar >= totalVal) return alert("O valor digitado liquida ou passa do total da comanda. Para isso, feche este aviso e use o botão verde 'Cobrar Todo'.");
+
+        // O valor total que o caixa de pagamento vai exigir é o valor parcial que ele prometeu dar!
+        abrirModalPagamento(valorA_Pagar, { tipo: 'comanda_parcial', id_comanda: idComanda, cliente: cliente, valorTotal: valorA_Pagar });
     }
 
     function iniciarCobrancaComanda(idComanda, cliente, itensJsonStr, totalVal) {
         if(!turnoAtual) return alert("Abra o caixa!");
         let numPessoas = parseInt(prompt("Dividir a conta para quantas pessoas? (Deixe 1 para não dividir)", "1")) || 1;
         let msgDescricaoExtra = numPessoas > 1 ? ` (Dividido para ${numPessoas})` : "";
-        if(numPessoas > 1) alert(`🎾 DIVIDIDO PARA ${numPessoas} PESSOAS\n💰 CADA UM PAGA: R$ ${(totalVal / numPessoas).toFixed(2)}\n\nAvance para registrar como esse valor total foi pago.`);
+        if(numPessoas > 1) alert(`🎾 DIVIDIDO PARA ${numPessoas} PESSOAS\n💰 CADA UM PAGA: R$ ${(totalVal / numPessoas).toFixed(2)}\n\nAvance para registar as formas de pagamento até liquidar a conta.`);
         
         abrirModalPagamento(totalVal, { tipo: 'comanda', id_comanda: idComanda, cliente: cliente, itensJsonStr: itensJsonStr, totalSalvo: totalVal, valorTotal: totalVal, msgExtra: msgDescricaoExtra });
     }
@@ -646,7 +650,7 @@
     }
     async function removerProduto(id) { if(confirm("Apagar produto?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover", id: id }) }); recarregarDadosSilencioso(); } }
 
-    // --- LIVRO CAIXA E DASHBOARD ---
+    // --- LIVRO CAIXA ---
     function mudarFormDespesa() { let t = document.getElementById('tipoMovimento').value; if(t === "Saida") document.getElementById('boxCategoriaDespesa').style.display = "block"; else document.getElementById('boxCategoriaDespesa').style.display = "none"; }
     function parseDataBR(dataStr) { if(!dataStr) return new Date(0); let partes = dataStr.split(/[\s,]+/); let dma = partes[0].split('/'); if(dma.length === 3) return new Date(`${dma[2]}-${dma[1]}-${dma[0]}T12:00:00`); return new Date(0); }
     
