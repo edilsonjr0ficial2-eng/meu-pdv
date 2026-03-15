@@ -338,7 +338,7 @@
     
     let chartFat = null, chartProd = null;
     let acaoPagamentoPendente = null;
-    let idComandaEmEdicao = null; // NOVO: Controla se estamos a editar uma comanda no caixa
+    let idComandaEmEdicao = null;
 
     async function reqPOST(dados) {
         return await fetch(API_URL, { method: 'POST', body: JSON.stringify(dados), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
@@ -461,7 +461,7 @@
         chartProd = new Chart(document.getElementById('graficoProdutos'), { type: 'doughnut', data: { labels: prodOrder.map(p => p.nome), datasets: [{ data: prodOrder.map(p => p.qtd), backgroundColor: ['#10b981', '#0ea5e9', '#eab308', '#f97316', '#8b5cf6'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
     }
 
-    // --- NOVA LÓGICA DO MODAL DE PAGAMENTO (FLEXÍVEL) ---
+    // --- NOVA LÓGICA DO MODAL DE PAGAMENTO ---
     function abrirModalPagamento(valorTotal, acaoObj) {
         document.getElementById('pagTotalLabel').innerText = valorTotal.toFixed(2);
         ['pagPix','pagCredito','pagDebito','pagEspecie'].forEach(id => document.getElementById(id).value = "");
@@ -547,30 +547,20 @@
 
     // --- EDIÇÃO DE COMANDAS ---
     function editarComanda(id, cliente, itensEncoded) {
-        idComandaEmEdicao = id;
-        carrinho = JSON.parse(decodeURIComponent(itensEncoded));
+        idComandaEmEdicao = id; carrinho = JSON.parse(decodeURIComponent(itensEncoded));
         total = carrinho.reduce((acc, item) => acc + (item.preco * item.qtd), 0);
-        
-        document.getElementById('bannerEdicaoComanda').style.display = 'flex';
-        document.getElementById('nomeEdicaoComanda').innerText = cliente;
-        
+        document.getElementById('bannerEdicaoComanda').style.display = 'flex'; document.getElementById('nomeEdicaoComanda').innerText = cliente;
         let selectCli = document.getElementById('selectClienteVenda');
         if(!Array.from(selectCli.options).some(opt => opt.value === cliente)) { selectCli.add(new Option(cliente, cliente)); }
         selectCli.value = cliente;
-        
-        document.getElementById('btnSalvarComanda').innerText = "Gravar Alterações (F3)";
-        document.getElementById('btnSalvarComanda').classList.replace("btn-laranja", "btn-amarelo");
-        
+        document.getElementById('btnSalvarComanda').innerText = "Gravar Alterações (F3)"; document.getElementById('btnSalvarComanda').classList.replace("btn-laranja", "btn-amarelo");
         atualizarCarrinho(); mudarTela('tela-caixa');
     }
 
     function cancelarEdicaoComanda() {
-        idComandaEmEdicao = null; carrinho = []; total = 0;
-        document.getElementById('bannerEdicaoComanda').style.display = 'none';
-        document.getElementById('btnSalvarComanda').innerText = "Salvar na Comanda (F3)";
-        document.getElementById('btnSalvarComanda').classList.replace("btn-amarelo", "btn-laranja");
-        document.getElementById('selectClienteVenda').value = "Consumidor Final";
-        atualizarCarrinho();
+        idComandaEmEdicao = null; carrinho = []; total = 0; document.getElementById('bannerEdicaoComanda').style.display = 'none';
+        document.getElementById('btnSalvarComanda').innerText = "Salvar na Comanda (F3)"; document.getElementById('btnSalvarComanda').classList.replace("btn-amarelo", "btn-laranja");
+        document.getElementById('selectClienteVenda').value = "Consumidor Final"; atualizarCarrinho();
     }
 
     function acaoBotaoComanda() {
@@ -586,14 +576,13 @@
         cancelarEdicaoComanda(); recarregarDadosSilencioso();
     }
 
-    // --- CAIXA: QUADRAS E CARRINHO (QTD DINÂMICA) ---
+    // --- CAIXA: QUADRAS E CARRINHO ---
     function adicionarQuadra(nomeQuadra) { let horas = prompt(`Quantas horas para a ${nomeQuadra}?`, "1"); if(!horas) return; let valor = prompt(`Valor TOTAL a cobrar?`, "80.00"); if(!valor) return; let precoObj = parseFloat(valor.replace(',','.')); carrinho.push({ codigo: 'SERVICO', nome: `${nomeQuadra} (${parseInt(horas)}h)`, preco: precoObj, qtd: 1 }); total += precoObj; atualizarCarrinho(); }
     
     document.getElementById('codigoInput').addEventListener('keypress', function(e) { if (e.key === 'Enter' && this.value.trim() !== "") { e.preventDefault(); processarEntradaCodigo(this.value.trim()); this.value = ""; } });
     
     function processarEntradaCodigo(termo) { 
-        termo = termo.toLowerCase(); 
-        let prod = bancoDeProdutos.find(p => String(p.ID_Produto).toLowerCase() === termo || String(p.Nome_Produto).toLowerCase() === termo); 
+        termo = termo.toLowerCase(); let prod = bancoDeProdutos.find(p => String(p.ID_Produto).toLowerCase() === termo || String(p.Nome_Produto).toLowerCase() === termo); 
         if (!prod) { let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto).toLowerCase().includes(termo)); if (achados.length === 1) prod = achados[0]; else if (achados.length > 1) { alert("Múltiplos produtos encontrados. Digite o código exato."); return; } } 
         
         if (prod) { 
@@ -601,9 +590,7 @@
             let qtdMult = parseInt(document.getElementById('qtdInput').value) || 1;
             let ext = carrinho.find(i => i.codigo === prod.ID_Produto); 
             if(ext) { ext.qtd += qtdMult; } else { carrinho.push({ codigo: prod.ID_Produto, nome: prod.Nome_Produto, preco: preco, qtd: qtdMult }); } 
-            total += (preco * qtdMult); 
-            atualizarCarrinho(); 
-            document.getElementById('qtdInput').value = "1"; // Reseta a qtd para 1
+            total += (preco * qtdMult); atualizarCarrinho(); document.getElementById('qtdInput').value = "1"; 
         } else { alert("Produto não encontrado!"); } 
     }
     
@@ -651,7 +638,8 @@
         if(promptVal === null) return;
         let valorA_Pagar = parseFloat(promptVal.replace(',','.'));
         if(!valorA_Pagar || isNaN(valorA_Pagar) || valorA_Pagar <= 0) return;
-        if(valorA_Pagar >= totalVal) return alert("O valor digitado liquida ou passa do total da comanda. Para isso, feche este aviso e use o botão verde 'Cobrar Todo'.");
+        if(valorA_Pagar >= totalVal) return alert("O valor digitado liquida ou passa do total da comanda. Para isso, use o botão verde 'Cobrar Todo'.");
+
         abrirModalPagamento(valorA_Pagar, { tipo: 'comanda_parcial', id_comanda: idComanda, cliente: cliente, valorTotal: valorA_Pagar });
     }
 
@@ -659,7 +647,8 @@
         if(!turnoAtual) return alert("Abra o caixa!");
         let numPessoas = parseInt(prompt("Dividir a conta para quantas pessoas? (Deixe 1 para não dividir)", "1")) || 1;
         let msgDescricaoExtra = numPessoas > 1 ? ` (Dividido para ${numPessoas})` : "";
-        if(numPessoas > 1) alert(`🎾 DIVIDIDO PARA ${numPessoas} PESSOAS\n💰 CADA UM PAGA: R$ ${(totalVal / numPessoas).toFixed(2)}\n\nAvance para registar as formas de pagamento até liquidar a conta.`);
+        if(numPessoas > 1) alert(`🎾 DIVIDIDO PARA ${numPessoas} PESSOAS\n💰 CADA UM PAGA: R$ ${(totalVal / numPessoas).toFixed(2)}\n\nAvance para registrar como esse valor total foi pago.`);
+        
         abrirModalPagamento(totalVal, { tipo: 'comanda', id_comanda: idComanda, cliente: cliente, itensJsonStr: itensJsonStr, totalSalvo: totalVal, valorTotal: totalVal, msgExtra: msgDescricaoExtra });
     }
 
@@ -679,7 +668,7 @@
     }
     async function removerProduto(id) { if(confirm("Apagar produto?")) { await reqPOST({ acao: "remover", id: id }); recarregarDadosSilencioso(); } }
 
-    // --- LIVRO CAIXA ---
+    // --- LIVRO CAIXA E DASHBOARD ---
     function mudarFormDespesa() { let t = document.getElementById('tipoMovimento').value; if(t === "Saida") document.getElementById('boxCategoriaDespesa').style.display = "block"; else document.getElementById('boxCategoriaDespesa').style.display = "none"; }
     function parseDataBR(dataStr) { if(!dataStr) return new Date(0); let partes = dataStr.split(/[\s,]+/); let dma = partes[0].split('/'); if(dma.length === 3) return new Date(`${dma[2]}-${dma[1]}-${dma[0]}T12:00:00`); return new Date(0); }
     
@@ -714,14 +703,21 @@
             let c = m.Tipo==='Entrada' ? 'val-entrada' : 'val-saida'; 
 
             if(m.Tipo === 'Entrada') somaEntradas += v; if(m.Tipo === 'Saida') somaSaidas += v;
-            htmlTabela += `<tr><td>${hData}</td><td class="${c}">${m.Tipo}</td><td>${m.Descricao}</td><td class="${c}">R$ ${v.toFixed(2)}</td><td><button type="button" class="btn-vermelho" style="padding: 5px 10px; font-size:12px;" onclick="excluirItemCaixa('${m.ID_Transacao}')">X Excluir</button></td></tr>`; 
+            htmlTabela += `<tr><td>${hData}</td><td class="${c}">${m.Tipo}</td><td>${m.Descricao}</td><td class="${c}">R$ ${v.toFixed(2)}</td><td><button type="button" class="btn-vermelho" style="padding: 5px 10px; font-size:12px;" onclick="excluirItemCaixa('${m.ID_Transacao}')">X Cancelar</button></td></tr>`; 
         });
 
         document.getElementById('listaCaixa').innerHTML = htmlTabela; document.getElementById('resumo-filtro-entradas').innerText = "R$ " + somaEntradas.toFixed(2); document.getElementById('resumo-filtro-saidas').innerText = "R$ " + somaSaidas.toFixed(2); document.getElementById('resumo-filtro-saldo').innerText = "R$ " + (somaEntradas - somaSaidas).toFixed(2);
     }
 
     function limparFiltroCaixa() { document.getElementById('filtroDataInicio').value = ""; document.getElementById('filtroDataFim').value = ""; filtrarLivroCaixa(); }
-    async function excluirItemCaixa(idTrans) { if(confirm("Apagar este registro do Caixa?")) { await reqPOST({ acao: "excluir_caixa", id_transacao: idTrans }); recarregarDadosSilencioso(); } }
+    
+    // --- EXCLUSÃO DE ITEM DO CAIXA E RETORNO AO ESTOQUE ---
+    async function excluirItemCaixa(idTrans) { 
+        if(confirm("Deseja cancelar este registro do Caixa?\n\nSe for uma Venda ou Comanda paga, os itens retornarão ao estoque automaticamente e a venda será apagada.")) { 
+            await reqPOST({ acao: "excluir_caixa", id_transacao: idTrans }); 
+            recarregarDadosSilencioso(); 
+        } 
+    }
     
     async function registrarCaixa() { 
         let t = document.getElementById('tipoMovimento').value, d = document.getElementById('descMovimento').value;
@@ -755,7 +751,6 @@
     
     function atualizarInterfaceTurno() { let s = turnoAtual ? ["#10b981", "ABERTO", "Fechar Caixa", "btn-vermelho", "none", false] : ["#ef4444", "FECHADO", "Abrir Caixa", "btn-verde", "block", true]; document.getElementById('card-status-caixa').style.borderColor = s[0]; document.getElementById('texto-status-caixa').style.color = s[0]; document.getElementById('texto-status-caixa').innerText = s[1]; document.getElementById('btnAcaoCaixa').innerText = s[2]; document.getElementById('btnAcaoCaixa').className = s[3]; document.getElementById('alerta-caixa').style.display = s[4]; ['codigoInput','btnCamera','btnSalvarComanda','btnFinalizarVenda','btnRegistrarLivro'].forEach(id => document.getElementById(id).disabled = s[5]); }
 
-    // --- USUÁRIOS E CLIENTES ---
     function atualizarListaUsuarios() { let tbody = document.getElementById('listaUsuariosGestao'); tbody.innerHTML = ""; bancoUsuarios.forEach(u => { if(!u.Login) return; let btnApagar = String(u.Login).toLowerCase() === 'edilson' ? `<span style="color:#94a3b8; font-size:12px;">Admin Fixo</span>` : `<button type="button" class="btn-vermelho" onclick="removerUsuarioSistema('${u.Login}')">Excluir</button>`; tbody.innerHTML += `<tr><td style="font-weight:bold;">${u.Login}</td><td>${btnApagar}</td></tr>`; }); }
     async function adicionarUsuarioSistema() { let l = document.getElementById('novoUserLogin').value.trim(); let s = document.getElementById('novoUserSenha').value.trim(); if(!l || !s) return alert("Preencha Login e Senha!"); if(bancoUsuarios.find(u => String(u.Login).toLowerCase() === l.toLowerCase())) return alert("Login já existe!"); document.getElementById('btnAdicionarUser').innerText = "Gravando..."; await reqPOST({ acao: "adicionar_usuario", login: l, senha: s }); document.getElementById('novoUserLogin').value = ""; document.getElementById('novoUserSenha').value = ""; document.getElementById('btnAdicionarUser').innerText = "Criar Operador"; recarregarDadosSilencioso(); }
     async function removerUsuarioSistema(login) { if(confirm(`Remover acesso de ${login}?`)) { await reqPOST({ acao: "remover_usuario", login: login }); recarregarDadosSilencioso(); } }
