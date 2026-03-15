@@ -322,7 +322,6 @@
 </div>
 
 <script>
-    // --- SEU LINK OFICIAL INTACTO ---
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
     let bancoDeProdutos = [], bancoComandas = [], bancoCaixaGlobal = [], bancoClientes = [], bancoUsuarios = [], bancoVendas = [];
@@ -331,6 +330,11 @@
     
     let chartFat = null, chartProd = null;
     let acaoPagamentoPendente = null;
+
+    // --- FUNÇÃO DE COMUNICAÇÃO SEGURA COM O GOOGLE (CORRIGE BUG DE CORS/TELA BRANCA) ---
+    async function reqPOST(dados) {
+        return await fetch(API_URL, { method: 'POST', body: JSON.stringify(dados), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+    }
 
     document.getElementById('loginSenha').addEventListener('keypress', e => { 
         if(e.key === 'Enter') { e.preventDefault(); fazerLogin(); } 
@@ -484,7 +488,7 @@
     function fecharModalPagamento() { document.getElementById('modalPagamento').style.display = 'none'; acaoPagamentoPendente = null; }
 
     function calcularRestantePagamento() {
-        let totalRequerido = acaoPagamentoPendente.valorTotal; // No parcial, este valor é exatamente o que o cliente disse que ia dar de entrada.
+        let totalRequerido = acaoPagamentoPendente.valorTotal; 
         
         let p = parseFloat(document.getElementById('pagPix').value.replace(',', '.')) || 0;
         let c = parseFloat(document.getElementById('pagCredito').value.replace(',', '.')) || 0;
@@ -493,9 +497,6 @@
         let totalPagoAgora = p + c + d + e;
         
         let box = document.getElementById('boxStatusPagamento');
-        
-        // A LÓGICA AGORA É IGUAL PARA TODOS (Venda Direta, Cobrar Todo ou Parcial).
-        // Se a pessoa disse que ia dar de entrada 11.66, a janela quer receber os 11.66 exatos ou dar troco.
         let falta = totalRequerido - totalPagoAgora;
         
         if (falta > 0.01) { 
@@ -528,7 +529,7 @@
         let acao = acaoPagamentoPendente;
         if(acao.tipo === 'venda_direta') {
             document.getElementById('btnFinalizarVenda').innerText = "Gravando..."; document.getElementById('btnFinalizarVenda').disabled = true;
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "venda", cliente: acao.cliente, total: acao.totalSalvo, carrinho: acao.carrinhoSalvo, operador: operadorAtual, forma_pagamento: formaPagStr }) });
+            await reqPOST({ acao: "venda", cliente: acao.cliente, total: acao.totalSalvo, carrinho: acao.carrinhoSalvo, operador: operadorAtual, forma_pagamento: formaPagStr });
             carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso();
             document.getElementById('btnFinalizarVenda').innerText = "Finalizar Venda Direta (F2)"; document.getElementById('btnFinalizarVenda').disabled = false;
             if(confirm("Imprimir recibo térmico?")) imprimirCupao(acao.cliente, acao.carrinhoSalvo, acao.totalSalvo);
@@ -536,20 +537,16 @@
         } 
         else if (acao.tipo === 'comanda') {
             document.getElementById('status-bar').innerText = "Recebendo...";
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, forma_pagamento: formaPagStr + acao.msgExtra }) });
+            await reqPOST({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, forma_pagamento: formaPagStr + acao.msgExtra });
             let iArr = JSON.parse(decodeURIComponent(acao.itensJsonStr)); recarregarDadosSilencioso();
             if(confirm("Imprimir recibo térmico?")) imprimirCupao(acao.cliente, iArr, acao.totalSalvo);
             if(confirm("Enviar por WhatsApp?")) enviarWhatsApp(acao.cliente, iArr, acao.totalSalvo);
         }
         else if (acao.tipo === 'comanda_parcial') {
-            // O target agora é bater o valor que foi prometido abater na comanda
-            // O valor a descontar da comanda é o acao.valorTotal (sem o troco, se houver).
-            let valorAbatidoReal = acao.valorTotal; 
-            
             document.getElementById('status-bar').innerText = "Recebendo Parcial...";
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "pagamento_parcial_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, forma_pagamento: formaPagStr, valor_pago: valorAbatidoReal }) });
+            await reqPOST({ acao: "pagamento_parcial_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, forma_pagamento: formaPagStr, valor_pago: totalPagoFinal });
             recarregarDadosSilencioso();
-            alert(`Pagamento parcial de R$ ${valorAbatidoReal.toFixed(2)} registado!\nA comanda continua em aberto com o restante do saldo.`);
+            alert(`Pagamento parcial de R$ ${totalPagoFinal.toFixed(2)} registado!\nA comanda continua em aberto com o restante do saldo.`);
         }
     }
 
@@ -593,8 +590,8 @@
     // --- COMANDAS ---
     function abrirModalComandas() { if(!turnoAtual) return alert("Abra o caixa!"); if(carrinho.length === 0) return alert("Carrinho vazio!"); let lista = document.getElementById('listaComandasModal'); lista.innerHTML = bancoComandas.length === 0 ? "<p>Nenhuma comanda aberta.</p>" : bancoComandas.map(c => `<button type="button" class="btn-comanda-item" onclick="adicionarNaComandaExistente('${c.ID_Comanda}', '${c.Cliente}')">👤 ${c.Cliente} (Comanda #${c.ID_Comanda})</button>`).join(''); document.getElementById('modalComandas').style.display = 'flex'; }
     function fecharModalComandas() { document.getElementById('modalComandas').style.display = 'none'; }
-    async function criarNovaComandaModal() { fecharModalComandas(); let nome = prompt("Nome do Cliente para a NOVA comanda?"); if(!nome) return; document.getElementById('status-bar').innerText = "Abrindo Comanda..."; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_comanda", cliente: nome, total: total, carrinho: carrinho }) }); alert("Comanda criada!"); carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso(); }
-    async function adicionarNaComandaExistente(idComanda, nomeCli) { fecharModalComandas(); document.getElementById('status-bar').innerText = "Adicionando itens..."; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_item_comanda", id_comanda: idComanda, total: total, carrinho: carrinho }) }); alert(`Itens adicionados!`); carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso(); }
+    async function criarNovaComandaModal() { fecharModalComandas(); let nome = prompt("Nome do Cliente para a NOVA comanda?"); if(!nome) return; document.getElementById('status-bar').innerText = "Abrindo Comanda..."; await reqPOST({ acao: "abrir_comanda", cliente: nome, total: total, carrinho: carrinho }); alert("Comanda criada!"); carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso(); }
+    async function adicionarNaComandaExistente(idComanda, nomeCli) { fecharModalComandas(); document.getElementById('status-bar').innerText = "Adicionando itens..."; await reqPOST({ acao: "adicionar_item_comanda", id_comanda: idComanda, total: total, carrinho: carrinho }); alert(`Itens adicionados!`); carrinho = []; total = 0; atualizarCarrinho(); recarregarDadosSilencioso(); }
     
     function atualizarTabelaComandas() { 
         let tbody = document.getElementById('listaComandas'); 
@@ -621,7 +618,6 @@
         if(!valorA_Pagar || isNaN(valorA_Pagar) || valorA_Pagar <= 0) return;
         if(valorA_Pagar >= totalVal) return alert("O valor digitado liquida ou passa do total da comanda. Para isso, feche este aviso e use o botão verde 'Cobrar Todo'.");
 
-        // O valor total que o caixa de pagamento vai exigir é o valor parcial que ele prometeu dar!
         abrirModalPagamento(valorA_Pagar, { tipo: 'comanda_parcial', id_comanda: idComanda, cliente: cliente, valorTotal: valorA_Pagar });
     }
 
@@ -634,7 +630,7 @@
         abrirModalPagamento(totalVal, { tipo: 'comanda', id_comanda: idComanda, cliente: cliente, itensJsonStr: itensJsonStr, totalSalvo: totalVal, valorTotal: totalVal, msgExtra: msgDescricaoExtra });
     }
 
-    async function excluirComanda(idComanda) { if(confirm("ATENÇÃO: Deseja excluir a comanda e devolver TODOS os itens ao estoque sem cobrar?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "excluir_comanda", id_comanda: idComanda }) }); recarregarDadosSilencioso(); } }
+    async function excluirComanda(idComanda) { if(confirm("ATENÇÃO: Deseja excluir a comanda e devolver TODOS os itens ao estoque sem cobrar?")) { await reqPOST({ acao: "excluir_comanda", id_comanda: idComanda }); recarregarDadosSilencioso(); } }
 
     // --- ESTOQUE ---
     function atualizarTabelaEstoque() { document.getElementById('listaGestao').innerHTML = bancoDeProdutos.map(p => { if(!p.ID_Produto) return ''; return `<tr><td>${p.ID_Produto}</td><td>${p.Nome_Produto}</td><td>R$ ${p.Preco_Custo}</td><td>R$ ${p.Preco_Venda}</td><td style="font-weight:bold;">${p.Quantidade}</td><td>${p.Estoque_Minimo || 0}</td><td style="display:flex; gap:5px;"><button type="button" class="btn-amarelo" onclick="prepararEdicaoEstoque('${p.ID_Produto}')">Editar</button><button type="button" class="btn-vermelho" onclick="removerProduto('${p.ID_Produto}')">Apagar</button></td></tr>`; }).join(''); }
@@ -645,10 +641,10 @@
         let custo = document.getElementById('novoCusto').value.replace(',','.'), preco = document.getElementById('novoPreco').value.replace(',','.'), qtd = document.getElementById('novaQtd').value, min = document.getElementById('novoMinimo').value || 0; 
         if(!id || !nome || !preco || !qtd) return alert("Preencha Código, Nome, Venda e Qtd!"); 
         let acaoReq = idEditandoEstoque ? "editar_produto" : "adicionar"; document.getElementById('btnAdicionarEstoque').innerText = "Salvando..."; 
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: acaoReq, id_antigo: idEditandoEstoque, id: id, nome: nome, custo: custo, preco: preco, quantidade: qtd, estoque_minimo: min }) }); 
+        await reqPOST({ acao: acaoReq, id_antigo: idEditandoEstoque, id: id, nome: nome, custo: custo, preco: preco, quantidade: qtd, estoque_minimo: min }); 
         document.getElementById('novoId').value = ""; document.getElementById('novoNome').value = ""; document.getElementById('novoCusto').value = ""; document.getElementById('novoPreco').value = ""; document.getElementById('novaQtd').value = ""; document.getElementById('novoMinimo').value = ""; idEditandoEstoque = null; document.getElementById('btnAdicionarEstoque').innerText = "Salvar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-verde"; recarregarDadosSilencioso(); 
     }
-    async function removerProduto(id) { if(confirm("Apagar produto?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover", id: id }) }); recarregarDadosSilencioso(); } }
+    async function removerProduto(id) { if(confirm("Apagar produto?")) { await reqPOST({ acao: "remover", id: id }); recarregarDadosSilencioso(); } }
 
     // --- LIVRO CAIXA ---
     function mudarFormDespesa() { let t = document.getElementById('tipoMovimento').value; if(t === "Saida") document.getElementById('boxCategoriaDespesa').style.display = "block"; else document.getElementById('boxCategoriaDespesa').style.display = "none"; }
@@ -692,19 +688,19 @@
     }
 
     function limparFiltroCaixa() { document.getElementById('filtroDataInicio').value = ""; document.getElementById('filtroDataFim').value = ""; filtrarLivroCaixa(); }
-    async function excluirItemCaixa(idTrans) { if(confirm("Apagar este registro do Caixa?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "excluir_caixa", id_transacao: idTrans }) }); recarregarDadosSilencioso(); } }
+    async function excluirItemCaixa(idTrans) { if(confirm("Apagar este registro do Caixa?")) { await reqPOST({ acao: "excluir_caixa", id_transacao: idTrans }); recarregarDadosSilencioso(); } }
     
     async function registrarCaixa() { 
         let t = document.getElementById('tipoMovimento').value, d = document.getElementById('descMovimento').value;
         let v = document.getElementById('valorMovimento').value.replace(',','.'); 
         if(t === "Saida") d = `[${document.getElementById('categoriaDespesa').value}] ` + d; 
-        if(d&&v) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "caixa", tipo: t, descricao: d, valor: v, operador: operadorAtual }) }); document.getElementById('descMovimento').value=""; document.getElementById('valorMovimento').value=""; recarregarDadosSilencioso(); } 
+        if(d&&v) { await reqPOST({ acao: "caixa", tipo: t, descricao: d, valor: v, operador: operadorAtual }); document.getElementById('descMovimento').value=""; document.getElementById('valorMovimento').value=""; recarregarDadosSilencioso(); } 
     }
     
     async function acaoCaixa() { 
         if(!turnoAtual) { 
             let pVal = prompt("Troco inicial na gaveta (Ex: 50,00):", "0,00"); 
-            if(pVal!==null) { let f = parseFloat(pVal.replace(',','.')); await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "abrir_caixa", fundo: f||0, operador: operadorAtual }) }); recarregarDadosSilencioso(); } 
+            if(pVal!==null) { let f = parseFloat(pVal.replace(',','.')); await reqPOST({ acao: "abrir_caixa", fundo: f||0, operador: operadorAtual }); recarregarDadosSilencioso(); } 
         } else { 
             let esp = 0, totalEntradas = 0, totalSaidas = 0; 
             bancoCaixaGlobal.forEach(m => { 
@@ -717,7 +713,7 @@
             if(apStr!==null) { 
                 let ap = parseFloat(apStr.replace(',','.'))||0; let dif = ap - esp; 
                 if(confirm(`Esperado: R$ ${esp.toFixed(2)}\nContado: R$ ${ap.toFixed(2)}\nConfirmar fechamento?`)) { 
-                    await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "fechar_caixa", valor_apurado: ap, diferenca: dif }) }); recarregarDadosSilencioso(); 
+                    await reqPOST({ acao: "fechar_caixa", valor_apurado: ap, diferenca: dif }); recarregarDadosSilencioso(); 
                     if(confirm("Enviar resumo do Fechamento de Caixa para o WhatsApp do grupo?")) { let textoFechamento = `*📊 FECHAMENTO DE CAIXA*%0A*Operador:* ${operadorAtual}%0A*Data:* ${new Date().toLocaleString('pt-BR')}%0A----------------%0A*Total Entradas:* R$ ${totalEntradas.toFixed(2)}%0A*Total Saídas (Despesas):* R$ ${totalSaidas.toFixed(2)}%0A----------------%0A*Esperado (Sistema):* R$ ${esp.toFixed(2)}%0A*Apurado (Gaveta):* R$ ${ap.toFixed(2)}%0A*Diferença:* R$ ${dif.toFixed(2)}%0A----------------%0A*Turno Encerrado.*`; window.open(`https://wa.me/?text=${textoFechamento}`, '_blank'); }
                 } 
             } 
@@ -728,11 +724,11 @@
 
     // --- USUÁRIOS E CLIENTES ---
     function atualizarListaUsuarios() { let tbody = document.getElementById('listaUsuariosGestao'); tbody.innerHTML = ""; bancoUsuarios.forEach(u => { if(!u.Login) return; let btnApagar = String(u.Login).toLowerCase() === 'edilson' ? `<span style="color:#94a3b8; font-size:12px;">Admin Fixo</span>` : `<button type="button" class="btn-vermelho" onclick="removerUsuarioSistema('${u.Login}')">Excluir</button>`; tbody.innerHTML += `<tr><td style="font-weight:bold;">${u.Login}</td><td>${btnApagar}</td></tr>`; }); }
-    async function adicionarUsuarioSistema() { let l = document.getElementById('novoUserLogin').value.trim(); let s = document.getElementById('novoUserSenha').value.trim(); if(!l || !s) return alert("Preencha Login e Senha!"); if(bancoUsuarios.find(u => String(u.Login).toLowerCase() === l.toLowerCase())) return alert("Login já existe!"); document.getElementById('btnAdicionarUser').innerText = "Gravando..."; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_usuario", login: l, senha: s }) }); document.getElementById('novoUserLogin').value = ""; document.getElementById('novoUserSenha').value = ""; document.getElementById('btnAdicionarUser').innerText = "Criar Operador"; recarregarDadosSilencioso(); }
-    async function removerUsuarioSistema(login) { if(confirm(`Remover acesso de ${login}?`)) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_usuario", login: login }) }); recarregarDadosSilencioso(); } }
+    async function adicionarUsuarioSistema() { let l = document.getElementById('novoUserLogin').value.trim(); let s = document.getElementById('novoUserSenha').value.trim(); if(!l || !s) return alert("Preencha Login e Senha!"); if(bancoUsuarios.find(u => String(u.Login).toLowerCase() === l.toLowerCase())) return alert("Login já existe!"); document.getElementById('btnAdicionarUser').innerText = "Gravando..."; await reqPOST({ acao: "adicionar_usuario", login: l, senha: s }); document.getElementById('novoUserLogin').value = ""; document.getElementById('novoUserSenha').value = ""; document.getElementById('btnAdicionarUser').innerText = "Criar Operador"; recarregarDadosSilencioso(); }
+    async function removerUsuarioSistema(login) { if(confirm(`Remover acesso de ${login}?`)) { await reqPOST({ acao: "remover_usuario", login: login }); recarregarDadosSilencioso(); } }
 
-    async function adicionarCliente() { let id = document.getElementById('novoIdCli').value, nome = document.getElementById('novoNomeCli').value, tel = document.getElementById('novoTelCli').value; if(!id || !nome) return alert("Preencha ID e Nome!"); await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "adicionar_cliente", id: id, nome: nome, telefone: tel }) }); recarregarDadosSilencioso(); }
-    async function removerCliente(id) { if(confirm("Apagar cliente?")) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ acao: "remover_cliente", id: id }) }); recarregarDadosSilencioso(); } }
+    async function adicionarCliente() { let id = document.getElementById('novoIdCli').value, nome = document.getElementById('novoNomeCli').value, tel = document.getElementById('novoTelCli').value; if(!id || !nome) return alert("Preencha ID e Nome!"); await reqPOST({ acao: "adicionar_cliente", id: id, nome: nome, telefone: tel }); recarregarDadosSilencioso(); }
+    async function removerCliente(id) { if(confirm("Apagar cliente?")) { await reqPOST({ acao: "remover_cliente", id: id }); recarregarDadosSilencioso(); } }
     function atualizarListasClientes() { let tbody = document.getElementById('listaClientesGestao'); let selectVenda = document.getElementById('selectClienteVenda'); tbody.innerHTML = ""; selectVenda.innerHTML = '<option value="Consumidor Final">Consumidor Final</option>'; bancoClientes.forEach(c => { if(!c.ID_Cliente) return; tbody.innerHTML += `<tr><td>${c.ID_Cliente}</td><td>${c.Nome}</td><td>${c.Telefone}</td><td><button type="button" class="btn-vermelho" onclick="removerCliente('${c.ID_Cliente}')">Apagar</button></td></tr>`; selectVenda.innerHTML += `<option value="${c.Nome}">${c.Nome}</option>`; }); }
 
     function enviarWhatsApp(clienteNome, itensCart, valorT) { let resumo = itensCart.map(i => `${i.qtd}x ${i.nome}`).join('%0A'); let texto = `*ARENA VITALE*%0AOlá ${clienteNome}, aqui está o resumo da sua compra:%0A%0A${resumo}%0A%0A*Total: R$ ${valorT.toFixed(2)}*%0A%0AObrigado!`; window.open(`https://wa.me/?text=${texto}`, '_blank'); }
