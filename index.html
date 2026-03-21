@@ -178,7 +178,6 @@
     <div id="status-bar" style="display:none;">Sistema Online</div>
 
     <div id="tela-caixa" class="tela ativa" style="padding: 0; background: transparent; border: none; box-shadow: none;">
-        
         <div id="alerta-caixa" style="margin-bottom: 5px; padding: 10px; flex-shrink: 0;">⚠️ O CAIXA ESTÁ FECHADO! Vá em Controle de Caixa para abrir o turno.</div>
         <div id="bannerEdicaoComanda" style="display:none; background:#fef3c7; border:1px solid #f59e0b; padding:8px; margin-bottom:5px; border-radius:5px; color:#b45309; font-weight:bold; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; flex-shrink: 0;">
             <span>✏️ A editar a Comanda de <span id="nomeEdicaoComanda"></span></span>
@@ -186,7 +185,6 @@
         </div>
 
         <div style="background: #fff; border-radius: 8px; padding: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; flex: 1; min-height: 0;">
-            
             <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; gap: 10px;">
                 <h2 style="margin:0; color:#111; font-size:20px; display:flex; align-items:center; gap:8px;">Nova Venda <span style="font-size:16px; color:#94a3b8;">💬</span></h2>
                 <div style="display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #cbd5e1; border-radius: 20px; padding: 4px 10px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); flex: 1; min-width: 200px;">
@@ -289,7 +287,6 @@
                     💵 Pagamento <span style="font-size:11px; opacity:0.8;">F6</span>
                 </button>
             </div>
-
         </div>
     </div>
 
@@ -758,73 +755,54 @@
 
 <div id="modalPagamento" class="modal-overlay">
     <div class="modal-box" style="max-width: 450px; padding: 0; border-radius: 8px; overflow: hidden; background: #f8fafc; display: flex; flex-direction: column; max-height: 90vh;">
-        
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #fff; border-bottom: 1px solid #e2e8f0; flex-shrink: 0;">
             <h3 id="tituloModalPagamento" style="margin: 0; color: #0f172a; font-size: 18px;">Formas de pagamento</h3>
             <button style="background: transparent; border: none; font-size: 20px; color: #64748b; cursor: pointer; padding: 0;" onclick="fecharModalPagamento()">×</button>
         </div>
-        
         <div style="padding: 20px; text-align: left; overflow-y: auto; flex: 1;">
-            
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
                 <button type="button" style="background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="addFormaPagamento('dinheiro', 'Dinheiro', '💵')">Dinheiro</button>
                 <button type="button" style="background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="addFormaPagamento('debito', 'Cartão de Débito', '💳')">Cartão de Débito</button>
                 <button type="button" style="background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="addFormaPagamento('credito', 'Cartão de Crédito', '💳')">Cartão de Crédito</button>
                 <button type="button" style="background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="addFormaPagamento('pix', 'Pix', '💠')">Pix</button>
             </div>
-
             <div id="boxNomePagador" style="display: none; margin-bottom: 20px;">
                 <label style="font-weight:bold; color:#475569; font-size:13px; display:block; margin-bottom:5px;">Nome de quem está pagando (Parcial):</label>
                 <input type="text" id="pagNomePagador" placeholder="Ex: João" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-size:14px; outline:none;">
             </div>
-
             <div style="background:#fff; border:1px solid #e2e8f0; padding:15px; border-radius:6px; margin-bottom:20px; font-size:14px; color:#475569;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                    <span>Subtotal</span>
-                    <span style="font-weight:bold; color:#111;">R$ <span id="pagSubtotalVal">0.00</span></span>
+                    <span>Subtotal</span><span style="font-weight:bold; color:#111;">R$ <span id="pagSubtotalVal">0.00</span></span>
                 </div>
                 <div style="display:flex; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #e2e8f0;">
-                    <span style="color:#3b82f6;">Taxa de Serviço</span>
-                    <span style="color:#3b82f6; font-weight:bold;">+ R$ <span id="pagTaxaVal">0.00</span></span>
+                    <span style="color:#3b82f6;">Taxa de Serviço</span><span style="color:#3b82f6; font-weight:bold;">+ R$ <span id="pagTaxaVal">0.00</span></span>
                 </div>
-                
                 <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:16px; font-weight:bold; color:#111;">
-                    <span>Total</span>
-                    <span>R$ <span id="pagTotalVal">0.00</span></span>
+                    <span>Total</span><span>R$ <span id="pagTotalVal">0.00</span></span>
                 </div>
                 <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-weight:bold; color:#22c55e;">
-                    <span>Pago</span>
-                    <span>R$ <span id="pagPagoVal">0.00</span></span>
+                    <span>Pago</span><span>R$ <span id="pagPagoVal">0.00</span></span>
                 </div>
                 <div style="display:flex; justify-content:space-between; font-weight:bold; color:#dc2626;">
-                    <span>Restante</span>
-                    <span>R$ <span id="pagRestanteVal">0.00</span></span>
+                    <span>Restante</span><span>R$ <span id="pagRestanteVal">0.00</span></span>
                 </div>
             </div>
-
             <div id="listaPagamentosAtivos" style="margin-bottom: 20px;"></div>
-
             <div style="display:flex; align-items:center; justify-content:center; gap:10px; font-size:14px; color:#64748b; margin-bottom:10px;">
                 <span>Dividir a conta por:</span>
                 <input type="number" id="pagDividirInput" value="1" min="1" style="width:50px; padding:6px; border:1px solid #cbd5e1; border-radius:4px; text-align:center; outline:none;" oninput="calcularDivisao()">
                 <span style="color:#3b82f6; font-weight:bold;">R$ <span id="pagDivisaoResult">0.00</span> pra cada</span>
             </div>
         </div>
-
         <div style="padding: 15px 20px; background: #fff; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; flex-shrink: 0;">
-            <button type="button" id="btnFin1" style="flex:1; background:#22c55e; color:#fff; border:none; padding:14px; border-radius:4px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="confirmarPagamentoMisto(false)" disabled>
-                ✓ Finalizar
-            </button>
-            <button type="button" id="btnFin2" style="flex:2; background:#22c55e; color:#fff; border:none; padding:14px; border-radius:4px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="confirmarPagamentoMisto(true)" disabled>
-                🖨️ Finalizar e imprimir <span style="font-size:10px; opacity:0.8;">F6</span>
-            </button>
+            <button type="button" id="btnFin1" style="flex:1; background:#22c55e; color:#fff; border:none; padding:14px; border-radius:4px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="confirmarPagamentoMisto(false)" disabled>✓ Finalizar</button>
+            <button type="button" id="btnFin2" style="flex:2; background:#22c55e; color:#fff; border:none; padding:14px; border-radius:4px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="confirmarPagamentoMisto(true)" disabled>🖨️ Finalizar e imprimir <span style="font-size:10px; opacity:0.8;">F6</span></button>
         </div>
     </div>
 </div>
 
 <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
-    
     const TAXAS_CARTAO = { credito: 0.03, debito: 0.015, pix: 0, especie: 0 };
 
     let bancoDeProdutos = [], bancoComandas = [], bancoCaixaGlobal = [], bancoClientes = [], bancoUsuarios = [], bancoVendas = [], bancoHistorico = [];
@@ -1047,11 +1025,19 @@
         document.getElementById('pagPagoVal').innerText = totalPago.toFixed(2);
         
         let restEl = document.getElementById('pagRestanteVal');
+        let isParcial = acaoPagamentoPendente && acaoPagamentoPendente.tipo === 'comanda_parcial';
+
         if (restante > 0.01) {
             restEl.innerText = restante.toFixed(2);
             restEl.style.color = "#dc2626";
-            document.getElementById('btnFin1').disabled = true;
-            document.getElementById('btnFin2').disabled = true;
+            
+            if (isParcial && totalPago > 0) {
+                document.getElementById('btnFin1').disabled = false;
+                document.getElementById('btnFin2').disabled = false;
+            } else {
+                document.getElementById('btnFin1').disabled = true;
+                document.getElementById('btnFin2').disabled = true;
+            }
         } else if (restante < -0.01) {
             restEl.innerText = "Troco: " + Math.abs(restante).toFixed(2);
             restEl.style.color = "#eab308";
@@ -1350,7 +1336,8 @@
                 </div>
                 <div style="text-align: right; margin-bottom: 15px;">${valorExibicaoHtml}</div>
                 <div class="comanda-actions">
-                    <button type="button" class="btn-azul" style="grid-column: span 2;" onclick="mudarTela('tela-caixa'); editarComanda('${c.ID_Comanda}')">📂 Abrir no Caixa</button>
+                    <button type="button" class="btn-azul" onclick="mudarTela('tela-caixa'); editarComanda('${c.ID_Comanda}')">📂 Abrir no Caixa</button>
+                    <button type="button" class="btn-vermelho" onclick="verificarPermissaoGerente('Zerar Comanda', () => excluirComanda('${c.ID_Comanda}'))">🗑️ Cancelar</button>
                 </div>
             </div>`; 
         }).join(''); 
