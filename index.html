@@ -178,6 +178,7 @@
     <div id="status-bar" style="display:none;">Sistema Online</div>
 
     <div id="tela-caixa" class="tela ativa" style="padding: 0; background: transparent; border: none; box-shadow: none;">
+        
         <div id="alerta-caixa" style="margin-bottom: 5px; padding: 10px; flex-shrink: 0;">⚠️ O CAIXA ESTÁ FECHADO! Vá em Controle de Caixa para abrir o turno.</div>
         <div id="bannerEdicaoComanda" style="display:none; background:#fef3c7; border:1px solid #f59e0b; padding:8px; margin-bottom:5px; border-radius:5px; color:#b45309; font-weight:bold; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; flex-shrink: 0;">
             <span>✏️ A editar a Comanda de <span id="nomeEdicaoComanda"></span></span>
@@ -185,6 +186,7 @@
         </div>
 
         <div style="background: #fff; border-radius: 8px; padding: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; flex: 1; min-height: 0;">
+            
             <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; gap: 10px;">
                 <h2 style="margin:0; color:#111; font-size:20px; display:flex; align-items:center; gap:8px;">Nova Venda <span style="font-size:16px; color:#94a3b8;">💬</span></h2>
                 <div style="display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #cbd5e1; border-radius: 20px; padding: 4px 10px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); flex: 1; min-width: 200px;">
@@ -207,9 +209,6 @@
             <div style="display: flex; gap: 10px; margin-bottom: 8px;">
                 <button type="button" style="flex:1; background:#3b82f6; color:#fff; border:none; padding:10px; border-radius:6px; font-weight:bold; font-size:13px; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:6px;" onclick="abrirModalComandas()">
                     🔍 Buscar Venda / Comanda <span style="font-size:10px; opacity:0.8; margin-left:6px;">F3</span>
-                </button>
-                <button type="button" style="flex:1; background:#22c55e; color:#fff; border:none; padding:10px; border-radius:6px; font-weight:bold; font-size:13px; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:6px;" onclick="limparCarrinhoNovaVenda()">
-                    🛒 Novo Pedido Balcão <span style="font-size:10px; opacity:0.8; margin-left:6px;">F2</span>
                 </button>
             </div>
             
@@ -759,48 +758,66 @@
 
 <div id="modalPagamento" class="modal-overlay">
     <div class="modal-box" style="max-width: 450px; padding: 0; border-radius: 8px; overflow: hidden; background: #f8fafc; display: flex; flex-direction: column; max-height: 90vh;">
+        
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #fff; border-bottom: 1px solid #e2e8f0; flex-shrink: 0;">
             <h3 id="tituloModalPagamento" style="margin: 0; color: #0f172a; font-size: 18px;">Formas de pagamento</h3>
             <button style="background: transparent; border: none; font-size: 20px; color: #64748b; cursor: pointer; padding: 0;" onclick="fecharModalPagamento()">×</button>
         </div>
+        
         <div style="padding: 20px; text-align: left; overflow-y: auto; flex: 1;">
+            
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
                 <button type="button" style="background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="addFormaPagamento('dinheiro', 'Dinheiro', '💵')">Dinheiro</button>
                 <button type="button" style="background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="addFormaPagamento('debito', 'Cartão de Débito', '💳')">Cartão de Débito</button>
                 <button type="button" style="background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="addFormaPagamento('credito', 'Cartão de Crédito', '💳')">Cartão de Crédito</button>
                 <button type="button" style="background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="addFormaPagamento('pix', 'Pix', '💠')">Pix</button>
             </div>
+
             <div id="boxNomePagador" style="display: none; margin-bottom: 20px;">
                 <label style="font-weight:bold; color:#475569; font-size:13px; display:block; margin-bottom:5px;">Nome de quem está pagando (Parcial):</label>
                 <input type="text" id="pagNomePagador" placeholder="Ex: João" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-size:14px; outline:none;">
             </div>
+
             <div style="background:#fff; border:1px solid #e2e8f0; padding:15px; border-radius:6px; margin-bottom:20px; font-size:14px; color:#475569;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                    <span>Subtotal</span><span style="font-weight:bold; color:#111;">R$ <span id="pagSubtotalVal">0.00</span></span>
+                    <span>Subtotal</span>
+                    <span style="font-weight:bold; color:#111;">R$ <span id="pagSubtotalVal">0.00</span></span>
                 </div>
                 <div style="display:flex; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #e2e8f0;">
-                    <span style="color:#3b82f6;">Taxa de Serviço</span><span style="color:#3b82f6; font-weight:bold;">+ R$ <span id="pagTaxaVal">0.00</span></span>
+                    <span style="color:#3b82f6;">Taxa de Serviço</span>
+                    <span style="color:#3b82f6; font-weight:bold;">+ R$ <span id="pagTaxaVal">0.00</span></span>
                 </div>
+                
                 <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:16px; font-weight:bold; color:#111;">
-                    <span>Total</span><span>R$ <span id="pagTotalVal">0.00</span></span>
+                    <span>Total</span>
+                    <span>R$ <span id="pagTotalVal">0.00</span></span>
                 </div>
                 <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-weight:bold; color:#22c55e;">
-                    <span>Pago</span><span>R$ <span id="pagPagoVal">0.00</span></span>
+                    <span>Pago</span>
+                    <span>R$ <span id="pagPagoVal">0.00</span></span>
                 </div>
                 <div style="display:flex; justify-content:space-between; font-weight:bold; color:#dc2626;">
-                    <span>Restante</span><span>R$ <span id="pagRestanteVal">0.00</span></span>
+                    <span>Restante</span>
+                    <span>R$ <span id="pagRestanteVal">0.00</span></span>
                 </div>
             </div>
+
             <div id="listaPagamentosAtivos" style="margin-bottom: 20px;"></div>
+
             <div style="display:flex; align-items:center; justify-content:center; gap:10px; font-size:14px; color:#64748b; margin-bottom:10px;">
                 <span>Dividir a conta por:</span>
                 <input type="number" id="pagDividirInput" value="1" min="1" style="width:50px; padding:6px; border:1px solid #cbd5e1; border-radius:4px; text-align:center; outline:none;" oninput="calcularDivisao()">
                 <span style="color:#3b82f6; font-weight:bold;">R$ <span id="pagDivisaoResult">0.00</span> pra cada</span>
             </div>
         </div>
+
         <div style="padding: 15px 20px; background: #fff; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; flex-shrink: 0;">
-            <button type="button" id="btnFin1" style="flex:1; background:#22c55e; color:#fff; border:none; padding:14px; border-radius:4px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="confirmarPagamentoMisto(false)" disabled>✓ Finalizar</button>
-            <button type="button" id="btnFin2" style="flex:2; background:#22c55e; color:#fff; border:none; padding:14px; border-radius:4px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="confirmarPagamentoMisto(true)" disabled>🖨️ Finalizar e imprimir <span style="font-size:10px; opacity:0.8;">F6</span></button>
+            <button type="button" id="btnFin1" style="flex:1; background:#22c55e; color:#fff; border:none; padding:14px; border-radius:4px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="confirmarPagamentoMisto(false)" disabled>
+                ✓ Finalizar
+            </button>
+            <button type="button" id="btnFin2" style="flex:2; background:#22c55e; color:#fff; border:none; padding:14px; border-radius:4px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="confirmarPagamentoMisto(true)" disabled>
+                🖨️ Finalizar e imprimir <span style="font-size:10px; opacity:0.8;">F6</span>
+            </button>
         </div>
     </div>
 </div>
@@ -895,7 +912,7 @@
             document.getElementById('cargoLogadoText').innerText = cargoAtual;
             
             if(cargoAtual === "Gerente" || userTyped === "edilson") document.getElementById('menu-usuarios').style.display = 'flex'; else document.getElementById('menu-usuarios').style.display = 'none';
-            if(turnoAtual) document.getElementById('codigoInput').focus();
+            if(turnoAtual && window.innerWidth > 768) document.getElementById('codigoInput').focus();
         } else { document.getElementById('msg-login').style.display = 'block'; }
     }
     
@@ -951,7 +968,8 @@
 
         if(elementoMenu) elementoMenu.classList.add('ativo'); else { let el = document.querySelector(`.menu-item[onclick*="${idTela}"]`); if(el) el.classList.add('ativo'); }
         localStorage.setItem('arena_tab', idTela);
-        if(leitorHtml5) fecharCamera(); if(idTela === 'tela-caixa' && turnoAtual) document.getElementById('codigoInput').focus();
+        if(leitorHtml5) fecharCamera(); 
+        if(idTela === 'tela-caixa' && turnoAtual && window.innerWidth > 768) document.getElementById('codigoInput').focus();
     }
 
     function abrirModalPagamento(valorTotal, acaoObj) {
@@ -974,6 +992,10 @@
         
         renderizarPagamentosAtivos();
         document.getElementById('modalPagamento').style.display = 'flex'; 
+        
+        if(acaoObj.tipo === 'comanda_parcial' && window.innerWidth > 768) {
+            document.getElementById('pagNomePagador').focus();
+        }
     }
     
     function fecharModalPagamento() { 
@@ -1207,11 +1229,12 @@
     function abrirCamera() { let divCamera = document.getElementById('leitorCamera'); divCamera.style.display = "block"; if (!leitorHtml5) leitorHtml5 = new Html5Qrcode("leitorCamera"); leitorHtml5.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, (codigoLido) => { fecharCamera(); document.getElementById(inputCameraAlvo).value = codigoLido; if(inputCameraAlvo === 'codigoInput') processarEntradaCodigo(codigoLido); }, (erro) => {}).catch(err => { alert("Sem acesso à câmara."); divCamera.style.display = "none"; }); }
     function fecharCamera() { if(leitorHtml5) leitorHtml5.stop().then(() => { document.getElementById('leitorCamera').style.display = "none"; }).catch(e=>e); }
 
+    // --- LÓGICA DO MODAL DE BUSCA DE COMANDAS ---
     function abrirModalComandas() { 
         renderizarTabelaModalComandas(bancoComandas);
         document.getElementById('buscaComandaInput').value = "";
         document.getElementById('modalComandas').style.display = 'flex'; 
-        setTimeout(() => document.getElementById('buscaComandaInput').focus(), 100);
+        setTimeout(() => { if(window.innerWidth > 768) document.getElementById('buscaComandaInput').focus(); }, 100);
     }
     
     function fecharModalComandas() { document.getElementById('modalComandas').style.display = 'none'; }
@@ -1523,7 +1546,7 @@
         document.getElementById('descMovimentoModal').value = "";
         document.getElementById('valorMovimentoModal').value = "";
         document.getElementById('modalMovimentacao').style.display = 'flex';
-        setTimeout(() => document.getElementById('descMovimentoModal').focus(), 100);
+        setTimeout(() => { if(window.innerWidth > 768) document.getElementById('descMovimentoModal').focus(); }, 100);
     }
 
     function fecharModalMovimentacao() {
