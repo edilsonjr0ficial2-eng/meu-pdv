@@ -802,7 +802,7 @@
 </div>
 
 <script>
-    const API_URL = "SEU_NOVO_LINK_AQUI"; // <-- COLE SEU LINK DO GOOGLE AQUI
+    const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
     const TAXAS_CARTAO = { credito: 0.03, debito: 0.015, pix: 0, especie: 0 };
 
@@ -928,12 +928,10 @@
             turnoAtual = (dados.turnos || []).find(t => String(t.Status || '') === "Aberto"); 
             document.getElementById('status-bar').innerText = "Sistema Online";
             
-            // Aqui acontece a MÁGICA da blindagem!
             atualizarTodasAsTelas();
             
             setTimeout(() => { document.getElementById('status-bar').style.display = 'none'; }, 2000);
         } catch(e) { 
-            // Agora, se algo der errado, ele imprime a mensagem REAL do erro para a gente ver, e não culpa a conexão!
             console.error("ERRO REAL DETECTADO NA BLINDAGEM:", e);
             document.getElementById('status-bar').style.display = 'block';
             document.getElementById('status-bar').innerText = "⚠️ Erro de Renderização: " + e.message;
@@ -1604,7 +1602,7 @@
                 let ap = parseFloat(apStr.replace(',','.'))||0; let dif = ap - esp; 
                 if(confirm(`Esperado: R$ ${esp.toFixed(2)}\nContado: R$ ${ap.toFixed(2)}\nConfirmar fechamento?`)) { 
                     await reqPOST({ acao: "fechar_caixa", valor_apurado: ap, diferenca: dif, operador: operadorAtual }); recarregarDadosSilencioso(); 
-                    if(confirm("Enviar resumo do Fechamento de Caixa para o WhatsApp do grupo?")) { let textoFechamento = `*📊 FECHAMENTO DE CAIXA*%0A*Operador:* ${operadorAtual}%0A*Data:* ${new Date().toLocaleString('pt-BR')}%0A----------------%0A*Total Entradas:* R$ ${totalEntradas.toFixed(2)}%0A*Total Saídas (Despesas):* R$ ${totalSaidas.toFixed(2)}%0A----------------%0A*Esperado (Sistema):* R$ ${esp.toFixed(2)}%0A*Apurado (Gaveta):* R$ ${ap.toFixed(2)}%0A*Diferença:* R$ ${dif.toFixed(2)}%0A----------------%0A*Turno Encerrado.*`; window.open(`https://wa.me/?text=${textoFechamento}`, '_blank'); }
+                    if(confirm("Enviar resumo do Fechamento de Caixa para o WhatsApp do grupo?")) { let textoFechamento = `*📊 FECHAMENTO DE CAIXA*%0A*Operador:* ${operadorAtual}%0A*Data:* ${new Date().toLocaleString('pt-BR')}%0A----------------%0A*Total Entradas:* R$ ${totalEntradas.toFixed(2)}%0A*Total Saídas (Despesas):* R$ ${totalSaidas.toFixed(2)}%0A----------------%0A*Esperado (Sistema):* R$ ${esp.toFixed(2)}%0A*Apurado (Gaveta):* R$ ${ap.toFixed(2)}%0A*Diferença:* R$ ${dif.toFixed(2)}%0A----------------%0A*Turno Encerrado.*`; window.open(`https://wa.me/5588988229008?text=${textoFechamento}`, '_blank'); }
                 } 
             } 
         } 
