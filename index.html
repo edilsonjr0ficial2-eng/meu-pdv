@@ -392,7 +392,8 @@
     </div>
 
     <div id="tela-estoque" class="tela">
-        <div id="alerta-estoque"></div> <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div id="alerta-estoque"></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <h1>Gestão de Estoque</h1>
             <button type="button" class="btn-azul" onclick="abrirModalHistorico()">📜 Ver Histórico de Movimentações</button>
         </div>
@@ -1247,7 +1248,18 @@
         } 
         
         lista.innerHTML = comandas.map(c => { 
-            let valor = parseFloat(String(c.Total || 0).replace(',','.')) || 0; 
+            let valor = 0;
+            try {
+                let its = JSON.parse(c.Itens_JSON || "[]");
+                if(its.length > 0) {
+                    valor = its.reduce((sum, i) => sum + ((parseFloat(i.preco)||0) * (parseInt(i.qtd)||0)), 0);
+                } else {
+                    valor = parseFloat(String(c.Total || 0).replace(',','.')) || 0;
+                }
+            } catch(e) {
+                valor = parseFloat(String(c.Total || 0).replace(',','.')) || 0;
+            }
+            
             let clienteEscapado = String(c.Cliente || '').replace(/'/g, "\\'");
             
             let btnSelecionar = `<button onclick="selecionarComandaModal('${c.ID_Comanda}', '${clienteEscapado}')" style="background:transparent; border:none; color:#3b82f6; cursor:pointer; font-size:16px; padding:0 5px;" title="Selecionar / Abrir">📂</button>`;
@@ -1308,6 +1320,14 @@
             let itensStr = "", itensObj = []; 
             try { itensObj = JSON.parse(c.Itens_JSON || "[]"); itensStr = itensObj.map(i => `• ${i.qtd}x ${i.nome}`).join('<br>'); } catch(e) {} 
             
+            // NOVO CÁLCULO INFALÍVEL DA TELA COMANDAS
+            let valorTotal = 0;
+            if(itensObj && itensObj.length > 0) {
+                valorTotal = itensObj.reduce((sum, i) => sum + ((parseFloat(i.preco)||0) * (parseInt(i.qtd)||0)), 0);
+            } else {
+                valorTotal = parseFloat(String(c.Total || 0).replace(',','.')) || 0;
+            }
+            
             let pagamentosHtml = "";
             let totalJaPago = 0; 
 
@@ -1325,7 +1345,6 @@
                 } catch(e){}
             }
 
-            let valorTotal = parseFloat(String(c.Total || 0).replace(',','.')) || 0; 
             let saldoDevedor = valorTotal - totalJaPago; 
             
             let valorExibicaoHtml = "";
@@ -1478,7 +1497,6 @@
         let itensBaixos = bancoDeProdutos.filter(p => p.ID_Produto && p.ID_Produto !== 'SERVICO' && parseInt(p.Quantidade||0) <= parseInt(p.Estoque_Minimo || 0));
         let alertaBox = document.getElementById('alerta-estoque');
         
-        // A TRAVA DE SEGURANÇA QUE FALTAVA!
         if (alertaBox) {
             if(itensBaixos.length > 0) { 
                 alertaBox.style.display = 'block'; 
