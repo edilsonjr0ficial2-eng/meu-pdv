@@ -802,7 +802,8 @@
 </div>
 
 <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
+    const API_URL = "SEU_NOVO_LINK_AQUI"; // <-- COLE SEU LINK DO GOOGLE AQUI
+    
     const TAXAS_CARTAO = { credito: 0.03, debito: 0.015, pix: 0, especie: 0 };
 
     let bancoDeProdutos = [], bancoComandas = [], bancoCaixaGlobal = [], bancoClientes = [], bancoUsuarios = [], bancoVendas = [], bancoHistorico = [];
@@ -817,13 +818,13 @@
     let filtroLivroTipo = 'Todos'; 
 
     function formatarDataExibicao(dataStr) {
-        if (!dataStr) return ""; let str = String(dataStr);
+        if (!dataStr) return ""; let str = String(dataStr || '');
         if (str.includes('T')) { let d = new Date(str); let dia = String(d.getDate()).padStart(2, '0'); let mes = String(d.getMonth() + 1).padStart(2, '0'); let ano = d.getFullYear(); let hora = String(d.getHours()).padStart(2, '0'); let min = String(d.getMinutes()).padStart(2, '0'); return `${dia}/${mes}/${ano} ${hora}:${min}`; }
         let limpa = str.replace(',', ''); let p = limpa.split(' '); if (p.length >= 2) return `${p[0]} ${p[1].substring(0,5)}`; return str;
     }
 
     function parseDataBR(dataStr) { 
-        if(!dataStr) return new Date(0); let str = String(dataStr);
+        if(!dataStr) return new Date(0); let str = String(dataStr || '');
         if(str.includes('T')) return new Date(str); let partes = str.split(/[\s,]+/); let dma = partes[0].split('/'); if(dma.length === 3) return new Date(`${dma[2]}-${dma[1]}-${dma[0]}T12:00:00`); return new Date(0); 
     }
 
@@ -843,12 +844,12 @@
             bancoDeProdutos = dados.produtos || []; bancoComandas = dados.comandas || [];
             bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || [];
             bancoUsuarios = dados.usuarios || []; bancoVendas = dados.vendas || []; bancoHistorico = dados.historico || [];
-            turnoAtual = (dados.turnos || []).find(t => t.Status === "Aberto");
+            turnoAtual = (dados.turnos || []).find(t => String(t.Status || '') === "Aberto");
             
             let opSalvo = localStorage.getItem('arena_operador'); let nomeSalvo = localStorage.getItem('arena_operador_nome');
             let cargoSalvo = localStorage.getItem('arena_operador_cargo');
             
-            let userFound = bancoUsuarios.find(u => String(u.Login).toLowerCase() === opSalvo);
+            let userFound = bancoUsuarios.find(u => String(u.Login || '').toLowerCase() === opSalvo);
             if (opSalvo && userFound) {
                 operadorAtual = nomeSalvo;
                 cargoAtual = cargoSalvo || userFound.Cargo || "Operador";
@@ -874,7 +875,7 @@
 
     function fazerLogin() {
         let userTyped = document.getElementById('loginUsuario').value.trim().toLowerCase(); let passTyped = document.getElementById('loginSenha').value.trim();
-        let userEncontrado = bancoUsuarios.find(u => String(u.Login).toLowerCase() === userTyped && String(u.Senha) === passTyped);
+        let userEncontrado = bancoUsuarios.find(u => String(u.Login || '').toLowerCase() === userTyped && String(u.Senha || '') === passTyped);
         
         if(userEncontrado) {
             operadorAtual = userTyped.charAt(0).toUpperCase() + userTyped.slice(1);
@@ -897,14 +898,14 @@
     function fazerLogout() { localStorage.clear(); location.reload(); }
 
     function verificarPermissaoGerente(acaoNome, callback) {
-        if(cargoAtual === "Gerente" || operadorAtual.toLowerCase() === "edilson") {
+        if(cargoAtual === "Gerente" || String(operadorAtual || '').toLowerCase() === "edilson") {
             callback(); 
         } else {
             let senhaMestre = prompt(`🛡️ ACESSO RESTRITO\nA ação [${acaoNome}] requer aprovação. Digite a senha de um Gerente:`);
             if(senhaMestre === null) return;
             
             let gerenteEncontrado = bancoUsuarios.find(u => 
-                (u.Cargo === 'Gerente' || String(u.Login).toLowerCase() === 'edilson') && String(u.Senha) === senhaMestre
+                (String(u.Cargo || '') === 'Gerente' || String(u.Login || '').toLowerCase() === 'edilson') && String(u.Senha || '') === senhaMestre
             );
 
             if(gerenteEncontrado) {
@@ -916,14 +917,29 @@
     }
 
     async function recarregarDadosSilencioso() {
+        document.getElementById('status-bar').style.display = 'block';
         document.getElementById('status-bar').innerText = "Sincronizando...";
+        document.getElementById('status-bar').style.background = "#e0f2fe";
+        document.getElementById('status-bar').style.color = "#0369a1";
         try {
             const resposta = await fetch(API_URL); const dados = await resposta.json();
             bancoDeProdutos = dados.produtos || []; bancoComandas = dados.comandas || [];
             bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || []; bancoUsuarios = dados.usuarios || []; bancoVendas = dados.vendas || []; bancoHistorico = dados.historico || [];
-            turnoAtual = (dados.turnos || []).find(t => t.Status === "Aberto"); document.getElementById('status-bar').innerText = "Sistema Online";
+            turnoAtual = (dados.turnos || []).find(t => String(t.Status || '') === "Aberto"); 
+            document.getElementById('status-bar').innerText = "Sistema Online";
+            
+            // Aqui acontece a MÁGICA da blindagem!
             atualizarTodasAsTelas();
-        } catch(e) { document.getElementById('status-bar').innerText = "Erro de conexão."; }
+            
+            setTimeout(() => { document.getElementById('status-bar').style.display = 'none'; }, 2000);
+        } catch(e) { 
+            // Agora, se algo der errado, ele imprime a mensagem REAL do erro para a gente ver, e não culpa a conexão!
+            console.error("ERRO REAL DETECTADO NA BLINDAGEM:", e);
+            document.getElementById('status-bar').style.display = 'block';
+            document.getElementById('status-bar').innerText = "⚠️ Erro de Renderização: " + e.message;
+            document.getElementById('status-bar').style.background = "#fee2e2";
+            document.getElementById('status-bar').style.color = "#ef4444";
+        }
     }
 
     function atualizarTodasAsTelas() {
@@ -1093,8 +1109,8 @@
             await reqPOST({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr + acao.msgExtra });
             recarregarDadosSilencioso();
             
-            let comandaImpressao = bancoComandas.find(c => String(c.ID_Comanda) === String(acao.id_comanda));
-            let iArr = comandaImpressao ? JSON.parse(comandaImpressao.Itens_JSON) : [];
+            let comandaImpressao = bancoComandas.find(c => String(c.ID_Comanda || '') === String(acao.id_comanda));
+            let iArr = comandaImpressao ? JSON.parse(comandaImpressao.Itens_JSON || "[]") : [];
             
             limparCarrinhoNovaVenda();
             if(imprimirRecibo) imprimirCupao(pagadorNome !== "Não informado" ? pagadorNome : acao.cliente, iArr, acao.totalSalvo);
@@ -1175,11 +1191,11 @@
     document.getElementById('codigoInput').addEventListener('keypress', function(e) { if (e.key === 'Enter' && this.value.trim() !== "") { e.preventDefault(); processarEntradaCodigo(this.value.trim()); this.value = ""; } });
     
     function processarEntradaCodigo(termo) { 
-        termo = termo.toLowerCase(); let prod = bancoDeProdutos.find(p => String(p.ID_Produto).toLowerCase() === termo || String(p.Nome_Produto).toLowerCase() === termo); 
-        if (!prod) { let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto).toLowerCase().includes(termo)); if (achados.length === 1) prod = achados[0]; else if (achados.length > 1) { alert("Múltiplos produtos encontrados. Digite o código exato."); return; } } 
+        termo = String(termo || '').toLowerCase(); let prod = bancoDeProdutos.find(p => String(p.ID_Produto || '').toLowerCase() === termo || String(p.Nome_Produto || '').toLowerCase() === termo); 
+        if (!prod) { let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto || '').toLowerCase().includes(termo)); if (achados.length === 1) prod = achados[0]; else if (achados.length > 1) { alert("Múltiplos produtos encontrados. Digite o código exato."); return; } } 
         if (prod) { 
-            let preco = parseFloat(prod.Preco_Venda.toString().replace(',','.')) || 0; let qtdMult = parseInt(document.getElementById('qtdInput').value) || 1;
-            let ext = carrinho.find(i => i.codigo === prod.ID_Produto); 
+            let preco = parseFloat(String(prod.Preco_Venda || 0).replace(',','.')) || 0; let qtdMult = parseInt(document.getElementById('qtdInput').value) || 1;
+            let ext = carrinho.find(i => String(i.codigo) === String(prod.ID_Produto)); 
             if(ext) { ext.qtd += qtdMult; } else { carrinho.push({ codigo: prod.ID_Produto, nome: prod.Nome_Produto, preco: preco, qtd: qtdMult }); } 
             total += (preco * qtdMult); atualizarCarrinho(); document.getElementById('qtdInput').value = "1"; 
         } else { alert("Produto não encontrado!"); } 
@@ -1233,8 +1249,8 @@
         } 
         
         lista.innerHTML = comandas.map(c => { 
-            let valor = parseFloat(c.Total.toString().replace(',','.')) || 0; 
-            let clienteEscapado = c.Cliente ? c.Cliente.replace(/'/g, "\\'") : "";
+            let valor = parseFloat(String(c.Total || 0).replace(',','.')) || 0; 
+            let clienteEscapado = String(c.Cliente || '').replace(/'/g, "\\'");
             
             let btnSelecionar = `<button onclick="selecionarComandaModal('${c.ID_Comanda}', '${clienteEscapado}')" style="background:transparent; border:none; color:#3b82f6; cursor:pointer; font-size:16px; padding:0 5px;" title="Selecionar / Abrir">📂</button>`;
             let btnApagar = `<button onclick="verificarPermissaoGerente('Zerar Comanda', () => { excluirComanda('${c.ID_Comanda}'); fecharModalComandas(); })" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:16px; padding:0 5px;" title="Apagar">🗑️</button>`;
@@ -1251,10 +1267,10 @@
     }
 
     function filtrarModalComandas() {
-        let termo = document.getElementById('buscaComandaInput').value.toLowerCase();
+        let termo = String(document.getElementById('buscaComandaInput').value || '').toLowerCase();
         let filtradas = bancoComandas.filter(c => 
-            String(c.ID_Comanda).toLowerCase().includes(termo) || 
-            String(c.Cliente).toLowerCase().includes(termo)
+            String(c.ID_Comanda || '').toLowerCase().includes(termo) || 
+            String(c.Cliente || '').toLowerCase().includes(termo)
         );
         renderizarTabelaModalComandas(filtradas);
     }
@@ -1292,7 +1308,7 @@
         grid.innerHTML = bancoComandas.map(c => { 
             if(!c.ID_Comanda) return ''; 
             let itensStr = "", itensObj = []; 
-            try { itensObj = JSON.parse(c.Itens_JSON); itensStr = itensObj.map(i => `• ${i.qtd}x ${i.nome}`).join('<br>'); } catch(e) {} 
+            try { itensObj = JSON.parse(c.Itens_JSON || "[]"); itensStr = itensObj.map(i => `• ${i.qtd}x ${i.nome}`).join('<br>'); } catch(e) {} 
             
             let pagamentosHtml = "";
             let totalJaPago = 0; 
@@ -1302,16 +1318,16 @@
                     let pags = JSON.parse(c.Pagamentos_JSON);
                     if(pags.length > 0) {
                         let strPags = pags.map(p => {
-                            totalJaPago += parseFloat(p.valor) || 0; 
+                            totalJaPago += parseFloat(String(p.valor).replace(',','.')) || 0; 
                             let btnExcluir = p.id_transacao ? `<button type="button" onclick="removerPagamentoParcial('${c.ID_Comanda}', '${p.id_transacao}')" style="background:transparent; border:none; color:#dc2626; cursor:pointer; font-size:14px; padding:0; margin-left:5px;" title="Remover Pagamento">❌</button>` : '';
-                            return `<b>${p.nome}</b> (R$ ${p.valor.toFixed(2)})${btnExcluir}`;
+                            return `<b>${p.nome}</b> (R$ ${parseFloat(p.valor||0).toFixed(2)})${btnExcluir}`;
                         }).join(' | ');
                         pagamentosHtml = `<div style="font-size:12px; color:#16a34a; margin-top:10px; background:#dcfce7; padding:8px; border-radius:4px; border: 1px solid #bbf7d0;">✅ <b>Pgto Parcial:</b><br>${strPags}</div>`;
                     }
                 } catch(e){}
             }
 
-            let valorTotal = parseFloat(c.Total.toString().replace(',','.')) || 0; 
+            let valorTotal = parseFloat(String(c.Total || 0).replace(',','.')) || 0; 
             let saldoDevedor = valorTotal - totalJaPago; 
             
             let valorExibicaoHtml = "";
@@ -1322,12 +1338,12 @@
                 valorExibicaoHtml = `<div class="comanda-valor">R$ ${valorTotal.toFixed(2)}</div>`;
             }
             
-            let clienteEscapado = c.Cliente ? c.Cliente.replace(/'/g, "\\'") : "";
+            let clienteEscapado = String(c.Cliente || '').replace(/'/g, "\\'");
             
             return `
             <div class="comanda-card">
                 <div class="comanda-header">
-                    <h3>👤 ${c.Cliente}</h3>
+                    <h3>👤 ${c.Cliente || 'Sem Nome'}</h3>
                     <span class="id-comanda">#${c.ID_Comanda}</span>
                 </div>
                 <div class="comanda-body">
@@ -1344,19 +1360,19 @@
     }
 
     function editarComanda(idComanda) {
-        let comanda = bancoComandas.find(c => String(c.ID_Comanda) === String(idComanda)); if(!comanda) return alert("Comanda não encontrada!");
-        idComandaEmEdicao = idComanda; try { carrinho = JSON.parse(comanda.Itens_JSON); } catch(e) { carrinho = []; }
+        let comanda = bancoComandas.find(c => String(c.ID_Comanda || '') === String(idComanda)); if(!comanda) return alert("Comanda não encontrada!");
+        idComandaEmEdicao = idComanda; try { carrinho = JSON.parse(comanda.Itens_JSON || "[]"); } catch(e) { carrinho = []; }
         total = carrinho.reduce((acc, item) => acc + (item.preco * item.qtd), 0);
         
         pagamentosComandaAtual = 0;
         if(comanda.Pagamentos_JSON) {
             try {
                 let pags = JSON.parse(comanda.Pagamentos_JSON);
-                pags.forEach(p => pagamentosComandaAtual += parseFloat(p.valor) || 0);
+                pags.forEach(p => pagamentosComandaAtual += parseFloat(String(p.valor).replace(',','.')) || 0);
             } catch(e){}
         }
 
-        document.getElementById('bannerEdicaoComanda').style.display = 'flex'; document.getElementById('nomeEdicaoComanda').innerText = comanda.Cliente;
+        document.getElementById('bannerEdicaoComanda').style.display = 'flex'; document.getElementById('nomeEdicaoComanda').innerText = comanda.Cliente || 'Sem Nome';
         let selectCli = document.getElementById('selectClienteVenda'); if(!Array.from(selectCli.options).some(opt => opt.value === comanda.Cliente)) { selectCli.add(new Option(comanda.Cliente, comanda.Cliente)); }
         selectCli.value = comanda.Cliente; document.getElementById('btnSalvarComanda').innerHTML = '💾 Gravar Alterações <span style="font-size:11px; opacity:0.8;">F5</span>'; document.getElementById('btnSalvarComanda').style.background = "#eab308"; document.getElementById('btnSalvarComanda').disabled = false; 
         
@@ -1381,8 +1397,8 @@
         let tbody = document.getElementById('listaHistoricoModal');
         tbody.innerHTML = bancoHistorico.slice().reverse().map(h => {
             if(!h.Data_Hora) return '';
-            let corQtd = String(h.Qtd).includes('-') ? 'color:#dc2626;' : 'color:#16a34a;';
-            return `<tr><td>${formatarDataExibicao(h.Data_Hora)}</td><td>${h.Operador}</td><td>${h.Produto}</td><td style="font-weight:bold; ${corQtd}">${h.Qtd}</td><td>${h.Motivo}</td></tr>`;
+            let corQtd = String(h.Qtd || '').includes('-') ? 'color:#dc2626;' : 'color:#16a34a;';
+            return `<tr><td>${formatarDataExibicao(h.Data_Hora)}</td><td>${h.Operador || ''}</td><td>${h.Produto || ''}</td><td style="font-weight:bold; ${corQtd}">${h.Qtd || ''}</td><td>${h.Motivo || ''}</td></tr>`;
         }).join('');
         document.getElementById('modalHistorico').style.display = 'flex';
     }
@@ -1394,8 +1410,8 @@
         reqPOST({ acao: "entrada_estoque", id_produto: idProduto, qtd: qtd, operador: operadorAtual }).then(() => { alert(`Entrada de ${qtd} unidades registrada!`); recarregarDadosSilencioso(); });
     }
 
-    function atualizarTabelaEstoque() { document.getElementById('listaGestao').innerHTML = bancoDeProdutos.map(p => { if(!p.ID_Produto) return ''; return `<tr><td>${p.ID_Produto}</td><td>${p.Nome_Produto}</td><td>R$ ${p.Preco_Custo}</td><td>R$ ${p.Preco_Venda}</td><td style="font-weight:bold;">${p.Quantidade}</td><td>${p.Estoque_Minimo || 0}</td><td style="display:flex; gap:5px; flex-wrap:wrap;"><button type="button" class="btn-verde" onclick="adicionarEntradaManual('${p.ID_Produto}', '${p.Nome_Produto}')">+ Entrada</button><button type="button" class="btn-amarelo" onclick="prepararEdicaoEstoque('${p.ID_Produto}')">Editar</button><button type="button" class="btn-vermelho" onclick="removerProduto('${p.ID_Produto}')">Apagar</button></td></tr>`; }).join(''); }
-    function prepararEdicaoEstoque(id) { let p = bancoDeProdutos.find(x => String(x.ID_Produto) === String(id)); if(!p) return; document.getElementById('novoId').value = p.ID_Produto; document.getElementById('novoNome').value = p.Nome_Produto; document.getElementById('novoCusto').value = p.Preco_Custo; document.getElementById('novoPreco').value = p.Preco_Venda; document.getElementById('novaQtd').value = p.Quantidade; document.getElementById('novoMinimo').value = p.Estoque_Minimo || 0; idEditandoEstoque = id; document.getElementById('btnAdicionarEstoque').innerText = "Atualizar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-amarelo"; window.scrollTo(0, 0); }
+    function atualizarTabelaEstoque() { document.getElementById('listaGestao').innerHTML = bancoDeProdutos.map(p => { if(!p.ID_Produto) return ''; let pCusto = parseFloat(String(p.Preco_Custo||0).replace(',','.'))||0; let pVenda = parseFloat(String(p.Preco_Venda||0).replace(',','.'))||0; return `<tr><td>${p.ID_Produto}</td><td>${p.Nome_Produto||''}</td><td>R$ ${pCusto.toFixed(2)}</td><td>R$ ${pVenda.toFixed(2)}</td><td style="font-weight:bold;">${p.Quantidade||0}</td><td>${p.Estoque_Minimo || 0}</td><td style="display:flex; gap:5px; flex-wrap:wrap;"><button type="button" class="btn-verde" onclick="adicionarEntradaManual('${p.ID_Produto}', '${String(p.Nome_Produto||'').replace(/'/g, "\\'")}')">+ Entrada</button><button type="button" class="btn-amarelo" onclick="prepararEdicaoEstoque('${p.ID_Produto}')">Editar</button><button type="button" class="btn-vermelho" onclick="removerProduto('${p.ID_Produto}')">Apagar</button></td></tr>`; }).join(''); }
+    function prepararEdicaoEstoque(id) { let p = bancoDeProdutos.find(x => String(x.ID_Produto||'') === String(id)); if(!p) return; document.getElementById('novoId').value = p.ID_Produto; document.getElementById('novoNome').value = p.Nome_Produto || ''; document.getElementById('novoCusto').value = p.Preco_Custo || '0'; document.getElementById('novoPreco').value = p.Preco_Venda || '0'; document.getElementById('novaQtd').value = p.Quantidade || 0; document.getElementById('novoMinimo').value = p.Estoque_Minimo || 0; idEditandoEstoque = id; document.getElementById('btnAdicionarEstoque').innerText = "Atualizar Produto"; document.getElementById('btnAdicionarEstoque').className = "btn-amarelo"; window.scrollTo(0, 0); }
     
     async function salvarProdutoEstoque() { 
         let id = document.getElementById('novoId').value, nome = document.getElementById('novoNome').value; 
@@ -1416,24 +1432,21 @@
 
     function atualizarDashboardECaixa() {
         let abertura = 0, entradas = 0, saidas = 0;
-        let vHoje = 0, hj = new Date().toLocaleDateString('pt-BR'); 
+        let hj = new Date().toLocaleDateString('pt-BR'); 
         
         bancoCaixaGlobal.forEach(m => { 
             if(!m.ID_Transacao) return; 
-            let v = parseFloat(m.Valor.toString().replace(',','.'))||0; 
+            let v = parseFloat(String(m.Valor || 0).replace(',','.'))||0; 
+            let desc = String(m.Descricao || '').toLowerCase();
             
             if(turnoAtual && m.ID_Transacao >= turnoAtual.ID_Turno) { 
-                if(m.Descricao && m.Descricao.toLowerCase().includes('troco inicial')) {
+                if(desc.includes('troco inicial')) {
                     abertura += v;
-                } else if(m.Tipo === "Entrada") { 
+                } else if(String(m.Tipo || '') === "Entrada") { 
                     entradas += v; 
-                } else if(m.Tipo === "Saida") { 
+                } else if(String(m.Tipo || '') === "Saida") { 
                     saidas += v; 
                 }
-            } 
-            
-            if(m.Data_Hora && m.Data_Hora.includes(hj) && m.Tipo==="Entrada" && (m.Descricao.includes("Venda") || m.Descricao.includes("Pgto Comanda"))) { 
-                vHoje+=v; 
             } 
         });
         
@@ -1455,7 +1468,7 @@
         let lblStatusLivro = document.getElementById('lblStatusCaixaLivro');
 
         if (turnoAtual && lblAbertura && lblStatusLivro) {
-            lblAbertura.innerText = "Aberto em: " + formatarDataExibicao(turnoAtual.Data_Hora) + " por " + turnoAtual.Operador;
+            lblAbertura.innerText = "Aberto em: " + formatarDataExibicao(turnoAtual.Data_Hora) + " por " + (turnoAtual.Operador || 'Sistema');
             lblStatusLivro.innerHTML = '<span style="width:8px; height:8px; background:#22c55e; border-radius:50%; display:inline-block;"></span> Caixa Aberto';
             lblStatusLivro.style.color = "#22c55e";
         } else if (lblAbertura && lblStatusLivro) {
@@ -1464,9 +1477,9 @@
             lblStatusLivro.style.color = "#ef4444";
         }
 
-        let itensBaixos = bancoDeProdutos.filter(p => p.ID_Produto && p.ID_Produto !== 'SERVICO' && parseInt(p.Quantidade) <= parseInt(p.Estoque_Minimo || 0));
+        let itensBaixos = bancoDeProdutos.filter(p => p.ID_Produto && p.ID_Produto !== 'SERVICO' && parseInt(p.Quantidade||0) <= parseInt(p.Estoque_Minimo || 0));
         let alertaBox = document.getElementById('alerta-estoque');
-        if(itensBaixos.length > 0) { alertaBox.style.display = 'block'; alertaBox.innerHTML = `<h3 style="color:#b91c1c; margin-top:0;">⚠️ Alerta de Reposição de Estoque</h3>` + itensBaixos.map(i => `<div>- <b>${i.Nome_Produto}</b> (Restam: ${i.Quantidade})</div>`).join(''); } else { alertaBox.style.display = 'none'; }
+        if(itensBaixos.length > 0) { alertaBox.style.display = 'block'; alertaBox.innerHTML = `<h3 style="color:#b91c1c; margin-top:0;">⚠️ Alerta de Reposição de Estoque</h3>` + itensBaixos.map(i => `<div>- <b>${i.Nome_Produto}</b> (Restam: ${i.Quantidade||0})</div>`).join(''); } else { alertaBox.style.display = 'none'; }
         
         filtrarLivroCaixa();
     }
@@ -1488,16 +1501,18 @@
             if (dIni && recordDate < dIni) return; 
             if (dFim && recordDate > dFim) return;
             
-            if (filtroLivroTipo !== 'Todos' && m.Tipo !== filtroLivroTipo) return;
+            if (filtroLivroTipo !== 'Todos' && String(m.Tipo || '') !== filtroLivroTipo) return;
 
-            if (buscaTexto && !m.Descricao.toLowerCase().includes(buscaTexto) && !m.Operador.toLowerCase().includes(buscaTexto)) return;
+            let descStr = String(m.Descricao || '').toLowerCase();
+            let opStr = String(m.Operador || '').toLowerCase();
+            if (buscaTexto && !descStr.includes(buscaTexto) && !opStr.includes(buscaTexto)) return;
 
-            let v = parseFloat(m.Valor.toString().replace(',','.'))||0; 
+            let v = parseFloat(String(m.Valor || 0).replace(',','.'))||0; 
             let hData = formatarDataExibicao(m.Data_Hora);
             
-            let corTipo = m.Tipo === 'Entrada' ? '#22c55e' : '#ef4444';
-            let txtTipo = m.Tipo.toUpperCase();
-            if(m.Descricao.toLowerCase().includes('troco inicial')) {
+            let corTipo = String(m.Tipo || '').toUpperCase() === 'ENTRADA' ? '#22c55e' : '#ef4444';
+            let txtTipo = String(m.Tipo || '').toUpperCase();
+            if(descStr.includes('troco inicial')) {
                 corTipo = '#3b82f6';
                 txtTipo = 'ABERTURA';
             }
@@ -1505,10 +1520,10 @@
             htmlTabela += `
             <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
                 <td style="padding: 12px; color: #475569;">${hData}</td>
-                <td style="padding: 12px; font-weight: 500;">${m.Descricao}</td>
+                <td style="padding: 12px; font-weight: 500;">${m.Descricao || ''}</td>
                 <td style="padding: 12px; text-align: center; color: ${corTipo}; font-weight: bold; font-size: 11px;">${txtTipo}</td>
                 <td style="padding: 12px; font-weight: bold; color: ${corTipo};">R$ ${v.toFixed(2)}</td>
-                <td style="padding: 12px; color: #475569;">${m.Operador}</td>
+                <td style="padding: 12px; color: #475569;">${m.Operador || ''}</td>
                 <td style="padding: 12px; text-align: center;">
                     <button type="button" onclick="excluirItemCaixa('${m.ID_Transacao}')" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:16px; padding:0;" title="Cancelar Transação">❌</button>
                 </td>
@@ -1580,8 +1595,8 @@
             let esp = 0, totalEntradas = 0, totalSaidas = 0; 
             bancoCaixaGlobal.forEach(m => { 
                 if(m.ID_Transacao >= turnoAtual.ID_Turno) { 
-                    let v = parseFloat(m.Valor.toString().replace(',','.'))||0; 
-                    if(m.Tipo==="Entrada") { esp+=v; totalEntradas+=v; } if(m.Tipo==="Saida") { esp-=v; totalSaidas+=v; }
+                    let v = parseFloat(String(m.Valor || 0).replace(',','.'))||0; 
+                    if(String(m.Tipo || '')==="Entrada") { esp+=v; totalEntradas+=v; } if(String(m.Tipo || '')==="Saida") { esp-=v; totalSaidas+=v; }
                 } 
             }); 
             let apStr = prompt("Valor na gaveta:", "0,00"); 
@@ -1629,7 +1644,7 @@
         let c = document.getElementById('novoUserCargo').value; 
         
         if(!l || !s) return alert("Preencha Login e Senha!"); 
-        if(bancoUsuarios.find(u => String(u.Login).toLowerCase() === l.toLowerCase())) return alert("Login já existe!"); 
+        if(bancoUsuarios.find(u => String(u.Login||'').toLowerCase() === l.toLowerCase())) return alert("Login já existe!"); 
         
         let btn = document.getElementById('btnAdicionarUser');
         btn.innerText = "Aguarde..."; btn.disabled = true;
@@ -1651,7 +1666,7 @@
 
     async function adicionarCliente() { let id = document.getElementById('novoIdCli').value, nome = document.getElementById('novoNomeCli').value, tel = document.getElementById('novoTelCli').value; if(!id || !nome) return alert("Preencha ID e Nome!"); await reqPOST({ acao: "adicionar_cliente", id: id, nome: nome, telefone: tel }); recarregarDadosSilencioso(); }
     async function removerCliente(id) { if(confirm("Apagar cliente?")) { await reqPOST({ acao: "remover_cliente", id: id }); recarregarDadosSilencioso(); } }
-    function atualizarListasClientes() { let tbody = document.getElementById('listaClientesGestao'); let selectVenda = document.getElementById('selectClienteVenda'); tbody.innerHTML = ""; selectVenda.innerHTML = '<option value="Consumidor Final">Consumidor Final</option>'; bancoClientes.forEach(c => { if(!c.ID_Cliente) return; tbody.innerHTML += `<tr><td>${c.ID_Cliente}</td><td>${c.Nome}</td><td>${c.Telefone}</td><td><button type="button" class="btn-vermelho" onclick="removerCliente('${c.ID_Cliente}')">Apagar</button></td></tr>`; selectVenda.innerHTML += `<option value="${c.Nome}">${c.Nome}</option>`; }); }
+    function atualizarListasClientes() { let tbody = document.getElementById('listaClientesGestao'); let selectVenda = document.getElementById('selectClienteVenda'); tbody.innerHTML = ""; selectVenda.innerHTML = '<option value="Consumidor Final">Consumidor Final</option>'; bancoClientes.forEach(c => { if(!c.ID_Cliente) return; tbody.innerHTML += `<tr><td>${c.ID_Cliente}</td><td>${c.Nome||''}</td><td>${c.Telefone||''}</td><td><button type="button" class="btn-vermelho" onclick="removerCliente('${c.ID_Cliente}')">Apagar</button></td></tr>`; selectVenda.innerHTML += `<option value="${c.Nome||''}">${c.Nome||''}</option>`; }); }
 
     function enviarWhatsApp(clienteNome, itensCart, valorT) { let resumo = itensCart.map(i => `${i.qtd}x ${i.nome}`).join('%0A'); let texto = `*ARENA VITALE*%0AOlá ${clienteNome}, aqui está o resumo da sua compra:%0A%0A${resumo}%0A%0A*Total: R$ ${valorT.toFixed(2)}*%0A%0AObrigado!`; window.open(`https://wa.me/?text=${texto}`, '_blank'); }
     function imprimirCupao(clienteNome, itensCart, valorT) { let cupao = document.getElementById('cupao-impressao'); let data = new Date().toLocaleString('pt-BR'); let itensHtml = itensCart.map(i => `<div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.preco * i.qtd).toFixed(2)}</span></div>`).join(''); cupao.innerHTML = `<div style="text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 5px;">ARENA VITALE</div><div style="text-align: center; font-size: 10px; margin-bottom: 10px;">Russas - CE</div><div style="text-align: center; font-size: 12px; margin-bottom: 10px;">Recibo Não Fiscal</div><div>Data: ${data}</div><div>Operador: ${operadorAtual}</div><div>Cliente: ${clienteNome}</div><hr style="border-top: 1px dashed #000; margin: 5px 0;">${itensHtml}<hr style="border-top: 1px dashed #000; margin: 5px 0;"><div style="text-align: right; font-weight: bold; font-size: 14px;">TOTAL: R$ ${valorT.toFixed(2)}</div><div style="text-align: center; margin-top: 15px; font-size: 10px;">Obrigado e volte sempre!</div>`; window.print(); }
@@ -1702,20 +1717,22 @@
             if (dIni && recordDate < dIni) return;
             if (dFim && recordDate > dFim) return;
 
-            let v = parseFloat(m.Valor.toString().replace(',','.')) || 0;
-            let diaStr = m.Data_Hora.split(/[\s,T]+/)[0]; 
+            let v = parseFloat(String(m.Valor || 0).replace(',','.')) || 0;
+            let diaStr = String(m.Data_Hora || '').split(/[\s,T]+/)[0]; 
 
             if(!dadosPorDia[diaStr]) dadosPorDia[diaStr] = { entradas: 0, saidas: 0 };
 
             let categoria = "Vendas/Outros";
-            let catMatch = m.Descricao.match(/\[(.*?)\]/);
+            let descStr = String(m.Descricao || '');
+            let catMatch = descStr.match(/\[(.*?)\]/);
+            
             if(catMatch) categoria = catMatch[1];
-            else if(m.Descricao.toLowerCase().includes('venda') || m.Descricao.toLowerCase().includes('pgto comanda')) categoria = "Vendas / Recebimentos";
-            else if(m.Descricao.toLowerCase().includes('troco inicial')) categoria = "Abertura de Caixa";
+            else if(descStr.toLowerCase().includes('venda') || descStr.toLowerCase().includes('pgto comanda')) categoria = "Vendas / Recebimentos";
+            else if(descStr.toLowerCase().includes('troco inicial')) categoria = "Abertura de Caixa";
 
             if(!dadosPorCategoria[categoria]) dadosPorCategoria[categoria] = 0;
 
-            if (m.Tipo === 'Entrada') {
+            if (String(m.Tipo||'') === 'Entrada') {
                 totalEntradas += v;
                 dadosPorDia[diaStr].entradas += v;
                 dadosPorCategoria[categoria] += v;
@@ -1750,7 +1767,7 @@
             chartRelFluxo = new Chart(ctx, { 
                 type: 'bar', 
                 data: { 
-                    labels: labels.map(l => l.substring(0,5)), 
+                    labels: labels.map(l => String(l).substring(0,5)), 
                     datasets: [
                         { label: 'Entradas', data: valEntradas, backgroundColor: '#22c55e', borderRadius: 4 },
                         { label: 'Saídas', data: valSaidas, backgroundColor: '#ef4444', borderRadius: 4 }
@@ -1769,8 +1786,8 @@
         bancoDeProdutos.forEach(p => {
             if(!p.ID_Produto || p.ID_Produto === 'SERVICO') return;
             let qtd = parseInt(p.Quantidade) || 0;
-            let custo = parseFloat(String(p.Preco_Custo).replace(',','.')) || 0;
-            let preco = parseFloat(String(p.Preco_Venda).replace(',','.')) || 0;
+            let custo = parseFloat(String(p.Preco_Custo || 0).replace(',','.')) || 0;
+            let preco = parseFloat(String(p.Preco_Venda || 0).replace(',','.')) || 0;
             
             let tCusto = qtd * custo;
             let tVenda = qtd * preco;
@@ -1779,7 +1796,7 @@
             totalVenda += tVenda;
             
             html += `<tr style="border-bottom: 1px solid #e2e8f0; transition: 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
-                <td style="padding:10px; font-weight:bold; color:#334155;">${p.Nome_Produto}</td>
+                <td style="padding:10px; font-weight:bold; color:#334155;">${p.Nome_Produto || ''}</td>
                 <td style="padding:10px;">${qtd}</td>
                 <td style="padding:10px;">R$ ${custo.toFixed(2)}</td>
                 <td style="padding:10px; color:#ef4444;">R$ ${tCusto.toFixed(2)}</td>
@@ -1814,7 +1831,7 @@
             if (dFim && recordDate > dFim) return;
 
             if(!v.Itens_Vendidos) return; 
-            let itensStr = v.Itens_Vendidos.split('(')[0];
+            let itensStr = String(v.Itens_Vendidos || '').split('(')[0];
             
             itensStr.split(',').forEach(item => { 
                 let match = item.trim().match(/^(\d+)x\s+(.+)$/); 
@@ -1874,11 +1891,11 @@
             if (dIni && recordDate < dIni) return;
             if (dFim && recordDate > dFim) return;
 
-            let totalVenda = parseFloat(String(v.Total).replace(',','.')) || 0;
+            let totalVenda = parseFloat(String(v.Total || 0).replace(',','.')) || 0;
             receitaVendas += totalVenda;
 
             if(v.Itens_Vendidos) {
-                let itensStr = v.Itens_Vendidos.split('(')[0];
+                let itensStr = String(v.Itens_Vendidos || '').split('(')[0];
                 itensStr.split(',').forEach(item => { 
                     let match = item.trim().match(/^(\d+)x\s+(.+)$/); 
                     if(match) { 
@@ -1886,7 +1903,7 @@
                         let nome = match[2].trim(); 
                         let prodDb = bancoDeProdutos.find(p => p.Nome_Produto === nome);
                         if(prodDb) {
-                            let custoUn = parseFloat(String(prodDb.Preco_Custo).replace(',','.')) || 0;
+                            let custoUn = parseFloat(String(prodDb.Preco_Custo || 0).replace(',','.')) || 0;
                             custoVendas += (custoUn * qtd);
                         }
                     } 
@@ -1930,7 +1947,7 @@
                     totais[nome] = (totais[nome] || 0) + valor;
                 } else {
                     let nome = parte.trim();
-                    let valorTotal = parseFloat(String(v.Total).replace(',','.')) || 0;
+                    let valorTotal = parseFloat(String(v.Total || 0).replace(',','.')) || 0;
                     totais[nome] = (totais[nome] || 0) + valorTotal;
                 }
             });
