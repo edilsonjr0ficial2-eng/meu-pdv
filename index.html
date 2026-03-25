@@ -1188,11 +1188,19 @@
     function aplicarDescontoCaixa() {
         if(carrinho.length === 0) return alert("Adicione produtos primeiro!");
         let descStr = prompt(`Total Atual: R$ ${total.toFixed(2)}\n\nDigite o valor do desconto (Ex: 10,00):`, "0,00");
-        if(!descStr) return; let valDesc = parseFloat(descStr.replace(',', '.')); if(isNaN(valDesc) || valDesc <= 0) return;
+        if(!descStr) return; 
+        let valDesc = parseFloat(descStr.replace(',', '.')); 
+        if(isNaN(valDesc) || valDesc <= 0) return;
         if(valDesc > total) return alert("O desconto não pode ser maior que o total da compra!");
 
-        carrinho.push({ codigo: 'DESC', nome: 'Desconto Aplicado', preco: -valDesc, qtd: 1 });
-        total -= valDesc; atualizarCarrinho();
+        let motivo = prompt("Qual o motivo do desconto?");
+        if (motivo === null) return; // Se o usuário clicar em "Cancelar", anula o desconto
+        
+        let nomeDesconto = motivo.trim() !== "" ? `Desconto (${motivo.trim()})` : "Desconto (Motivo não informado)";
+
+        carrinho.push({ codigo: 'DESC', nome: nomeDesconto, preco: -valDesc, qtd: 1 });
+        total -= valDesc; 
+        atualizarCarrinho();
     }
 
     // --- NOVA LÓGICA DO AUTO-COMPLETE DA BARRA DE PESQUISA ---
