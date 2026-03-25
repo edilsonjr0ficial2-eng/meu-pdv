@@ -85,6 +85,11 @@
         
         #alerta-caixa { display: none; background: #fee2e2; color: #991b1b; padding: 15px; text-align: center; font-weight: bold; border-radius: 5px; margin-bottom: 20px; border: 2px solid #ef4444; }
 
+        /* DROPDOWN PESQUISA PRODUTOS */
+        .dropdown-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;}
+        .dropdown-item:hover { background-color: #f8fafc; color: #0ea5e9; }
+        .dropdown-item:last-child { border-bottom: none; }
+
         /* MODAIS */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
         .modal-box { background: #fff; padding: 25px; border-radius: 8px; width: 90%; max-width: 500px; text-align: center; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch;}
@@ -187,10 +192,13 @@
         <div style="background: #fff; border-radius: 8px; padding: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; flex: 1; min-height: 0;">
             <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; gap: 10px;">
                 <h2 style="margin:0; color:#111; font-size:20px; display:flex; align-items:center; gap:8px;">Nova Venda <span style="font-size:16px; color:#94a3b8;">💬</span></h2>
-                <div style="display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #cbd5e1; border-radius: 20px; padding: 4px 10px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); flex: 1; min-width: 200px;">
+                <div style="display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #cbd5e1; border-radius: 20px; padding: 4px 10px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); flex: 1; min-width: 200px; position: relative;">
                     <span style="color:#64748b;">🔍</span>
-                    <input type="text" id="codigoInput" placeholder="Produto ou Cód. Barras" style="border:none; background:transparent; outline:none; flex: 1; min-width: 80px; font-size: 13px;" disabled>
-                    <button type="button" id="btnAddCodigo" onclick="let inp=document.getElementById('codigoInput'); if(inp.value.trim()!==''){processarEntradaCodigo(inp.value.trim()); inp.value='';}" disabled style="background:#10b981; color:#fff; border:none; border-radius:15px; padding:6px 12px; font-weight:bold; font-size:12px; cursor:pointer; box-shadow: 0 2px 4px rgba(16,185,129,0.3);">+ Inserir</button>
+                    <input type="text" id="codigoInput" placeholder="Nome do Produto ou Código" autocomplete="off" style="border:none; background:transparent; outline:none; flex: 1; min-width: 80px; font-size: 13px;" disabled>
+                    
+                    <div id="dropdownProdutos" style="display:none; position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #cbd5e1; border-radius:8px; margin-top:5px; max-height:250px; overflow-y:auto; z-index:9999; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);"></div>
+                    
+                    <button type="button" id="btnAddCodigo" onclick="let inp=document.getElementById('codigoInput'); if(inp.value.trim()!==''){processarEntradaCodigo(inp.value.trim()); inp.value=''; document.getElementById('dropdownProdutos').style.display='none';}" disabled style="background:#10b981; color:#fff; border:none; border-radius:15px; padding:6px 12px; font-weight:bold; font-size:12px; cursor:pointer; box-shadow: 0 2px 4px rgba(16,185,129,0.3);">+ Inserir</button>
                     <button type="button" class="btn-camera" id="btnCamera" onclick="alternarCamera('codigoInput')" disabled style="padding: 2px; font-size: 16px; background: transparent; border: none; color: #3b82f6;">📷</button>
                 </div>
             </div>
@@ -1187,11 +1195,64 @@
         total -= valDesc; atualizarCarrinho();
     }
 
-    document.getElementById('codigoInput').addEventListener('keypress', function(e) { if (e.key === 'Enter' && this.value.trim() !== "") { e.preventDefault(); processarEntradaCodigo(this.value.trim()); this.value = ""; } });
-    
+    // --- NOVA LÓGICA DO AUTO-COMPLETE DA BARRA DE PESQUISA ---
+    document.getElementById('codigoInput').addEventListener('keypress', function(e) { 
+        if (e.key === 'Enter' && this.value.trim() !== "") { 
+            e.preventDefault(); 
+            processarEntradaCodigo(this.value.trim()); 
+            this.value = ""; 
+            document.getElementById('dropdownProdutos').style.display = 'none';
+        } 
+    });
+
+    document.getElementById('codigoInput').addEventListener('input', function(e) {
+        let termo = this.value.trim().toLowerCase();
+        let dropdown = document.getElementById('dropdownProdutos');
+        
+        if (termo.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+        
+        // Filtra os produtos ignorando 'SERVICO' e 'DESC'
+        let filtrados = bancoDeProdutos.filter(p => {
+            if(!p.Nome_Produto || p.ID_Produto === 'SERVICO' || p.ID_Produto === 'DESC') return false;
+            return String(p.Nome_Produto).toLowerCase().includes(termo) || String(p.ID_Produto).toLowerCase().includes(termo);
+        });
+        
+        if (filtrados.length > 0) {
+            dropdown.innerHTML = filtrados.map(p => `
+                <div class="dropdown-item" onclick="selecionarProdutoDropdown('${p.ID_Produto}')">
+                    <span style="font-weight: 500;">${p.Nome_Produto}</span> 
+                    <span style="color:#10b981; font-weight: bold; font-size: 13px;">R$ ${parseFloat(String(p.Preco_Venda||0).replace(',','.')).toFixed(2)}</span>
+                </div>
+            `).join('');
+            dropdown.style.display = 'block';
+        } else {
+            dropdown.innerHTML = `<div style="padding:15px; color:#94a3b8; font-size:13px; text-align:center;">Nenhum produto encontrado</div>`;
+            dropdown.style.display = 'block';
+        }
+    });
+
+    // Fecha o dropdown se o usuário clicar fora dele
+    document.addEventListener('click', function(e) {
+        if (e.target.id !== 'codigoInput') {
+            let dropdown = document.getElementById('dropdownProdutos');
+            if(dropdown) dropdown.style.display = 'none';
+        }
+    });
+
+    function selecionarProdutoDropdown(idProduto) {
+        document.getElementById('codigoInput').value = idProduto;
+        document.getElementById('dropdownProdutos').style.display = 'none';
+        processarEntradaCodigo(idProduto);
+        document.getElementById('codigoInput').value = ""; // limpa a barra após inserir
+    }
+    // -----------------------------------------------------------
+
     function processarEntradaCodigo(termo) { 
         termo = String(termo || '').toLowerCase(); let prod = bancoDeProdutos.find(p => String(p.ID_Produto || '').toLowerCase() === termo || String(p.Nome_Produto || '').toLowerCase() === termo); 
-        if (!prod) { let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto || '').toLowerCase().includes(termo)); if (achados.length === 1) prod = achados[0]; else if (achados.length > 1) { alert("Múltiplos produtos encontrados. Digite o código exato."); return; } } 
+        if (!prod) { let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto || '').toLowerCase().includes(termo)); if (achados.length === 1) prod = achados[0]; else if (achados.length > 1) { alert("Múltiplos produtos encontrados. Digite o código exato ou clique na lista."); return; } } 
         if (prod) { 
             let preco = parseFloat(String(prod.Preco_Venda || 0).replace(',','.')) || 0; let qtdMult = parseInt(document.getElementById('qtdInput').value) || 1;
             let ext = carrinho.find(i => String(i.codigo) === String(prod.ID_Produto)); 
