@@ -109,7 +109,8 @@
         .comanda-card.over { border: 2px dashed #0ea5e9; opacity: 0.6; transform: scale(1.02); }
         
         .comanda-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 5px; }
-        .comanda-header h3 { margin: 0; font-size: 18px; color: #0f172a; pointer-events: none; }
+        .comanda-header h3 { margin: 0; font-size: 18px; color: #0f172a; display: flex; align-items: center; gap: 8px;}
+        .comanda-header h3 span { pointer-events: none; } /* Permite arrastar clicando no texto */
         .comanda-header .id-comanda { font-size: 12px; color: #64748b; background: #f1f5f9; padding: 3px 8px; border-radius: 10px; font-weight: bold; pointer-events: none; }
         .comanda-body { flex: 1; font-size: 14px; color: #475569; margin-bottom: 15px; pointer-events: none; }
         .comanda-body .itens { margin-bottom: 10px; line-height: 1.5; }
@@ -1341,6 +1342,37 @@
     function abrirCamera() { let divCamera = document.getElementById('leitorCamera'); divCamera.style.display = "block"; if (!leitorHtml5) leitorHtml5 = new Html5Qrcode("leitorCamera"); leitorHtml5.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, (codigoLido) => { fecharCamera(); document.getElementById(inputCameraAlvo).value = codigoLido; if(inputCameraAlvo === 'codigoInput') processarEntradaCodigo(codigoLido); }, (erro) => {}).catch(err => { alert("Sem acesso à câmara."); divCamera.style.display = "none"; }); }
     function fecharCamera() { if(leitorHtml5) leitorHtml5.stop().then(() => { document.getElementById('leitorCamera').style.display = "none"; }).catch(e=>e); }
 
+    // --- NOVA FUNÇÃO PARA RENOMEAR COMANDAS DIRETAMENTE ---
+    async function renomearComanda(idComanda, nomeAtual) {
+        let novoNome = prompt("Digite o novo nome para esta comanda:", nomeAtual);
+        
+        // Verifica se o usuário digitou algo e se é diferente do atual
+        if(novoNome !== null && novoNome.trim() !== "" && novoNome !== nomeAtual) {
+            
+            // Puxa a comanda para saber o que tem nela
+            let comanda = bancoComandas.find(c => String(c.ID_Comanda) === String(idComanda));
+            if(!comanda) return;
+            
+            let itensAtuais = [];
+            try { itensAtuais = JSON.parse(comanda.Itens_JSON || "[]"); } catch(e){}
+            let valorTotal = parseFloat(String(comanda.Total||0).replace(',','.')) || 0;
+
+            document.getElementById('tela-sincronizacao').style.display = 'flex';
+            
+            // Re-salva a comanda usando a função de atualizar, mudando só o nome
+            await reqPOST({ 
+                acao: "atualizar_comanda", 
+                id_comanda: idComanda, 
+                cliente: novoNome.trim(), 
+                total: valorTotal, 
+                carrinho: itensAtuais, 
+                operador: operadorAtual 
+            });
+            
+            recarregarDadosSilencioso();
+        }
+    }
+
     // --- MODAL DE COMANDAS ---
     function abrirModalComandas() { 
         renderizarTabelaModalComandas(bancoComandas);
@@ -1375,20 +1407,26 @@
             
             let clienteEscapado = String(c.Cliente || '').replace(/'/g, "\\'");
             
-            let btnSelecionar = `<button onclick="selecionarComandaModal('${c.ID_Comanda}', '${clienteEscapado}')" style="background:transparent; border:none; color:#3b82f6; cursor:pointer; font-size:16px; padding:0 5px;" title="Selecionar / Abrir">📂</button>`;
-            let btnApagar = `<button onclick="verificarPermissaoGerente('Zerar Comanda', () => { excluirComanda('${c.ID_Comanda}'); fecharModalComandas(); })" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:16px; padding:0 5px;" title="Apagar">🗑️</button>`;
+            // BOTOES DA TABELA MODAL
+            let btnSelecionar = `<button type="button" onclick="selecionarComandaModal('${c.ID_Comanda}', '${clienteEscapado}')" style="background:transparent; border:none; color:#3b82f6; cursor:pointer; font-size:16px; padding:0 5px;" title="Selecionar / Abrir">📂</button>`;
+            let btnRenomear = `<button type="button" onclick="renomearComanda('${c.ID_Comanda}', '${clienteEscapado}')" style="background:transparent; border:none; color:#eab308; cursor:pointer; font-size:16px; padding:0 5px;" title="Renomear">✏️</button>`;
+            let btnApagar = `<button type="button" onclick="verificarPermissaoGerente('Zerar Comanda', () => { excluirComanda('${c.ID_Comanda}'); fecharModalComandas(); })" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:16px; padding:0 5px;" title="Apagar">🗑️</button>`;
 
-            // ADICIONADO DATA E HORA DE CRIAÇÃO E O OPERADOR NA TABELA (F3)
+            // TRATAMENTO REFORÇADO DE DATA E OPERADOR
+            let dataC = c.Data_Hora || c.data_hora || c.Data || c.data || '--';
+            let dataFormatada = dataC !== '--' ? formatarDataExibicao(dataC) : '--';
+            let opC = c.Operador || c.operador || '--';
+
             return `
             <tr style="border-bottom: 1px solid #e2e8f0; transition: 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
                 <td style="padding: 10px; font-weight: bold;">${c.ID_Comanda}</td>
                 <td style="padding: 10px;">${c.Cliente || 'Sem cliente'}</td>
                 <td style="padding: 10px; font-size: 12px; color: #64748b;">
-                    ${c.Data_Hora ? formatarDataExibicao(c.Data_Hora) : '--'}<br>
-                    <span style="font-size: 10px; color: #94a3b8;">Op: ${c.Operador || '--'}</span>
+                    ${dataFormatada}<br>
+                    <span style="font-size: 10px; color: #94a3b8;">Op: ${opC}</span>
                 </td>
                 <td style="padding: 10px; font-weight: bold;">R$ ${valor.toFixed(2)}</td>
-                <td style="padding: 10px;">${btnSelecionar} ${btnApagar}</td>
+                <td style="padding: 10px;">${btnSelecionar} ${btnRenomear} ${btnApagar}</td>
             </tr>`; 
         }).join('');
     }
@@ -1529,16 +1567,23 @@
             
             let clienteEscapado = String(c.Cliente || '').replace(/'/g, "\\'");
             
-            // ADICIONADO DATA E HORA E OPERADOR NO CABEÇALHO DO CARTÃO DA COMANDA
+            // TRATAMENTO REFORÇADO DE DATA E OPERADOR NO CABEÇALHO DO CARTÃO DA COMANDA
+            let dataC = c.Data_Hora || c.data_hora || c.Data || c.data || '--';
+            let dataFormatada = dataC !== '--' ? formatarDataExibicao(dataC) : '--';
+            let opC = c.Operador || c.operador || '--';
+
             return `
             <div class="comanda-card" draggable="true" data-id="${c.ID_Comanda}">
                 <div class="comanda-header">
-                    <h3>👤 ${c.Cliente || 'Sem Nome'}</h3>
+                    <h3>
+                        👤 <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${c.Cliente || 'Sem Nome'}</span>
+                        <button type="button" onclick="renomearComanda('${c.ID_Comanda}', '${clienteEscapado}')" style="background:transparent; border:none; cursor:pointer; font-size:14px; padding:0; margin-left:5px;" title="Renomear">✏️</button>
+                    </h3>
                     <span class="id-comanda">#${c.ID_Comanda}</span>
                 </div>
                 <div style="font-size: 11px; color: #64748b; margin-bottom: 10px; display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 5px;">
-                    <span>📅 ${c.Data_Hora ? formatarDataExibicao(c.Data_Hora) : '--'}</span>
-                    <span>👤 Op: ${c.Operador || '--'}</span>
+                    <span>📅 ${dataFormatada}</span>
+                    <span>👤 Op: ${opC}</span>
                 </div>
                 <div class="comanda-body">
                     <div class="itens">${itensStr}</div>
