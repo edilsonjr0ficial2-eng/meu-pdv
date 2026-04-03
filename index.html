@@ -13,14 +13,11 @@
         
         @media screen { #cupao-impressao { display: none; } }
         
-        /* --- REGRAS DE IMPRESSÃO CORRIGIDAS --- */
         @media print { 
-            /* 1. SE FOR IMPRIMIR O CUPOM (TÉRMICA) */
             body.imprimindo-cupom * { visibility: hidden; display: none !important; } 
             body.imprimindo-cupom #cupao-impressao, body.imprimindo-cupom #cupao-impressao * { visibility: visible; display: block !important; } 
             body.imprimindo-cupom #cupao-impressao { position: absolute; left: 0; top: 0; width: 58mm; padding: 0; margin: 0; font-family: monospace; font-size: 12px; color: #000; } 
 
-            /* 2. SE FOR IMPRIMIR RELATÓRIOS (A4 normal) */
             body:not(.imprimindo-cupom) { padding-left: 0 !important; background: #fff !important; height: auto !important; overflow: visible !important; }
             body:not(.imprimindo-cupom) .sidebar, 
             body:not(.imprimindo-cupom) button, 
@@ -31,7 +28,6 @@
             body:not(.imprimindo-cupom) .table-responsive { max-height: none !important; overflow: visible !important; border: none !important; }
             body:not(.imprimindo-cupom) canvas { max-width: 100% !important; height: auto !important; page-break-inside: avoid; }
 
-            /* 3. SE FOR IMPRIMIR UM MODAL ESPECÍFICO (Ex: Histórico) */
             body.imprimindo-modal .main-content { display: none !important; }
             body.imprimindo-modal .modal-overlay { position: static !important; background: #fff !important; display: block !important; align-items: flex-start !important; }
             body.imprimindo-modal .modal-box { width: 100% !important; max-width: none !important; box-shadow: none !important; border: none !important; padding: 0 !important; max-height: none !important; overflow: visible !important; }
@@ -125,11 +121,10 @@
         .comanda-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 5px; }
         .comanda-header h3 { margin: 0; font-size: 18px; color: #0f172a; display: flex; align-items: center; gap: 8px;}
         .comanda-header h3 span { pointer-events: none; }
-        .comanda-header .id-comanda { font-size: 12px; color: #64748b; background: #f1f5f9; padding: 3px 8px; border-radius: 10px; font-weight: bold; pointer-events: none; }
         .comanda-body { flex: 1; font-size: 14px; color: #475569; margin-bottom: 15px; pointer-events: none; }
         .comanda-body .itens { margin-bottom: 10px; line-height: 1.5; }
         .comanda-valor { font-size: 20px; font-weight: bold; color: #10b981; text-align: right; margin-bottom: 15px; pointer-events: none; }
-        .comanda-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .comanda-actions { display: grid; gap: 8px; }
         .comanda-actions button { padding: 10px 5px; font-size: 13px; width: 100%; cursor: pointer; }
 
         .livro-resumo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
@@ -234,7 +229,7 @@
                 <div style="flex:1; display:flex; align-items:center; border:1px solid #e2e8f0; border-radius:6px; padding:6px 12px; background: #f8fafc;">
                     <span style="color:#64748b; margin-right:10px; font-size:12px; font-weight:bold;">👤 Cliente</span>
                     <select id="selectClienteVenda" style="border:none; outline:none; flex:1; font-weight:bold; background:transparent; font-size:13px; color:#0f172a;">
-                        <option value="Consumidor Final">-</option>
+                        <option value="Consumidor Final">Consumidor Final</option>
                     </select>
                 </div>
             </div>
@@ -930,7 +925,6 @@
                 document.getElementById('operadorLogadoText').innerHTML = "Operador:<br>" + operadorAtual;
                 document.getElementById('cargoLogadoText').innerText = cargoAtual;
                 
-                // --- REGRA: SE FOR GERENTE MOSTRA TUDO, SE NÃO, OCULTA TUDO ISSO AQUI ---
                 if(cargoAtual === "Gerente" || opSalvo.toLowerCase().includes("edilson")) {
                     document.getElementById('menu-usuarios').style.display = 'flex';
                     document.getElementById('menu-estoque').style.display = 'flex';
@@ -943,7 +937,6 @@
                 
                 let tabSalva = localStorage.getItem('arena_tab') || 'tela-caixa';
                 
-                // Se o cara salvou a aba Relatorios e depois logou como operador, volta pro Caixa
                 if (cargoAtual !== "Gerente" && !opSalvo.toLowerCase().includes("edilson")) {
                     if (tabSalva === 'tela-estoque' || tabSalva === 'tela-relatorios' || tabSalva === 'tela-usuarios' || tabSalva.includes('tela-relatorio-')) {
                         tabSalva = 'tela-caixa';
@@ -978,7 +971,6 @@
             document.getElementById('operadorLogadoText').innerHTML = "Operador:<br>" + operadorAtual;
             document.getElementById('cargoLogadoText').innerText = cargoAtual;
             
-            // --- REGRA NA HORA DO LOGIN TAMBÉM ---
             if(cargoAtual === "Gerente" || userTyped.includes("edilson")) {
                 document.getElementById('menu-usuarios').style.display = 'flex';
                 document.getElementById('menu-estoque').style.display = 'flex';
@@ -1025,7 +1017,6 @@
             
             atualizarTodasAsTelas();
         } catch(e) { 
-            console.error("ERRO REAL DETECTADO NA BLINDAGEM:", e);
             let statusBar = document.getElementById('status-bar');
             if(statusBar) {
                 statusBar.style.display = 'block';
@@ -1043,7 +1034,6 @@
         atualizarInterfaceTurno(); atualizarTabelaEstoque(); atualizarTabelaComandas(); 
         atualizarDashboardECaixa(); atualizarListasClientes(); atualizarListaUsuarios();
         
-        // Se o modal do Histórico estiver aberto, atualiza a lista dele também
         if(document.getElementById('modalHistorico').style.display === 'flex') {
             renderizarHistoricoModal();
         }
@@ -1207,35 +1197,40 @@
             
         } 
         else if (acao.tipo === 'comanda') {
+            let clienteSel = document.getElementById('selectClienteVenda').value;
+            document.getElementById('tela-sincronizacao').style.display = 'flex';
+            
+            // Auto-Save antes de fechar a comanda toda
+            await reqPOST({ acao: "atualizar_comanda", id_comanda: acao.id_comanda, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual });
+
             await reqPOST({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr + acao.msgExtra });
             recarregarDadosSilencioso();
             
-            let comandaImpressao = bancoComandas.find(c => String(c.ID_Comanda || '') === String(acao.id_comanda));
-            let iArr = comandaImpressao ? JSON.parse(comandaImpressao.Itens_JSON || "[]") : [];
-            
+            let iArr = [...carrinho];
             limparCarrinhoNovaVenda();
             if(imprimirRecibo) imprimirCupao(pagadorNome !== "Não informado" ? pagadorNome : acao.cliente, iArr, acao.totalSalvo);
         }
         else if (acao.tipo === 'comanda_parcial') {
+            let clienteSel = document.getElementById('selectClienteVenda').value;
+            document.getElementById('tela-sincronizacao').style.display = 'flex';
+            
+            // Auto-Save antes do pagamento parcial
+            await reqPOST({ acao: "atualizar_comanda", id_comanda: acao.id_comanda, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual });
+
             if (totalPagoFinal >= acao.valorTotal - 0.01) {
-                document.getElementById('tela-sincronizacao').style.display = 'flex';
-                
                 await reqPOST({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr + " (Liquidação Final)" });
                 recarregarDadosSilencioso();
+                let iArr = [...carrinho];
                 limparCarrinhoNovaVenda();
                 
-                alert(`Atenção: Como este pagamento cobriu todo o saldo restante, a comanda foi liquidada e encerrada com sucesso!`);
-                if(imprimirRecibo) {
-                    let comandaImpressao = bancoComandas.find(c => String(c.ID_Comanda || '') === String(acao.id_comanda));
-                    let iArr = comandaImpressao ? JSON.parse(comandaImpressao.Itens_JSON || "[]") : [];
-                    imprimirCupao(pagadorNome !== "Não informado" ? pagadorNome : acao.cliente, iArr, acao.valorTotal);
-                }
+                alert(`Atenção: Pagamento cobriu todo o saldo restante. Comanda encerrada com sucesso!`);
+                if(imprimirRecibo) { imprimirCupao(pagadorNome !== "Não informado" ? pagadorNome : acao.cliente, iArr, acao.valorTotal); }
             } else {
                 await reqPOST({ acao: "pagamento_parcial_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr, valor_pago: totalPagoFinal });
                 recarregarDadosSilencioso();
                 pagamentosComandaAtual += totalPagoFinal;
                 atualizarCarrinho();
-                alert(`Pagamento parcial de R$ ${totalPagoFinal.toFixed(2)} recebido! Resta saldo a pagar.`);
+                alert(`Pagamento parcial de R$ ${totalPagoFinal.toFixed(2)} recebido! A comanda foi salva automaticamente com os itens novos.`);
             }
         }
     }
@@ -1458,7 +1453,7 @@
 
             return `
             <tr style="border-bottom: 1px solid #e2e8f0; transition: 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
-                <td style="padding: 10px; font-weight: bold;">${c.ID_Comanda}</td>
+                <td style="padding: 10px; font-weight: bold;"></td>
                 <td style="padding: 10px;">${c.Cliente || 'Sem cliente'}</td>
                 <td style="padding: 10px; font-size: 12px; color: #64748b;">
                     ${dataFormatada}<br>
@@ -1511,11 +1506,20 @@
     function handleDrop(e) { e.stopPropagation(); if (draggedCard !== this) { let grid = this.parentNode; let allCards = Array.from(grid.querySelectorAll('.comanda-card')); let draggedIndex = allCards.indexOf(draggedCard); let targetIndex = allCards.indexOf(this); if (draggedIndex < targetIndex) { grid.insertBefore(draggedCard, this.nextSibling); } else { grid.insertBefore(draggedCard, this); } } return false; }
     function handleDragEnd(e) { this.style.opacity = '1'; document.querySelectorAll('.comanda-card').forEach(c => c.classList.remove('over')); }
 
+    async function liquidarComandaAdmin(idComanda) {
+        if(!confirm("👑 MODO ADMIN: Deseja liquidar e encerrar esta comanda (marcar como paga)?")) return;
+        document.getElementById('tela-sincronizacao').style.display = 'flex';
+        await reqPOST({ acao: "cobrar_comanda", id_comanda: idComanda, operador: operadorAtual, pagador: "Liquidação Admin", forma_pagamento: "Liquidação Isenta" });
+        recarregarDadosSilencioso();
+        alert("Comanda liquidada com sucesso!");
+    }
+
     function atualizarTabelaComandas() { 
         let grid = document.getElementById('listaComandasGrid'); 
         if(bancoComandas.length === 0) { grid.innerHTML = `<div style="text-align: center; width:100%; color:#64748b; padding: 20px;">Nenhuma comanda aberta no momento.</div>`; return; } 
         
         let comandasReversas = bancoComandas.slice().reverse();
+        let isAdmin = cargoAtual === 'Gerente' || String(operadorAtual || '').toLowerCase().includes('edilson');
 
         grid.innerHTML = comandasReversas.map(c => { 
             if(!c.ID_Comanda) return ''; 
@@ -1551,6 +1555,8 @@
             let dataFormatada = dataC !== '--' ? formatarDataExibicao(dataC) : '--';
             let opC = c.Operador || c.operador || '--';
 
+            let btnLiquidar = isAdmin ? `<button type="button" class="btn-verde" style="background:#10b981; border-radius:5px;" onclick="liquidarComandaAdmin('${c.ID_Comanda}')">👑 Liquidar</button>` : '';
+
             return `
             <div class="comanda-card" draggable="true" data-id="${c.ID_Comanda}">
                 <div class="comanda-header">
@@ -1558,7 +1564,6 @@
                         👤 <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${c.Cliente || 'Sem Nome'}</span>
                         <button type="button" onclick="renomearComanda('${c.ID_Comanda}', '${clienteEscapado}')" style="background:transparent; border:none; cursor:pointer; font-size:14px; padding:0; margin-left:5px;" title="Renomear">✏️</button>
                     </h3>
-                    <span class="id-comanda">#${c.ID_Comanda}</span>
                 </div>
                 <div style="font-size: 11px; color: #64748b; margin-bottom: 10px; display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 5px;">
                     <span>📅 ${dataFormatada}</span>
@@ -1569,9 +1574,10 @@
                     ${pagamentosHtml}
                 </div>
                 <div style="text-align: right; margin-bottom: 15px;">${valorExibicaoHtml}</div>
-                <div class="comanda-actions">
+                <div class="comanda-actions" style="grid-template-columns: ${isAdmin ? '1fr 1fr 1fr' : '1fr 1fr'};">
                     <button type="button" class="btn-azul" onclick="mudarTela('tela-caixa'); editarComanda('${c.ID_Comanda}')">📂 Abrir no Caixa</button>
                     <button type="button" class="btn-vermelho" onclick="verificarPermissaoGerente('Zerar Comanda', () => excluirComanda('${c.ID_Comanda}'))">🗑️ Cancelar</button>
+                    ${btnLiquidar}
                 </div>
             </div>`; 
         }).join(''); 
@@ -1601,7 +1607,6 @@
     
     async function excluirComanda(idComanda) { if(confirm("ATENÇÃO: Deseja excluir a comanda e devolver TODOS os itens ao estoque sem cobrar?")) { await reqPOST({ acao: "excluir_comanda", id_comanda: idComanda, operador: operadorAtual }); recarregarDadosSilencioso(); } }
 
-    // --- NOVA LÓGICA DO HISTÓRICO DE ESTOQUE (COM FILTRO E IMPRESSÃO) ---
     function abrirModalHistorico() {
         setaDatasPadrao('filtroHistInicio', 'filtroHistFim');
         renderizarHistoricoModal();
@@ -1820,7 +1825,30 @@
 
     async function adicionarCliente() { let id = document.getElementById('novoIdCli').value, nome = document.getElementById('novoNomeCli').value, tel = document.getElementById('novoTelCli').value; if(!id || !nome) return alert("Preencha ID e Nome!"); await reqPOST({ acao: "adicionar_cliente", id: id, nome: nome, telefone: tel }); recarregarDadosSilencioso(); }
     async function removerCliente(id) { if(confirm("Apagar cliente?")) { await reqPOST({ acao: "remover_cliente", id: id }); recarregarDadosSilencioso(); } }
-    function atualizarListasClientes() { let tbody = document.getElementById('listaClientesGestao'); let selectVenda = document.getElementById('selectClienteVenda'); tbody.innerHTML = ""; selectVenda.innerHTML = '<option value="Consumidor Final">Consumidor Final</option>'; bancoClientes.forEach(c => { if(!c.ID_Cliente) return; tbody.innerHTML += `<tr><td>${c.ID_Cliente}</td><td>${c.Nome||''}</td><td>${c.Telefone||''}</td><td><button type="button" class="btn-vermelho" onclick="removerCliente('${c.ID_Cliente}')">Apagar</button></td></tr>`; selectVenda.innerHTML += `<option value="${c.Nome||''}">${c.Nome||''}</option>`; }); }
+    
+    function atualizarListasClientes() { 
+        let selectVenda = document.getElementById('selectClienteVenda'); 
+        let clienteAtual = selectVenda.value; 
+
+        let tbody = document.getElementById('listaClientesGestao'); 
+        tbody.innerHTML = ""; 
+        selectVenda.innerHTML = '<option value="Consumidor Final">Consumidor Final</option>'; 
+        
+        bancoClientes.forEach(c => { 
+            if(!c.ID_Cliente) return; 
+            tbody.innerHTML += `<tr><td>${c.ID_Cliente}</td><td>${c.Nome||''}</td><td>${c.Telefone||''}</td><td><button type="button" class="btn-vermelho" onclick="removerCliente('${c.ID_Cliente}')">Apagar</button></td></tr>`; 
+            selectVenda.innerHTML += `<option value="${c.Nome||''}">${c.Nome||''}</option>`; 
+        }); 
+
+        // Restaura o nome (evita o bug de pular pra Consumidor Final após atualizações em segundo plano)
+        if (clienteAtual) {
+            let options = Array.from(selectVenda.options);
+            if (!options.some(opt => opt.value === clienteAtual)) {
+                selectVenda.add(new Option(clienteAtual, clienteAtual));
+            }
+            selectVenda.value = clienteAtual;
+        }
+    }
 
     function enviarWhatsApp(clienteNome, itensCart, valorT) { let resumo = itensCart.map(i => `${i.qtd}x ${i.nome}`).join('%0A'); let texto = `*ARENA VITALE*%0AOlá ${clienteNome}, aqui está o resumo da sua compra:%0A%0A${resumo}%0A%0A*Total: R$ ${valorT.toFixed(2)}*%0A%0AObrigado!`; window.open(`https://wa.me/?text=${texto}`, '_blank'); }
     
@@ -1829,7 +1857,6 @@
         let itensHtml = itensCart.map(i => `<div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.preco * i.qtd).toFixed(2)}</span></div>`).join(''); 
         cupao.innerHTML = `<div style="text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 5px;">ARENA VITALE</div><div style="text-align: center; font-size: 10px; margin-bottom: 10px;">Russas - CE</div><div style="text-align: center; font-size: 12px; margin-bottom: 10px;">Recibo Não Fiscal</div><div>Data: ${data}</div><div>Operador: ${operadorAtual}</div><div>Cliente: ${clienteNome}</div><hr style="border-top: 1px dashed #000; margin: 5px 0;">${itensHtml}<hr style="border-top: 1px dashed #000; margin: 5px 0;"><div style="text-align: right; font-weight: bold; font-size: 14px;">TOTAL: R$ ${valorT.toFixed(2)}</div><div style="text-align: center; margin-top: 15px; font-size: 10px;">Obrigado e volte sempre!</div>`; 
         
-        // ADICIONA CLASSE PARA SABER QUE É O CUPOM
         document.body.classList.add('imprimindo-cupom');
         window.print(); 
         setTimeout(() => document.body.classList.remove('imprimindo-cupom'), 1000);
@@ -1849,7 +1876,6 @@
         } 
     });
 
-    // --- NOVA LÓGICA DOS RELATÓRIOS ---
     function setaDatasPadrao(idIni, idFim) {
         let hoje = new Date();
         let primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -1857,7 +1883,6 @@
         document.getElementById(idFim).value = hoje.toISOString().split('T')[0];
     }
 
-    // 1. FLUXO DE CAIXA
     function abrirRelatorioFluxo() { setaDatasPadrao('relFluxoDataInicio', 'relFluxoDataFim'); mudarTela('tela-relatorio-fluxo'); gerarRelatorioFluxo(); }
 
     function gerarRelatorioFluxo() {
@@ -1908,7 +1933,6 @@
         if (ctx) { chartRelFluxo = new Chart(ctx, { type: 'bar', data: { labels: labels.map(l => String(l).substring(0,5)), datasets: [ { label: 'Entradas', data: valEntradas, backgroundColor: '#22c55e', borderRadius: 4 }, { label: 'Saídas', data: valSaidas, backgroundColor: '#ef4444', borderRadius: 4 } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { position: 'top' } } } }); }
     }
 
-    // 2. RELATÓRIO DE ESTOQUE ATUAL
     function abrirRelatorioEstoque() {
         mudarTela('tela-relatorio-estoque');
         let totalCusto = 0, totalVenda = 0, html = '';
@@ -1929,7 +1953,6 @@
         document.getElementById('relEstoqueLucroProj').innerText = "R$ " + (totalVenda - totalCusto).toFixed(2);
     }
 
-    // 3. PRODUTOS MAIS/MENOS VENDIDOS
     function abrirRelatorioProdutos() { setaDatasPadrao('relProdDataInicio', 'relProdDataFim'); mudarTela('tela-relatorio-produtos'); gerarRelatorioProdutos(); }
 
     function gerarRelatorioProdutos() {
@@ -1959,7 +1982,6 @@
         if(ctx) { chartRelProdutos = new Chart(ctx, { type: 'bar', data: { labels: top10.map(p => p.nome), datasets: [{ label: 'Qtd Vendida (Top 10)', data: top10.map(p => p.qtd), backgroundColor: '#3b82f6', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } }); }
     }
 
-    // 4. RELATÓRIO DE LUCRO (CMV)
     function abrirRelatorioLucro() { setaDatasPadrao('relLucroDataInicio', 'relLucroDataFim'); mudarTela('tela-relatorio-lucro'); gerarRelatorioLucro(); }
 
     function gerarRelatorioLucro() {
@@ -1986,7 +2008,6 @@
         document.getElementById('relLucroReceita').innerText = "R$ " + receitaVendas.toFixed(2); document.getElementById('relLucroCusto').innerText = "R$ " + custoVendas.toFixed(2); document.getElementById('relLucroBruto').innerText = "R$ " + (receitaVendas - custoVendas).toFixed(2);
     }
 
-    // 5. VENDAS POR FORMA DE PAGAMENTO
     function abrirRelatorioPagamentos() { setaDatasPadrao('relPagDataInicio', 'relPagDataFim'); mudarTela('tela-relatorio-pagamentos'); gerarRelatorioPagamentos(); }
 
     function gerarRelatorioPagamentos() {
