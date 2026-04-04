@@ -1200,7 +1200,6 @@
             let clienteSel = document.getElementById('selectClienteVenda').value;
             document.getElementById('tela-sincronizacao').style.display = 'flex';
             
-            // Auto-Save antes de fechar a comanda toda
             await reqPOST({ acao: "atualizar_comanda", id_comanda: acao.id_comanda, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual });
 
             await reqPOST({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr + acao.msgExtra });
@@ -1214,7 +1213,6 @@
             let clienteSel = document.getElementById('selectClienteVenda').value;
             document.getElementById('tela-sincronizacao').style.display = 'flex';
             
-            // Auto-Save antes do pagamento parcial
             await reqPOST({ acao: "atualizar_comanda", id_comanda: acao.id_comanda, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual });
 
             if (totalPagoFinal >= acao.valorTotal - 0.01) {
@@ -1359,14 +1357,38 @@
     }
 
     function processarEntradaCodigo(termo) { 
-        termo = String(termo || '').toLowerCase(); let prod = bancoDeProdutos.find(p => String(p.ID_Produto || '').toLowerCase() === termo || String(p.Nome_Produto || '').toLowerCase() === termo); 
-        if (!prod) { let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto || '').toLowerCase().includes(termo)); if (achados.length === 1) prod = achados[0]; else if (achados.length > 1) { alert("Múltiplos produtos encontrados. Digite o código exato ou clique na lista."); return; } } 
+        termo = String(termo || '').toLowerCase(); 
+        let prod = bancoDeProdutos.find(p => String(p.ID_Produto || '').toLowerCase() === termo || String(p.Nome_Produto || '').toLowerCase() === termo); 
+        
+        if (!prod) { 
+            let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto || '').toLowerCase().includes(termo)); 
+            if (achados.length === 1) prod = achados[0]; 
+            else if (achados.length > 1) { alert("Múltiplos produtos encontrados. Digite o código exato ou clique na lista."); return; } 
+        } 
+        
         if (prod) { 
-            let preco = parseFloat(String(prod.Preco_Venda || 0).replace(',','.')) || 0; let qtdMult = parseInt(document.getElementById('qtdInput').value) || 1;
-            let ext = carrinho.find(i => String(i.codigo) === String(prod.ID_Produto)); 
-            if(ext) { ext.qtd += qtdMult; } else { carrinho.push({ codigo: prod.ID_Produto, nome: prod.Nome_Produto, preco: preco, qtd: qtdMult }); } 
-            total += (preco * qtdMult); atualizarCarrinho(); document.getElementById('qtdInput').value = "1"; 
-        } else { alert("Produto não encontrado!"); } 
+            let preco = parseFloat(String(prod.Preco_Venda || 0).replace(',','.')) || 0; 
+            let qtdMult = parseInt(document.getElementById('qtdInput').value) || 1;
+            let nomeFinal = prod.Nome_Produto;
+            
+            let quemPegou = prompt(`Quem está pegando: ${prod.Nome_Produto}?\n(Deixe em branco e dê OK para não identificar)`);
+            if (quemPegou && quemPegou.trim() !== "") {
+                nomeFinal = `${prod.Nome_Produto} (${quemPegou.trim()})`;
+            }
+            
+            let ext = carrinho.find(i => String(i.codigo) === String(prod.ID_Produto) && i.nome === nomeFinal); 
+            if(ext) { 
+                ext.qtd += qtdMult; 
+            } else { 
+                carrinho.push({ codigo: prod.ID_Produto, nome: nomeFinal, preco: preco, qtd: qtdMult }); 
+            } 
+            
+            total += (preco * qtdMult); 
+            atualizarCarrinho(); 
+            document.getElementById('qtdInput').value = "1"; 
+        } else { 
+            alert("Produto não encontrado!"); 
+        } 
     }
     
     function removerItemCarrinho(index) {
@@ -1840,7 +1862,6 @@
             selectVenda.innerHTML += `<option value="${c.Nome||''}">${c.Nome||''}</option>`; 
         }); 
 
-        // Restaura o nome (evita o bug de pular pra Consumidor Final após atualizações em segundo plano)
         if (clienteAtual) {
             let options = Array.from(selectVenda.options);
             if (!options.some(opt => opt.value === clienteAtual)) {
