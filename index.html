@@ -954,14 +954,15 @@
     async function reqPOST(dados) { 
         document.getElementById('tela-sincronizacao').style.display = 'flex';
         try {
+            // HACK DE MESTRE: O Google Apps Script considera o número "0" como se o dado estivesse em branco (falsy). 
+            // Então ele rejeita a atualização e mantém o valor antigo. 
+            // Para burlar isso, quando o total for 0, enviamos 0.0001 (o Google aceita e nossa tela arredonda pra 0.00).
+            if (dados.total === 0) dados.total = 0.0001;
+            
             let resposta = await fetch(API_URL, { method: 'POST', body: JSON.stringify(dados), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); 
             return resposta;
         } finally {
-            setTimeout(() => {
-                if (document.getElementById('tela-sincronizacao').style.display === 'flex') {
-                    document.getElementById('tela-sincronizacao').style.display = 'none';
-                }
-            }, 3000);
+            // A tela de sincronização será ocultada manualmente em alguns casos
         }
     }
 
@@ -995,7 +996,6 @@
                 document.getElementById('operadorLogadoText').innerHTML = "Operador:<br>" + operadorAtual;
                 document.getElementById('cargoLogadoText').innerText = cargoAtual;
                 
-                // VISIBILIDADE DAS ABAS (GERENTE VS OPERADOR)
                 if(cargoAtual === "Gerente" || opSalvo.toLowerCase().includes("edilson")) {
                     document.getElementById('menu-usuarios').style.display = 'flex';
                     document.getElementById('menu-estoque').style.display = 'flex';
@@ -1044,7 +1044,6 @@
             document.getElementById('operadorLogadoText').innerHTML = "Operador:<br>" + operadorAtual;
             document.getElementById('cargoLogadoText').innerText = cargoAtual;
             
-            // VISIBILIDADE DAS ABAS (GERENTE VS OPERADOR)
             if(cargoAtual === "Gerente" || userTyped.includes("edilson")) {
                 document.getElementById('menu-usuarios').style.display = 'flex';
                 document.getElementById('menu-estoque').style.display = 'flex';
@@ -1237,7 +1236,6 @@
     }
     /* -------------------------- */
 
-    /* ---- HISTÓRICO COMANDAS PAGAS ---- */
     function renderizarComandasPagas() {
         let grid = document.getElementById('listaComandasPagasGrid');
         if(!grid) return;
@@ -1289,7 +1287,6 @@
 
         grid.innerHTML = html;
     }
-    /* ---------------------------------- */
 
 
     function abrirModalPagamento(valorTotal, acaoObj) {
@@ -1425,7 +1422,10 @@
         if(acao.tipo === 'venda_direta') {
             document.getElementById('btnFinalizarVenda').innerText = "Gravando..."; document.getElementById('btnFinalizarVenda').disabled = true;
             await reqPOST({ acao: "venda", cliente: acao.cliente, total: acao.totalSalvo, carrinho: acao.carrinhoSalvo, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr });
-            limparCarrinhoNovaVenda(); recarregarDadosSilencioso();
+            limparCarrinhoNovaVenda(); 
+            
+            setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
+            
             document.getElementById('btnFinalizarVenda').innerHTML = '💵 Pagamento <span style="font-size:11px; opacity:0.8;">F6</span>'; document.getElementById('btnFinalizarVenda').disabled = false;
             
             if(imprimirRecibo) imprimirCupao(pagadorNome !== "Não informado" ? pagadorNome : acao.cliente, acao.carrinhoSalvo, acao.totalSalvo);
@@ -1435,46 +1435,56 @@
             let clienteSel = document.getElementById('selectClienteVenda').value;
             document.getElementById('tela-sincronizacao').style.display = 'flex';
             
-            // --- ATUALIZAÇÃO LOCAL IMEDIATA ---
-            let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(idComandaEmEdicao));
-            if(cIndex > -1) { bancoComandas[cIndex].Cliente = clienteSel; bancoComandas[cIndex].Total = total; bancoComandas[cIndex].Itens_JSON = JSON.stringify(carrinho); }
-            // ----------------------------------
+            let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(acao.id_comanda));
+            if(cIndex > -1) { bancoComandas.splice(cIndex, 1); atualizarTabelaComandas(); }
 
             await reqPOST({ acao: "atualizar_comanda", id_comanda: acao.id_comanda, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual });
-
             await reqPOST({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr + acao.msgExtra });
-            recarregarDadosSilencioso();
+            
+            setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
             
             let iArr = [...carrinho];
             limparCarrinhoNovaVenda();
             if(imprimirRecibo) imprimirCupao(pagadorNome !== "Não informado" ? pagadorNome : acao.cliente, iArr, acao.totalSalvo);
+            document.getElementById('tela-sincronizacao').style.display = 'none';
         }
         else if (acao.tipo === 'comanda_parcial') {
             let clienteSel = document.getElementById('selectClienteVenda').value;
             document.getElementById('tela-sincronizacao').style.display = 'flex';
             
-            // --- ATUALIZAÇÃO LOCAL IMEDIATA ---
-            let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(idComandaEmEdicao));
-            if(cIndex > -1) { bancoComandas[cIndex].Cliente = clienteSel; bancoComandas[cIndex].Total = total; bancoComandas[cIndex].Itens_JSON = JSON.stringify(carrinho); }
-            // ----------------------------------
-
-            await reqPOST({ acao: "atualizar_comanda", id_comanda: acao.id_comanda, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual });
-
             if (totalPagoFinal >= acao.valorTotal - 0.01) {
+                let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(acao.id_comanda));
+                if(cIndex > -1) { bancoComandas.splice(cIndex, 1); atualizarTabelaComandas(); }
+
+                await reqPOST({ acao: "atualizar_comanda", id_comanda: acao.id_comanda, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual });
                 await reqPOST({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr + " (Liquidação Final)" });
-                recarregarDadosSilencioso();
+                
+                setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
+                
                 let iArr = [...carrinho];
                 limparCarrinhoNovaVenda();
                 
-                alert(`Atenção: Pagamento cobriu todo o saldo restante. Comanda encerrada com sucesso!`);
                 if(imprimirRecibo) { imprimirCupao(pagadorNome !== "Não informado" ? pagadorNome : acao.cliente, iArr, acao.valorTotal); }
             } else {
+                await reqPOST({ acao: "atualizar_comanda", id_comanda: acao.id_comanda, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual });
                 await reqPOST({ acao: "pagamento_parcial_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr, valor_pago: totalPagoFinal });
-                recarregarDadosSilencioso();
+                
                 pagamentosComandaAtual += totalPagoFinal;
+                
+                let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(acao.id_comanda));
+                if(cIndex > -1) { 
+                    let pagAntigos = [];
+                    try { pagAntigos = JSON.parse(bancoComandas[cIndex].Pagamentos_JSON || "[]"); } catch(e){}
+                    pagAntigos.push({id_transacao: Date.now(), nome: formaPagStr, valor: totalPagoFinal});
+                    bancoComandas[cIndex].Pagamentos_JSON = JSON.stringify(pagAntigos);
+                    atualizarTabelaComandas(); 
+                }
+
+                setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
                 atualizarCarrinho();
-                alert(`Pagamento parcial de R$ ${totalPagoFinal.toFixed(2)} recebido! A comanda foi salva automaticamente com os itens novos.`);
+                alert(`Pagamento parcial de R$ ${totalPagoFinal.toFixed(2)} recebido!`);
             }
+            document.getElementById('tela-sincronizacao').style.display = 'none';
         }
     }
 
@@ -1679,13 +1689,13 @@
 
             document.getElementById('tela-sincronizacao').style.display = 'flex';
             
-            // --- ATUALIZAÇÃO LOCAL IMEDIATA ---
             comanda.Cliente = novoNome.trim();
             atualizarTabelaComandas();
-            // ----------------------------------
 
             await reqPOST({ acao: "atualizar_comanda", id_comanda: idComanda, cliente: novoNome.trim(), total: valorTotal, carrinho: itensAtuais, operador: operadorAtual });
-            recarregarDadosSilencioso();
+            
+            setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
+            document.getElementById('tela-sincronizacao').style.display = 'none';
         }
     }
 
@@ -1756,16 +1766,19 @@
         fecharModalComandas(); 
         let nome = prompt("Nome do Cliente para a NOVA comanda?"); 
         if(!nome) return; 
+        
+        document.getElementById('tela-sincronizacao').style.display = 'flex';
         await reqPOST({ acao: "abrir_comanda", cliente: nome, total: total, carrinho: carrinho, operador: operadorAtual }); 
         alert("Comanda criada!"); 
         limparCarrinhoNovaVenda(); 
-        recarregarDadosSilencioso(); 
+        
+        setTimeout(() => { recarregarDadosSilencioso(); }, 1500);
+        document.getElementById('tela-sincronizacao').style.display = 'none';
     }
     
     async function adicionarNaComandaExistente(idComanda, nomeCli) { 
         fecharModalComandas(); 
         
-        // --- ATUALIZAÇÃO LOCAL IMEDIATA ---
         let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(idComanda));
         if(cIndex > -1) {
             let itensAntigos = [];
@@ -1776,12 +1789,14 @@
             bancoComandas[cIndex].Total = novoTotal;
             atualizarTabelaComandas();
         }
-        // ----------------------------------
 
+        document.getElementById('tela-sincronizacao').style.display = 'flex';
         await reqPOST({ acao: "adicionar_item_comanda", id_comanda: idComanda, total: total, carrinho: carrinho, operador: operadorAtual }); 
         alert(`Itens adicionados!`); 
         limparCarrinhoNovaVenda(); 
-        recarregarDadosSilencioso(); 
+        
+        setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
+        document.getElementById('tela-sincronizacao').style.display = 'none';
     }
     
     let draggedCard = null;
@@ -1796,9 +1811,15 @@
     async function liquidarComandaAdmin(idComanda) {
         if(!confirm("👑 MODO ADMIN: Deseja liquidar e encerrar esta comanda (marcar como paga)?")) return;
         document.getElementById('tela-sincronizacao').style.display = 'flex';
+        
+        let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(idComanda));
+        if(cIndex > -1) { bancoComandas.splice(cIndex, 1); atualizarTabelaComandas(); }
+
         await reqPOST({ acao: "cobrar_comanda", id_comanda: idComanda, operador: operadorAtual, pagador: "Liquidação Admin", forma_pagamento: "Liquidação Isenta" });
-        recarregarDadosSilencioso();
         alert("Comanda liquidada com sucesso!");
+        
+        setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
+        document.getElementById('tela-sincronizacao').style.display = 'none';
     }
 
     function atualizarTabelaComandas() { 
@@ -1817,6 +1838,9 @@
             if(itensObj && itensObj.length > 0) { valorTotal = itensObj.reduce((sum, i) => sum + ((parseFloat(i.preco)||0) * (parseInt(i.qtd)||0)), 0); } 
             else { valorTotal = parseFloat(String(c.Total || 0).replace(',','.')) || 0; }
             
+            // Corrige o float estranho (0.0001) para ficar cravado em 0.
+            if (Math.abs(valorTotal) < 0.01) valorTotal = 0;
+
             let pagamentosHtml = ""; let totalJaPago = 0; 
             if(c.Pagamentos_JSON) {
                 try {
@@ -1833,8 +1857,12 @@
 
             let valorExibicaoHtml = "";
             if (totalJaPago > 0) {
-                if (saldoDevedor <= 0) { valorExibicaoHtml = `<div style="font-size: 14px; color: #64748b; text-decoration: line-through;">Total: R$ ${valorTotal.toFixed(2)}</div><div style="font-size: 20px; font-weight: bold; color: #16a34a;">✅ Conta Paga</div>`; } 
-                else { valorExibicaoHtml = `<div style="font-size: 14px; color: #64748b; text-decoration: line-through;">Total: R$ ${valorTotal.toFixed(2)}</div><div style="font-size: 20px; font-weight: bold; color: #dc2626;">Falta: R$ ${saldoDevedor.toFixed(2)}</div>`; }
+                if (saldoDevedor <= 0.01) { 
+                    valorExibicaoHtml = `<div style="font-size: 14px; color: #64748b; text-decoration: line-through;">Total: R$ ${valorTotal.toFixed(2)}</div><div style="font-size: 20px; font-weight: bold; color: #16a34a;">✅ Conta Paga</div>`; 
+                } 
+                else { 
+                    valorExibicaoHtml = `<div style="font-size: 14px; color: #64748b; text-decoration: line-through;">Total: R$ ${valorTotal.toFixed(2)}</div><div style="font-size: 20px; font-weight: bold; color: #dc2626;">Falta: R$ ${saldoDevedor.toFixed(2)}</div>`; 
+                }
             } else { valorExibicaoHtml = `<div class="comanda-valor">R$ ${valorTotal.toFixed(2)}</div>`; }
             
             let clienteEscapado = String(c.Cliente || '').replace(/'/g, "\\'");
@@ -1899,7 +1927,6 @@
     async function atualizarComandaExistente() { 
         let clienteSel = document.getElementById('selectClienteVenda').value; 
         
-        // --- ATUALIZAÇÃO LOCAL IMEDIATA (Resolve o delay do Google Sheets) ---
         let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(idComandaEmEdicao));
         if(cIndex > -1) {
             bancoComandas[cIndex].Cliente = clienteSel;
@@ -1907,15 +1934,25 @@
             bancoComandas[cIndex].Itens_JSON = JSON.stringify(carrinho);
         }
         atualizarTabelaComandas();
-        // ----------------------------------------------------------------------
+
+        let btn = document.getElementById('btnSalvarComanda');
+        btn.innerText = "Salvando..."; btn.disabled = true;
 
         await reqPOST({ acao: "atualizar_comanda", id_comanda: idComandaEmEdicao, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual }); 
-        alert("Comanda atualizada com sucesso!"); 
+        
         cancelarEdicaoComanda(); 
-        recarregarDadosSilencioso(); 
+        setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
     }
     
-    async function excluirComanda(idComanda) { if(confirm("ATENÇÃO: Deseja excluir a comanda e devolver TODOS os itens ao estoque sem cobrar?")) { await reqPOST({ acao: "excluir_comanda", id_comanda: idComanda, operador: operadorAtual }); recarregarDadosSilencioso(); } }
+    async function excluirComanda(idComanda) { 
+        if(confirm("ATENÇÃO: Deseja excluir a comanda e devolver TODOS os itens ao estoque sem cobrar?")) { 
+            let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(idComanda));
+            if(cIndex > -1) { bancoComandas.splice(cIndex, 1); atualizarTabelaComandas(); }
+            
+            await reqPOST({ acao: "excluir_comanda", id_comanda: idComanda, operador: operadorAtual }); 
+            setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
+        } 
+    }
 
     function abrirModalHistorico() {
         setaDatasPadrao('filtroHistInicio', 'filtroHistFim');
