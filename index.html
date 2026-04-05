@@ -68,12 +68,14 @@
         .sidebar:hover .menu-item span { opacity: 1; }
         .menu-item:hover { background-color: #334155; }
         .menu-item.ativo { background-color: #0f172a; border-left-color: #38bdf8; color: #38bdf8; }
-        #menu-usuarios, #menu-estoque, #menu-relatorios { display: none; } 
+        
+        /* ABAS BLOQUEADAS PARA OPERADOR RESTRITO */
+        #menu-usuarios, #menu-estoque, #menu-relatorios, #menu-comandas-pagas { display: none; } 
         
         .main-content { flex: 1; padding: 15px; overflow-y: auto; position: relative; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; }
         .tela { display: none; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); flex: 1; }
         .tela.ativa { display: block; }
-        #tela-caixa.ativa, #tela-livro.ativa, #tela-relatorios.ativa, #tela-relatorio-fluxo.ativa, #tela-relatorio-estoque.ativa, #tela-relatorio-produtos.ativa, #tela-relatorio-lucro.ativa, #tela-relatorio-pagamentos.ativa { display: flex !important; flex-direction: column; background: transparent; padding: 0; box-shadow: none;}
+        #tela-caixa.ativa, #tela-livro.ativa, #tela-relatorios.ativa, #tela-relatorio-fluxo.ativa, #tela-relatorio-estoque.ativa, #tela-relatorio-produtos.ativa, #tela-relatorio-lucro.ativa, #tela-relatorio-pagamentos.ativa, #tela-comandas-pagas.ativa { display: flex !important; flex-direction: column; background: transparent; padding: 0; box-shadow: none;}
 
         h1 { color: #333; margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; font-size: 24px; }
         
@@ -274,16 +276,6 @@
                     <span>Subtotal</span>
                     <span>R$ <span id="valorSubtotal">0,00</span></span>
                 </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; font-weight:bold; color:#111; align-items:center;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span>Tx. Serviço</span>
-                        <button style="background:#3b82f6; color:#fff; border:none; border-radius:4px; padding:2px 8px; cursor:pointer; font-size:11px;">%</button>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:6px;">
-                        <span style="color:#64748b;">R$</span>
-                        <input type="text" value="0,00" disabled style="width:80px; text-align:right; border:1px solid #e2e8f0; border-radius:4px; padding:4px 6px; background:#fff; font-weight:bold; color:#111; font-size: 12px;">
-                    </div>
-                </div>
                 <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:20px; font-weight:900; color:#000; border-top: 1px solid #e2e8f0; padding-top: 8px;">
                     <span>Total</span>
                     <span>R$ <span id="valorTotal">0,00</span></span>
@@ -311,7 +303,7 @@
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex-shrink: 0;">
                 <button type="button" style="background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:6px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;" id="btnSalvarComanda" onclick="acaoBotaoComanda()" disabled>
-                    💾 Salvar <span style="font-size:11px; opacity:0.8;">F5</span>
+                    💾 Gravar <span style="font-size:11px; opacity:0.8;">F5</span>
                 </button>
                 <button type="button" style="background:#22c55e; color:#fff; border:none; padding:12px; border-radius:6px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;" id="btnFinalizarVenda" onclick="iniciarPagamentoCaixa()" disabled>
                     💵 Pagamento <span style="font-size:11px; opacity:0.8;">F6</span>
@@ -623,7 +615,9 @@
                 <button onclick="mudarTela('tela-relatorios')" style="background:transparent; border:none; font-size:20px; cursor:pointer; color:#3b82f6;">⬅️</button> 
                 Vendas por Forma de Pagamento
             </h2>
-            <button style="background: #0ea5e9; color: #fff; padding: 8px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="window.print()">🖨️ Imprimir</button>
+            <div style="display: flex; gap: 10px;">
+                <button style="background: #0ea5e9; color: #fff; padding: 8px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="window.print()">🖨️ Imprimir</button>
+            </div>
         </div>
         <div style="background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
             <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center; flex-wrap: wrap;">
@@ -856,6 +850,7 @@
 </div>
 
 <script>
+    // ⚠️ ATENÇÃO: COLOQUE AQUI O SEU LINK MAIS RECENTE DA NOVA IMPLANTAÇÃO!
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
     const TAXAS_CARTAO = { credito: 0.03, debito: 0.015, pix: 0, especie: 0 };
@@ -885,14 +880,19 @@
     async function reqPOST(dados) { 
         document.getElementById('tela-sincronizacao').style.display = 'flex';
         try {
-            let resposta = await fetch(API_URL, { method: 'POST', body: JSON.stringify(dados), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); 
+            let payload = JSON.parse(JSON.stringify(dados));
+            
+            if (payload.total !== undefined) payload.total = Number(payload.total).toFixed(2);
+            if (payload.valor !== undefined) payload.valor = Number(payload.valor).toFixed(2);
+            if (payload.valor_pago !== undefined) payload.valor_pago = Number(payload.valor_pago).toFixed(2);
+            if (payload.valor_apurado !== undefined) payload.valor_apurado = Number(payload.valor_apurado).toFixed(2);
+            if (payload.diferenca !== undefined) payload.diferenca = Number(payload.diferenca).toFixed(2);
+            if (payload.fundo !== undefined) payload.fundo = Number(payload.fundo).toFixed(2);
+            
+            let resposta = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); 
             return resposta;
         } finally {
-            setTimeout(() => {
-                if (document.getElementById('tela-sincronizacao').style.display === 'flex') {
-                    document.getElementById('tela-sincronizacao').style.display = 'none';
-                }
-            }, 3000);
+            // Tela oculta manualmente depois
         }
     }
 
@@ -951,7 +951,15 @@
                 ['loginUsuario', 'loginSenha', 'btnEntrar'].forEach(id => document.getElementById(id).disabled = false);
             }
             atualizarTodasAsTelas();
-        } catch (erro) { document.getElementById('caixa-login-loading').style.display = 'none'; document.getElementById('caixa-login-inputs').style.display = 'block'; document.getElementById('status-login').innerHTML = "Erro de conexão.<br>Recarregue a página."; document.getElementById('status-login').style.color = "#ef4444"; }
+        } catch (erro) { 
+            document.getElementById('caixa-login-loading').style.display = 'none'; 
+            document.getElementById('caixa-login-inputs').style.display = 'block'; 
+            document.getElementById('status-login').innerHTML = "Erro de conexão.<br>Verifique a API_URL."; 
+            document.getElementById('status-login').style.color = "#ef4444"; 
+            document.getElementById('loginUsuario').disabled = false;
+            document.getElementById('loginSenha').disabled = false;
+            document.getElementById('btnEntrar').disabled = false;
+        }
     }
 
     function fazerLogin() {
@@ -1008,7 +1016,6 @@
 
     async function recarregarDadosSilencioso() {
         document.getElementById('tela-sincronizacao').style.display = 'flex';
-        
         try {
             const resposta = await fetch(API_URL); const dados = await resposta.json();
             bancoDeProdutos = dados.produtos || []; bancoComandas = dados.comandas || [];
@@ -1182,54 +1189,87 @@
         executarAcaoPagamento(acaoSegura, formasStr, totalPago, pagNome, imprimirRecibo).then(() => {
             document.getElementById('btnFin1').innerText = "✓ Finalizar"; 
             fecharModalPagamento(); 
+        }).catch(() => {
+            document.getElementById('btnFin1').innerText = "✓ Finalizar"; 
+            document.getElementById('btnFin1').disabled = false;
+            document.getElementById('btnFin2').disabled = false;
         });
     }
 
     async function executarAcaoPagamento(acao, formaPagStr, totalPagoFinal, pagadorNome, imprimirRecibo) {
         if(!acao) return;
-        if(acao.tipo === 'venda_direta') {
-            document.getElementById('btnFinalizarVenda').innerText = "Gravando..."; document.getElementById('btnFinalizarVenda').disabled = true;
-            await reqPOST({ acao: "venda", cliente: acao.cliente, total: acao.totalSalvo, carrinho: acao.carrinhoSalvo, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr });
-            limparCarrinhoNovaVenda(); recarregarDadosSilencioso();
-            document.getElementById('btnFinalizarVenda').innerHTML = '💵 Pagamento <span style="font-size:11px; opacity:0.8;">F6</span>'; document.getElementById('btnFinalizarVenda').disabled = false;
-            
-            if(imprimirRecibo) imprimirCupao(pagadorNome !== "Não informado" ? pagadorNome : acao.cliente, acao.carrinhoSalvo, acao.totalSalvo);
-            
-        } 
-        else if (acao.tipo === 'comanda') {
-            let clienteSel = document.getElementById('selectClienteVenda').value;
-            document.getElementById('tela-sincronizacao').style.display = 'flex';
-            
-            await reqPOST({ acao: "atualizar_comanda", id_comanda: acao.id_comanda, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual });
+        try {
+            if(acao.tipo === 'venda_direta') {
+                document.getElementById('btnFinalizarVenda').innerText = "Gravando..."; document.getElementById('btnFinalizarVenda').disabled = true;
+                await reqPOST({ acao: "venda", cliente: acao.cliente, total: acao.totalSalvo, carrinho: acao.carrinhoSalvo, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr });
+                limparCarrinhoNovaVenda(); 
+                
+                setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
+                
+                document.getElementById('btnFinalizarVenda').innerHTML = '💵 Pagamento <span style="font-size:11px; opacity:0.8;">F6</span>'; document.getElementById('btnFinalizarVenda').disabled = false;
+                
+                if(imprimirRecibo) imprimirCupao(pagadorNome !== "Não informado" ? pagadorNome : acao.cliente, acao.carrinhoSalvo, acao.totalSalvo);
+                
+            } 
+            else if (acao.tipo === 'comanda') {
+                let clienteSel = document.getElementById('selectClienteVenda').value;
+                document.getElementById('tela-sincronizacao').style.display = 'flex';
+                
+                let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(acao.id_comanda));
+                if(cIndex > -1) { bancoComandas.splice(cIndex, 1); atualizarTabelaComandas(); }
 
-            await reqPOST({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr + acao.msgExtra });
-            recarregarDadosSilencioso();
-            
-            let iArr = [...carrinho];
-            limparCarrinhoNovaVenda();
-            if(imprimirRecibo) imprimirCupao(pagadorNome !== "Não informado" ? pagadorNome : acao.cliente, iArr, acao.totalSalvo);
-        }
-        else if (acao.tipo === 'comanda_parcial') {
-            let clienteSel = document.getElementById('selectClienteVenda').value;
-            document.getElementById('tela-sincronizacao').style.display = 'flex';
-            
-            await reqPOST({ acao: "atualizar_comanda", id_comanda: acao.id_comanda, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual });
-
-            if (totalPagoFinal >= acao.valorTotal - 0.01) {
-                await reqPOST({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr + " (Liquidação Final)" });
-                recarregarDadosSilencioso();
+                await reqPOST({ acao: "atualizar_comanda", id_comanda: acao.id_comanda, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual });
+                await reqPOST({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr + acao.msgExtra, total: total });
+                
+                setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
+                
                 let iArr = [...carrinho];
                 limparCarrinhoNovaVenda();
-                
-                alert(`Atenção: Pagamento cobriu todo o saldo restante. Comanda encerrada com sucesso!`);
-                if(imprimirRecibo) { imprimirCupao(pagadorNome !== "Não informado" ? pagadorNome : acao.cliente, iArr, acao.valorTotal); }
-            } else {
-                await reqPOST({ acao: "pagamento_parcial_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr, valor_pago: totalPagoFinal });
-                recarregarDadosSilencioso();
-                pagamentosComandaAtual += totalPagoFinal;
-                atualizarCarrinho();
-                alert(`Pagamento parcial de R$ ${totalPagoFinal.toFixed(2)} recebido! A comanda foi salva automaticamente com os itens novos.`);
+                if(imprimirRecibo) imprimirCupao(pagadorNome !== "Não informado" ? pagadorNome : acao.cliente, iArr, acao.totalSalvo);
+                document.getElementById('tela-sincronizacao').style.display = 'none';
             }
+            else if (acao.tipo === 'comanda_parcial') {
+                let clienteSel = document.getElementById('selectClienteVenda').value;
+                document.getElementById('tela-sincronizacao').style.display = 'flex';
+                
+                if (totalPagoFinal >= acao.valorTotal - 0.01) {
+                    let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(acao.id_comanda));
+                    if(cIndex > -1) { bancoComandas.splice(cIndex, 1); atualizarTabelaComandas(); }
+
+                    await reqPOST({ acao: "atualizar_comanda", id_comanda: acao.id_comanda, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual });
+                    await reqPOST({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr + " (Liquidação Final)", total: total });
+                    
+                    setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
+                    
+                    let iArr = [...carrinho];
+                    limparCarrinhoNovaVenda();
+                    
+                    if(imprimirRecibo) { imprimirCupao(pagadorNome !== "Não informado" ? pagadorNome : acao.cliente, iArr, acao.valorTotal); }
+                } else {
+                    await reqPOST({ acao: "atualizar_comanda", id_comanda: acao.id_comanda, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual });
+                    await reqPOST({ acao: "pagamento_parcial_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr, valor_pago: totalPagoFinal });
+                    
+                    pagamentosComandaAtual += totalPagoFinal;
+                    
+                    let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(acao.id_comanda));
+                    if(cIndex > -1) { 
+                        let pagAntigos = [];
+                        try { pagAntigos = JSON.parse(bancoComandas[cIndex].Pagamentos_JSON || "[]"); } catch(e){}
+                        pagAntigos.push({id_transacao: Date.now(), nome: formaPagStr, valor: totalPagoFinal});
+                        bancoComandas[cIndex].Pagamentos_JSON = JSON.stringify(pagAntigos);
+                        atualizarTabelaComandas(); 
+                    }
+
+                    setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
+                    atualizarCarrinho();
+                    alert(`Pagamento parcial de R$ ${totalPagoFinal.toFixed(2)} recebido!`);
+                }
+                document.getElementById('tela-sincronizacao').style.display = 'none';
+            }
+        } catch (e) {
+            alert("Erro de comunicação ao registrar. O Google não respondeu.");
+            document.getElementById('tela-sincronizacao').style.display = 'none';
+            throw e;
         }
     }
 
@@ -1263,7 +1303,7 @@
     function limparCarrinhoNovaVenda() {
         carrinho = []; total = 0; pagamentosComandaAtual = 0; idComandaEmEdicao = null; 
         document.getElementById('bannerEdicaoComanda').style.display = 'none';
-        document.getElementById('btnSalvarComanda').innerHTML = '💾 Salvar <span style="font-size:11px; opacity:0.8;">F5</span>'; 
+        document.getElementById('btnSalvarComanda').innerHTML = '💾 Gravar <span style="font-size:11px; opacity:0.8;">F5</span>'; 
         document.getElementById('btnSalvarComanda').style.background = "#3b82f6";
         atualizarCarrinho(); document.getElementById('selectClienteVenda').value = "Consumidor Final";
     }
@@ -1292,7 +1332,7 @@
         let descStr = prompt(`Total Atual: R$ ${total.toFixed(2)}\n\nDigite o valor do desconto (Ex: 10,00):`, "0,00");
         if(!descStr) return; 
         let valDesc = parseFloat(descStr.replace(',', '.')); 
-        if(isNaN(valDesc) || valDesc <= 0) return;
+        if(isNaN(valDesc) || valDesc <= 0) return alert("Valor inválido!");
         if(valDesc > total) return alert("O desconto não pode ser maior que o total da compra!");
 
         let motivo = prompt("Qual o motivo do desconto?");
@@ -1433,8 +1473,14 @@
             let valorTotal = parseFloat(String(comanda.Total||0).replace(',','.')) || 0;
 
             document.getElementById('tela-sincronizacao').style.display = 'flex';
+            
+            comanda.Cliente = novoNome.trim();
+            atualizarTabelaComandas();
+
             await reqPOST({ acao: "atualizar_comanda", id_comanda: idComanda, cliente: novoNome.trim(), total: valorTotal, carrinho: itensAtuais, operador: operadorAtual });
-            recarregarDadosSilencioso();
+            
+            setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
+            document.getElementById('tela-sincronizacao').style.display = 'none';
         }
     }
 
@@ -1505,18 +1551,37 @@
         fecharModalComandas(); 
         let nome = prompt("Nome do Cliente para a NOVA comanda?"); 
         if(!nome) return; 
+        
+        document.getElementById('tela-sincronizacao').style.display = 'flex';
         await reqPOST({ acao: "abrir_comanda", cliente: nome, total: total, carrinho: carrinho, operador: operadorAtual }); 
         alert("Comanda criada!"); 
         limparCarrinhoNovaVenda(); 
-        recarregarDadosSilencioso(); 
+        
+        setTimeout(() => { recarregarDadosSilencioso(); }, 1500);
+        document.getElementById('tela-sincronizacao').style.display = 'none';
     }
     
     async function adicionarNaComandaExistente(idComanda, nomeCli) { 
         fecharModalComandas(); 
+        
+        let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(idComanda));
+        if(cIndex > -1) {
+            let itensAntigos = [];
+            try { itensAntigos = JSON.parse(bancoComandas[cIndex].Itens_JSON || "[]"); } catch(e){}
+            let novoCarrinho = [...itensAntigos, ...carrinho];
+            let novoTotal = novoCarrinho.reduce((acc, item) => acc + (item.preco * item.qtd), 0);
+            bancoComandas[cIndex].Itens_JSON = JSON.stringify(novoCarrinho);
+            bancoComandas[cIndex].Total = novoTotal;
+            atualizarTabelaComandas();
+        }
+
+        document.getElementById('tela-sincronizacao').style.display = 'flex';
         await reqPOST({ acao: "adicionar_item_comanda", id_comanda: idComanda, total: total, carrinho: carrinho, operador: operadorAtual }); 
         alert(`Itens adicionados!`); 
         limparCarrinhoNovaVenda(); 
-        recarregarDadosSilencioso(); 
+        
+        setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
+        document.getElementById('tela-sincronizacao').style.display = 'none';
     }
     
     let draggedCard = null;
@@ -1531,9 +1596,34 @@
     async function liquidarComandaAdmin(idComanda) {
         if(!confirm("👑 MODO ADMIN: Deseja liquidar e encerrar esta comanda (marcar como paga)?")) return;
         document.getElementById('tela-sincronizacao').style.display = 'flex';
-        await reqPOST({ acao: "cobrar_comanda", id_comanda: idComanda, operador: operadorAtual, pagador: "Liquidação Admin", forma_pagamento: "Liquidação Isenta" });
-        recarregarDadosSilencioso();
-        alert("Comanda liquidada com sucesso!");
+
+        let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(idComanda));
+        let valorTotalComanda = 0;
+        
+        if(cIndex > -1) { 
+            // Captura o total exato da comanda antes de apagar da tela
+            valorTotalComanda = parseFloat(String(bancoComandas[cIndex].Total||0).replace(',', '.')) || 0;
+            bancoComandas.splice(cIndex, 1); 
+            atualizarTabelaComandas(); 
+        }
+
+        try {
+            // Enviamos o campo "total" explicitamente para o Google aceitar a requisição
+            await reqPOST({ 
+                acao: "cobrar_comanda", 
+                id_comanda: idComanda, 
+                operador: operadorAtual, 
+                pagador: "Liquidação Admin", 
+                forma_pagamento: "Liquidação Isenta",
+                total: valorTotalComanda 
+            });
+            alert("Comanda liquidada com sucesso!");
+        } catch(e) {
+            alert("Erro de comunicação ao liquidar. Tente novamente.");
+        }
+        
+        setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
+        document.getElementById('tela-sincronizacao').style.display = 'none';
     }
 
     function atualizarTabelaComandas() { 
@@ -1552,6 +1642,9 @@
             if(itensObj && itensObj.length > 0) { valorTotal = itensObj.reduce((sum, i) => sum + ((parseFloat(i.preco)||0) * (parseInt(i.qtd)||0)), 0); } 
             else { valorTotal = parseFloat(String(c.Total || 0).replace(',','.')) || 0; }
             
+            // Corrige o float para garantir que caia exatamente em zero
+            if (Math.abs(valorTotal) < 0.01) valorTotal = 0;
+
             let pagamentosHtml = ""; let totalJaPago = 0; 
             if(c.Pagamentos_JSON) {
                 try {
@@ -1568,8 +1661,12 @@
 
             let valorExibicaoHtml = "";
             if (totalJaPago > 0) {
-                if (saldoDevedor <= 0) { valorExibicaoHtml = `<div style="font-size: 14px; color: #64748b; text-decoration: line-through;">Total: R$ ${valorTotal.toFixed(2)}</div><div style="font-size: 20px; font-weight: bold; color: #16a34a;">✅ Conta Paga</div>`; } 
-                else { valorExibicaoHtml = `<div style="font-size: 14px; color: #64748b; text-decoration: line-through;">Total: R$ ${valorTotal.toFixed(2)}</div><div style="font-size: 20px; font-weight: bold; color: #dc2626;">Falta: R$ ${saldoDevedor.toFixed(2)}</div>`; }
+                if (saldoDevedor <= 0.01) { 
+                    valorExibicaoHtml = `<div style="font-size: 14px; color: #64748b; text-decoration: line-through;">Total: R$ ${valorTotal.toFixed(2)}</div><div style="font-size: 20px; font-weight: bold; color: #16a34a;">✅ Conta Paga</div>`; 
+                } 
+                else { 
+                    valorExibicaoHtml = `<div style="font-size: 14px; color: #64748b; text-decoration: line-through;">Total: R$ ${valorTotal.toFixed(2)}</div><div style="font-size: 20px; font-weight: bold; color: #dc2626;">Falta: R$ ${saldoDevedor.toFixed(2)}</div>`; 
+                }
             } else { valorExibicaoHtml = `<div class="comanda-valor">R$ ${valorTotal.toFixed(2)}</div>`; }
             
             let clienteEscapado = String(c.Cliente || '').replace(/'/g, "\\'");
@@ -1618,16 +1715,48 @@
 
         document.getElementById('bannerEdicaoComanda').style.display = 'flex'; document.getElementById('nomeEdicaoComanda').innerText = comanda.Cliente || 'Sem Nome';
         let selectCli = document.getElementById('selectClienteVenda'); if(!Array.from(selectCli.options).some(opt => opt.value === comanda.Cliente)) { selectCli.add(new Option(comanda.Cliente, comanda.Cliente)); }
-        selectCli.value = comanda.Cliente; document.getElementById('btnSalvarComanda').innerHTML = '💾 Gravar Alterações <span style="font-size:11px; opacity:0.8;">F5</span>'; document.getElementById('btnSalvarComanda').style.background = "#eab308"; document.getElementById('btnSalvarComanda').disabled = false; 
+        selectCli.value = comanda.Cliente; document.getElementById('btnSalvarComanda').innerHTML = '💾 Gravar <span style="font-size:11px; opacity:0.8;">F5</span>'; document.getElementById('btnSalvarComanda').style.background = "#eab308"; document.getElementById('btnSalvarComanda').disabled = false; 
         
         atualizarCarrinho(); 
     }
 
     function cancelarEdicaoComanda() { limparCarrinhoNovaVenda(); }
-    function acaoBotaoComanda() { if(!turnoAtual) return alert("Abra o caixa!"); if(carrinho.length === 0) return alert("Carrinho vazio!"); if(idComandaEmEdicao) { atualizarComandaExistente(); } else { abrirModalComandas(); } }
-    async function atualizarComandaExistente() { let clienteSel = document.getElementById('selectClienteVenda').value; await reqPOST({ acao: "atualizar_comanda", id_comanda: idComandaEmEdicao, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual }); alert("Comanda atualizada!"); cancelarEdicaoComanda(); recarregarDadosSilencioso(); }
     
-    async function excluirComanda(idComanda) { if(confirm("ATENÇÃO: Deseja excluir a comanda e devolver TODOS os itens ao estoque sem cobrar?")) { await reqPOST({ acao: "excluir_comanda", id_comanda: idComanda, operador: operadorAtual }); recarregarDadosSilencioso(); } }
+    function acaoBotaoComanda() { 
+        if(!turnoAtual) return alert("Abra o caixa!"); 
+        if(carrinho.length === 0) return alert("Carrinho vazio!"); 
+        if(idComandaEmEdicao) { atualizarComandaExistente(); } else { abrirModalComandas(); } 
+    }
+    
+    async function atualizarComandaExistente() { 
+        let clienteSel = document.getElementById('selectClienteVenda').value; 
+        
+        let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(idComandaEmEdicao));
+        if(cIndex > -1) {
+            bancoComandas[cIndex].Cliente = clienteSel;
+            bancoComandas[cIndex].Total = total;
+            bancoComandas[cIndex].Itens_JSON = JSON.stringify(carrinho);
+        }
+        atualizarTabelaComandas();
+
+        let btn = document.getElementById('btnSalvarComanda');
+        btn.innerText = "Salvando..."; btn.disabled = true;
+
+        await reqPOST({ acao: "atualizar_comanda", id_comanda: idComandaEmEdicao, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual }); 
+        
+        cancelarEdicaoComanda(); 
+        setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
+    }
+    
+    async function excluirComanda(idComanda) { 
+        if(confirm("ATENÇÃO: Deseja excluir a comanda e devolver TODOS os itens ao estoque sem cobrar?")) { 
+            let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(idComanda));
+            if(cIndex > -1) { bancoComandas.splice(cIndex, 1); atualizarTabelaComandas(); }
+            
+            await reqPOST({ acao: "excluir_comanda", id_comanda: idComanda, operador: operadorAtual }); 
+            setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
+        } 
+    }
 
     function abrirModalHistorico() {
         setaDatasPadrao('filtroHistInicio', 'filtroHistFim');
@@ -1989,7 +2118,7 @@
             let itensStr = String(v.Itens_Vendidos || '').split('(')[0];
             itensStr.split(',').forEach(item => { 
                 let match = item.trim().match(/^(\d+)x\s+(.+)$/); 
-                if(match) { let qtd = parseInt(match[1]); let nome = match[2].trim(); if(nome !== "SERVICO" && !nome.includes("Quadra") && !nome.includes("Desconto Aplicado")) { contagem[nome] = (contagem[nome] || 0) + qtd; } } 
+                if(match) { let qtd = parseInt(match[1]); let nome = match[2].trim(); if(nome !== "SERVICO" && !nome.includes("Quadra") && !nome.includes("Desconto Aplicado") && !nome.includes("Cupom Aplicado")) { contagem[nome] = (contagem[nome] || 0) + qtd; } } 
             });
         });
 
@@ -2040,35 +2169,49 @@
             let recordDate = parseDataBR(v.Data_Hora);
             if (dIni && recordDate < dIni) return; if (dFim && recordDate > dFim) return;
 
-            let fStr = String(v.Forma_Pagamento || "Não informada"); let partes = fStr.split('+');
-            partes.forEach(parte => {
-                if(parte.includes(':')) { let pedaco = parte.split(':'); let nome = pedaco[0].trim(); let valor = parseFloat(pedaco[1].trim()) || 0; totais[nome] = (totais[nome] || 0) + valor; } 
-                else { let nome = parte.trim(); let valorTotal = parseFloat(String(v.Total || 0).replace(',','.')) || 0; totais[nome] = (totais[nome] || 0) + valorTotal; }
-            });
-        });
-
-        let totalGeral = Object.values(totais).reduce((a,b)=>a+b, 0);
-        let html = Object.keys(totais).sort((a,b) => totais[b] - totais[a]).map(k => `<tr style="border-bottom: 1px solid #e2e8f0; transition: 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'"><td style="padding:12px; font-weight:bold; color:#334155;">${k}</td><td style="padding:12px; text-align:right; color:#10b981; font-weight:bold;">R$ ${totais[k].toFixed(2)}</td></tr>`).join('');
-        html += `<tr style="background:#f8fafc;"><td style="padding:12px; font-weight:900;">Total Processado</td><td style="padding:12px; text-align:right; font-weight:900;">R$ ${totalGeral.toFixed(2)}</td></tr>`;
-        document.getElementById('relPagTbody').innerHTML = html;
-
-        let cores = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'];
-        if(chartRelPagamentos) chartRelPagamentos.destroy();
-        let ctx = document.getElementById('graficoRelPagamentos');
-        if(ctx) { chartRelPagamentos = new Chart(ctx, { type: 'doughnut', data: { labels: Object.keys(totais), datasets: [{ data: Object.values(totais), backgroundColor: cores }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } }); }
-    }
-
-    async function removerPagamentoParcial(idComanda, idTransacao) {
-        verificarPermissaoGerente('Estornar Pagamento Parcial', async () => {
-            if(confirm("Deseja realmente estornar este pagamento parcial?\\nO valor voltará a ficar como 'Falta' na comanda.")) {
-                document.getElementById('status-bar').style.display = 'block'; document.getElementById('status-bar').innerText = "A estornar pagamento...";
-                await reqPOST({ acao: "remover_pagamento_parcial", id_comanda: idComanda, id_transacao: idTransacao, operador: operadorAtual });
-                alert("Pagamento estornado com sucesso!"); recarregarDadosSilencioso();
+            let fp = String(v.Forma_Pagamento || 'Não informada').split('(')[0].trim();
+            let total = parseFloat(String(v.Total || 0).replace(',','.')) || 0;
+            
+            if (fp.includes('+')) {
+                fp.split('+').forEach(parte => {
+                    let p = parte.trim();
+                    let match = p.match(/(.*?):\s*([\d\.,]+)/);
+                    if(match) {
+                        let nomeFp = match[1].trim();
+                        let valorFp = parseFloat(match[2].replace(',','.')) || 0;
+                        totais[nomeFp] = (totais[nomeFp] || 0) + valorFp;
+                    } else {
+                        totais[p] = (totais[p] || 0) + total; 
+                    }
+                });
+            } else {
+                let match = fp.match(/(.*?):\s*([\d\.,]+)/);
+                if(match) {
+                    let nomeFp = match[1].trim();
+                    let valorFp = parseFloat(match[2].replace(',','.')) || 0;
+                    totais[nomeFp] = (totais[nomeFp] || 0) + valorFp;
+                } else {
+                    totais[fp] = (totais[fp] || 0) + total;
+                }
             }
         });
+
+        let labels = Object.keys(totais);
+        let dados = labels.map(l => totais[l]);
+        
+        let html = labels.map(l => `<tr style="border-bottom: 1px solid #e2e8f0; transition: 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'"><td style="padding:12px; font-weight:500; color:#334155;">${l}</td><td style="padding:12px; text-align:right; font-weight:bold; color:#10b981;">R$ ${totais[l].toFixed(2)}</td></tr>`).join('');
+        document.getElementById('relPagTbody').innerHTML = html;
+
+        if(chartRelPagamentos) chartRelPagamentos.destroy();
+        let ctx = document.getElementById('graficoRelPagamentos');
+        if(ctx && labels.length > 0) { 
+            chartRelPagamentos = new Chart(ctx, { 
+                type: 'pie', 
+                data: { labels: labels, datasets: [{ data: dados, backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'] }] }, 
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } 
+            }); 
+        }
     }
-
 </script>
-
 </body>
 </html>
