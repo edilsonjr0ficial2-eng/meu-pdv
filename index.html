@@ -189,7 +189,10 @@
     <div id="cargoLogadoText">Cargo: Nenhum</div>
     
     <div class="menu-item ativo" onclick="mudarTela('tela-caixa', this)"><i>🛒</i> <span>Caixa</span></div>
-    <div class="menu-item" onclick="mudarTela('tela-comandas', this)"><i>📝</i> <span>Comandas</span></div>
+    <div class="menu-item" onclick="mudarTela('tela-comandas', this)"><i>📝</i> <span>Comandas Abertas</span></div>
+    
+    <div class="menu-item" onclick="mudarTela('tela-comandas-pagas', this)"><i>🗃️</i> <span>Comandas Pagas</span></div>
+    
     <div class="menu-item" onclick="mudarTela('tela-clientes', this)"><i>👥</i> <span>Clientes</span></div>
     <div class="menu-item" onclick="mudarTela('tela-livro', this)"><i>📠</i> <span>Controle de Caixa</span></div>
     
@@ -323,6 +326,19 @@
             <span style="font-size: 12px; color: #64748b; font-weight: 500;">Dica: Arraste os cartões para organizar</span>
         </div>
         <div class="comandas-grid" id="listaComandasGrid"></div>
+    </div>
+
+    <div id="tela-comandas-pagas" class="tela" style="background: transparent; border: none; box-shadow: none; padding: 0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding: 15px 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <h2 style="margin: 0; color: #1e293b; display: flex; align-items: center; gap: 10px;">🗃️ Histórico de Comandas Pagas</h2>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <label style="font-weight:bold; color:#475569; font-size:14px;">Período:</label>
+                <input type="date" id="filtroHistVendasIni" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; outline:none; font-size:14px;">
+                <input type="date" id="filtroHistVendasFim" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; outline:none; font-size:14px;">
+                <button type="button" style="background: #3b82f6; color: #fff; padding: 8px 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;" onclick="renderizarComandasPagas()">🔍 Filtrar</button>
+            </div>
+        </div>
+        <div class="comandas-grid" id="listaComandasPagasGrid"></div>
     </div>
 
     <div id="tela-clientes" class="tela">
@@ -906,7 +922,6 @@
 </div>
 
 <script>
-    // ✅ URL CORRETA ADICIONADA AQUI!
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
     const TAXAS_CARTAO = { credito: 0.03, debito: 0.015, pix: 0, especie: 0 };
@@ -962,7 +977,7 @@
             bancoDeProdutos = dados.produtos || []; bancoComandas = dados.comandas || [];
             bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || [];
             bancoUsuarios = dados.usuarios || []; bancoVendas = dados.vendas || []; bancoHistorico = dados.historico || [];
-            bancoCupons = dados.cupons || []; // PUXANDO DO DRIVE
+            bancoCupons = dados.cupons || []; 
             turnoAtual = (dados.turnos || []).find(t => String(t.Status || '') === "Aberto");
             
             let opSalvo = localStorage.getItem('arena_operador'); let nomeSalvo = localStorage.getItem('arena_operador_nome');
@@ -1066,7 +1081,7 @@
             const resposta = await fetch(API_URL); const dados = await resposta.json();
             bancoDeProdutos = dados.produtos || []; bancoComandas = dados.comandas || [];
             bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || []; bancoUsuarios = dados.usuarios || []; bancoVendas = dados.vendas || []; bancoHistorico = dados.historico || [];
-            bancoCupons = dados.cupons || []; // ATUALIZA CUPONS DO DRIVE
+            bancoCupons = dados.cupons || []; 
             turnoAtual = (dados.turnos || []).find(t => String(t.Status || '') === "Aberto"); 
             
             atualizarTodasAsTelas();
@@ -1091,6 +1106,11 @@
         if(document.getElementById('modalHistorico').style.display === 'flex') {
             renderizarHistoricoModal();
         }
+        
+        // Se estiver na tela de histórico de pagas, recarrega
+        if(document.getElementById('tela-comandas-pagas').classList.contains('ativa')) {
+            renderizarComandasPagas();
+        }
     }
 
     function mudarTela(idTela, elementoMenu) {
@@ -1100,7 +1120,7 @@
         let painel = document.getElementById(idTela);
         if(painel) painel.classList.add('ativa');
         
-        if(idTela === 'tela-caixa' || idTela === 'tela-livro' || idTela === 'tela-relatorios' || idTela.includes('tela-relatorio-')) {
+        if(idTela === 'tela-caixa' || idTela === 'tela-livro' || idTela === 'tela-relatorios' || idTela.includes('tela-relatorio-') || idTela === 'tela-comandas-pagas') {
             let statusBar = document.getElementById('status-bar');
             if (statusBar) statusBar.style.display = 'none';
         }
@@ -1109,6 +1129,14 @@
         localStorage.setItem('arena_tab', idTela);
         if(leitorHtml5) fecharCamera(); 
         if(idTela === 'tela-caixa' && turnoAtual && window.innerWidth > 768) document.getElementById('codigoInput').focus();
+        
+        // Ação específica para Comandas Pagas
+        if(idTela === 'tela-comandas-pagas') {
+            if(!document.getElementById('filtroHistVendasIni').value) {
+                setaDatasPadrao('filtroHistVendasIni', 'filtroHistVendasFim');
+            }
+            renderizarComandasPagas();
+        }
     }
 
     /* ---- GESTÃO DE CUPONS ---- */
@@ -1202,6 +1230,61 @@
         document.getElementById('inputCupomCaixa').value = "";
     }
     /* -------------------------- */
+
+    /* ---- HISTÓRICO COMANDAS PAGAS ---- */
+    function renderizarComandasPagas() {
+        let grid = document.getElementById('listaComandasPagasGrid');
+        if(!grid) return;
+
+        let dIniStr = document.getElementById('filtroHistVendasIni').value;
+        let dFimStr = document.getElementById('filtroHistVendasFim').value;
+        let dIni = dIniStr ? new Date(dIniStr + "T00:00:00") : null;
+        let dFim = dFimStr ? new Date(dFimStr + "T23:59:59") : null;
+
+        let filtradas = bancoVendas.filter(v => {
+            if(!v.Data_Hora) return false;
+            let recordDate = parseDataBR(v.Data_Hora);
+            if (dIni && recordDate < dIni) return false;
+            if (dFim && recordDate > dFim) return false;
+            return true;
+        });
+
+        if(filtradas.length === 0) {
+            grid.innerHTML = `<div style="text-align: center; width:100%; color:#64748b; padding: 20px;">Nenhuma comanda liquidada encontrada neste período.</div>`;
+            return;
+        }
+
+        let html = filtradas.slice().reverse().map(v => {
+            let dataFormatada = v.Data_Hora ? formatarDataExibicao(v.Data_Hora) : '--';
+            let itensStr = String(v.Itens_Vendidos || '').split(',').map(i => `• ${i.trim()}`).join('<br>');
+
+            return `
+            <div class="comanda-card" style="border-top: 5px solid #10b981; background: #f8fafc; opacity: 0.95;">
+                <div class="comanda-header" style="border-bottom-color: #cbd5e1;">
+                    <h3 style="color: #064e3b; margin:0; display:flex; align-items:center; gap:8px;">
+                        👤 <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px;">${v.Cliente || 'Consumidor Final'}</span>
+                    </h3>
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-bottom: 10px; display: flex; justify-content: space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 5px;">
+                    <span>📅 ${dataFormatada}</span>
+                    <span>👤 Op: ${v.Operador || '--'}</span>
+                </div>
+                <div class="comanda-body">
+                    <div class="itens" style="margin-bottom:10px;">${itensStr}</div>
+                    <div style="font-size:12px; color:#16a34a; background:#dcfce7; padding:8px; border-radius:4px; border: 1px solid #bbf7d0;">
+                        ✅ <b>Pagamento:</b><br>${v.Forma_Pagamento || 'Não informada'}
+                    </div>
+                </div>
+                <div style="text-align: right; margin-top: auto; padding-top:10px;">
+                    <div style="font-size: 20px; font-weight: bold; color: #10b981;">R$ ${parseFloat(String(v.Total||0).replace(',','.')).toFixed(2)}</div>
+                </div>
+            </div>`;
+        }).join('');
+
+        grid.innerHTML = html;
+    }
+    /* ---------------------------------- */
+
 
     function abrirModalPagamento(valorTotal, acaoObj) {
         pagamentosAtivos = [];
@@ -2135,7 +2218,7 @@
             let itensStr = String(v.Itens_Vendidos || '').split('(')[0];
             itensStr.split(',').forEach(item => { 
                 let match = item.trim().match(/^(\d+)x\s+(.+)$/); 
-                if(match) { let qtd = parseInt(match[1]); let nome = match[2].trim(); if(nome !== "SERVICO" && !nome.includes("Quadra") && !nome.includes("Desconto Aplicado")) { contagem[nome] = (contagem[nome] || 0) + qtd; } } 
+                if(match) { let qtd = parseInt(match[1]); let nome = match[2].trim(); if(nome !== "SERVICO" && !nome.includes("Quadra") && !nome.includes("Desconto Aplicado") && !nome.includes("Cupom Aplicado")) { contagem[nome] = (contagem[nome] || 0) + qtd; } } 
             });
         });
 
