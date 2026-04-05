@@ -1594,7 +1594,7 @@
     function handleDragEnd(e) { this.style.opacity = '1'; document.querySelectorAll('.comanda-card').forEach(c => c.classList.remove('over')); }
 
     async function liquidarComandaAdmin(idComanda) {
-        if(!confirm("👑 MODO ADMIN: Tem a certeza que deseja liquidar e encerrar esta comanda (marcar como paga sem valor)?")) return;
+        if(!confirm("👑 MODO ADMIN: Deseja liquidar e encerrar esta comanda (marcar como paga)?")) return;
         document.getElementById('tela-sincronizacao').style.display = 'flex';
 
         let cIndex = bancoComandas.findIndex(c => String(c.ID_Comanda) === String(idComanda));
@@ -1605,24 +1605,20 @@
         if(cIndex > -1) { 
             let c = bancoComandas[cIndex];
             clienteComanda = c.Cliente || "Sem Nome";
-            try { 
-                itensComanda = JSON.parse(c.Itens_JSON || "[]"); 
-            } catch(e) {}
+            try { itensComanda = JSON.parse(c.Itens_JSON || "[]"); } catch(e) {}
             
-            // Recalcula o total exato igual a tela faz para garantir que o número bate certinho
             if(itensComanda.length > 0) { 
                 valorTotalComanda = itensComanda.reduce((sum, i) => sum + ((parseFloat(i.preco)||0) * (parseInt(i.qtd)||0)), 0); 
             } else { 
                 valorTotalComanda = parseFloat(String(c.Total || 0).replace(',','.')) || 0; 
             }
 
-            // Remove visualmente de imediato
             bancoComandas.splice(cIndex, 1); 
             atualizarTabelaComandas(); 
         }
 
         try {
-            // 1. Atualizar a comanda no banco para garantir que os totais e itens batem lá no Google
+            // Atualizamos primeiro para garantir que o banco tem a versão mais recente
             await reqPOST({ 
                 acao: "atualizar_comanda", 
                 id_comanda: idComanda, 
@@ -1632,13 +1628,13 @@
                 operador: operadorAtual 
             });
 
-            // 2. Executar a cobrança e fechamento real da comanda no Google
+            // A SOLUÇÃO: Enviamos a forma de pagamento como "Nome: Valor" para o banco não dar erro na leitura
             await reqPOST({ 
                 acao: "cobrar_comanda", 
                 id_comanda: idComanda, 
                 operador: operadorAtual, 
-                pagador: "Liquidação Admin", 
-                forma_pagamento: "Liquidação Isenta",
+                pagador: "Admin", 
+                forma_pagamento: "Liquidação: " + valorTotalComanda.toFixed(2),
                 total: valorTotalComanda 
             });
 
@@ -1646,7 +1642,6 @@
             alert("Erro de comunicação ao liquidar.");
         }
         
-        // Recarregar os dados passados uns segundos para confirmar as mudanças
         setTimeout(() => { recarregarDadosSilencioso(); }, 3000);
         document.getElementById('tela-sincronizacao').style.display = 'none';
     }
