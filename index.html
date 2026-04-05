@@ -954,12 +954,21 @@
     async function reqPOST(dados) { 
         document.getElementById('tela-sincronizacao').style.display = 'flex';
         try {
-            // HACK DE MESTRE: O Google Apps Script considera o número "0" como se o dado estivesse em branco (falsy). 
-            // Então ele rejeita a atualização e mantém o valor antigo. 
-            // Para burlar isso, quando o total for 0, enviamos 0.0001 (o Google aceita e nossa tela arredonda pra 0.00).
-            if (dados.total === 0) dados.total = 0.0001;
+            // CRIANDO UM CLONE DOS DADOS PARA NÃO MODIFICAR A VARIÁVEL ORIGINAL
+            let payload = JSON.parse(JSON.stringify(dados));
             
-            let resposta = await fetch(API_URL, { method: 'POST', body: JSON.stringify(dados), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); 
+            // CONVERSÃO BLINDADA: 
+            // O Apps Script do Google interpreta o número '0' como vazio/nulo (falsy) e simplesmente ignora a atualização.
+            // Para forçar a gravação, transformamos todos os valores críticos em TEXTO ("0.00").
+            // Assim, ele é obrigado a reconhecer que não está vazio, aceita a alteração e grava "0.00" na planilha!
+            if (payload.total !== undefined) payload.total = Number(payload.total).toFixed(2);
+            if (payload.valor !== undefined) payload.valor = Number(payload.valor).toFixed(2);
+            if (payload.valor_pago !== undefined) payload.valor_pago = Number(payload.valor_pago).toFixed(2);
+            if (payload.valor_apurado !== undefined) payload.valor_apurado = Number(payload.valor_apurado).toFixed(2);
+            if (payload.diferenca !== undefined) payload.diferenca = Number(payload.diferenca).toFixed(2);
+            if (payload.fundo !== undefined) payload.fundo = Number(payload.fundo).toFixed(2);
+            
+            let resposta = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); 
             return resposta;
         } finally {
             // A tela de sincronização será ocultada manualmente em alguns casos
@@ -1838,7 +1847,7 @@
             if(itensObj && itensObj.length > 0) { valorTotal = itensObj.reduce((sum, i) => sum + ((parseFloat(i.preco)||0) * (parseInt(i.qtd)||0)), 0); } 
             else { valorTotal = parseFloat(String(c.Total || 0).replace(',','.')) || 0; }
             
-            // Corrige o float estranho (0.0001) para ficar cravado em 0.
+            // Corrige o float para garantir que caia exatamente em zero
             if (Math.abs(valorTotal) < 0.01) valorTotal = 0;
 
             let pagamentosHtml = ""; let totalJaPago = 0; 
@@ -2362,38 +2371,4 @@
         let totais = {};
 
         bancoVendas.forEach(v => {
-            let recordDate = parseDataBR(v.Data_Hora);
-            if (dIni && recordDate < dIni) return; if (dFim && recordDate > dFim) return;
-
-            let fStr = String(v.Forma_Pagamento || "Não informada"); let partes = fStr.split('+');
-            partes.forEach(parte => {
-                if(parte.includes(':')) { let pedaco = parte.split(':'); let nome = pedaco[0].trim(); let valor = parseFloat(pedaco[1].trim()) || 0; totais[nome] = (totais[nome] || 0) + valor; } 
-                else { let nome = parte.trim(); let valorTotal = parseFloat(String(v.Total || 0).replace(',','.')) || 0; totais[nome] = (totais[nome] || 0) + valorTotal; }
-            });
-        });
-
-        let totalGeral = Object.values(totais).reduce((a,b)=>a+b, 0);
-        let html = Object.keys(totais).sort((a,b) => totais[b] - totais[a]).map(k => `<tr style="border-bottom: 1px solid #e2e8f0; transition: 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'"><td style="padding:12px; font-weight:bold; color:#334155;">${k}</td><td style="padding:12px; text-align:right; color:#10b981; font-weight:bold;">R$ ${totais[k].toFixed(2)}</td></tr>`).join('');
-        html += `<tr style="background:#f8fafc;"><td style="padding:12px; font-weight:900;">Total Processado</td><td style="padding:12px; text-align:right; font-weight:900;">R$ ${totalGeral.toFixed(2)}</td></tr>`;
-        document.getElementById('relPagTbody').innerHTML = html;
-
-        let cores = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'];
-        if(chartRelPagamentos) chartRelPagamentos.destroy();
-        let ctx = document.getElementById('graficoRelPagamentos');
-        if(ctx) { chartRelPagamentos = new Chart(ctx, { type: 'doughnut', data: { labels: Object.keys(totais), datasets: [{ data: Object.values(totais), backgroundColor: cores }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } }); }
-    }
-
-    async function removerPagamentoParcial(idComanda, idTransacao) {
-        verificarPermissaoGerente('Estornar Pagamento Parcial', async () => {
-            if(confirm("Deseja realmente estornar este pagamento parcial?\\nO valor voltará a ficar como 'Falta' na comanda.")) {
-                document.getElementById('status-bar').style.display = 'block'; document.getElementById('status-bar').innerText = "A estornar pagamento...";
-                await reqPOST({ acao: "remover_pagamento_parcial", id_comanda: idComanda, id_transacao: idTransacao, operador: operadorAtual });
-                alert("Pagamento estornado com sucesso!"); recarregarDadosSilencioso();
-            }
-        });
-    }
-
-</script>
-
-</body>
-</html>
+            let recordDate = parseDataBR(v.Data_
