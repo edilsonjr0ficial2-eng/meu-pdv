@@ -924,6 +924,7 @@
 </div>
 
 <script>
+    // ⚠️ ATENÇÃO: COLOQUE AQUI O SEU LINK MAIS RECENTE DA NOVA IMPLANTAÇÃO!
     const API_URL = "https://script.google.com/macros/s/AKfycbz9zfoUJrNEq3kDqTf4_bksIr_Flme-HoC7ZH3bPNK_IM8Ocwx0cSDywCLsYJFuQ6nycw/exec";
     
     const TAXAS_CARTAO = { credito: 0.03, debito: 0.015, pix: 0, especie: 0 };
@@ -954,13 +955,9 @@
     async function reqPOST(dados) { 
         document.getElementById('tela-sincronizacao').style.display = 'flex';
         try {
-            // CRIANDO UM CLONE DOS DADOS PARA NÃO MODIFICAR A VARIÁVEL ORIGINAL
             let payload = JSON.parse(JSON.stringify(dados));
             
-            // CONVERSÃO BLINDADA: 
-            // O Apps Script do Google interpreta o número '0' como vazio/nulo (falsy) e simplesmente ignora a atualização.
-            // Para forçar a gravação, transformamos todos os valores críticos em TEXTO ("0.00").
-            // Assim, ele é obrigado a reconhecer que não está vazio, aceita a alteração e grava "0.00" na planilha!
+            // CONVERSÃO PARA TEXTO (RESOLVE O PROBLEMA DO DESCONTO DE R$ 0,00 NÃO GRAVAR)
             if (payload.total !== undefined) payload.total = Number(payload.total).toFixed(2);
             if (payload.valor !== undefined) payload.valor = Number(payload.valor).toFixed(2);
             if (payload.valor_pago !== undefined) payload.valor_pago = Number(payload.valor_pago).toFixed(2);
@@ -1033,7 +1030,17 @@
                 ['loginUsuario', 'loginSenha', 'btnEntrar'].forEach(id => document.getElementById(id).disabled = false);
             }
             atualizarTodasAsTelas();
-        } catch (erro) { document.getElementById('caixa-login-loading').style.display = 'none'; document.getElementById('caixa-login-inputs').style.display = 'block'; document.getElementById('status-login').innerHTML = "Erro de conexão.<br>Recarregue a página."; document.getElementById('status-login').style.color = "#ef4444"; }
+        } catch (erro) { 
+            // TRAVA DE SEGURANÇA (LIBERA OS BOTÕES SE O GOOGLE RECUSAR A CONEXÃO)
+            document.getElementById('caixa-login-loading').style.display = 'none'; 
+            document.getElementById('caixa-login-inputs').style.display = 'block'; 
+            document.getElementById('status-login').innerHTML = "Erro de conexão.<br>Verifique a API_URL."; 
+            document.getElementById('status-login').style.color = "#ef4444"; 
+            document.getElementById('loginUsuario').disabled = false;
+            document.getElementById('loginSenha').disabled = false;
+            document.getElementById('btnEntrar').disabled = false;
+            console.error("Falha no carregamento: ", erro);
+        }
     }
 
     function fazerLogin() {
@@ -2371,4 +2378,52 @@
         let totais = {};
 
         bancoVendas.forEach(v => {
-            let recordDate = parseDataBR(v.Data_
+            let recordDate = parseDataBR(v.Data_Hora);
+            if (dIni && recordDate < dIni) return; if (dFim && recordDate > dFim) return;
+
+            let fp = String(v.Forma_Pagamento || 'Não informada').split('(')[0].trim();
+            let total = parseFloat(String(v.Total || 0).replace(',','.')) || 0;
+            
+            if (fp.includes('+')) {
+                fp.split('+').forEach(parte => {
+                    let p = parte.trim();
+                    let match = p.match(/(.*?):\s*([\d\.,]+)/);
+                    if(match) {
+                        let nomeFp = match[1].trim();
+                        let valorFp = parseFloat(match[2].replace(',','.')) || 0;
+                        totais[nomeFp] = (totais[nomeFp] || 0) + valorFp;
+                    } else {
+                        totais[p] = (totais[p] || 0) + total; 
+                    }
+                });
+            } else {
+                let match = fp.match(/(.*?):\s*([\d\.,]+)/);
+                if(match) {
+                    let nomeFp = match[1].trim();
+                    let valorFp = parseFloat(match[2].replace(',','.')) || 0;
+                    totais[nomeFp] = (totais[nomeFp] || 0) + valorFp;
+                } else {
+                    totais[fp] = (totais[fp] || 0) + total;
+                }
+            }
+        });
+
+        let labels = Object.keys(totais);
+        let dados = labels.map(l => totais[l]);
+        
+        let html = labels.map(l => `<tr style="border-bottom: 1px solid #e2e8f0; transition: 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'"><td style="padding:12px; font-weight:500; color:#334155;">${l}</td><td style="padding:12px; text-align:right; font-weight:bold; color:#10b981;">R$ ${totais[l].toFixed(2)}</td></tr>`).join('');
+        document.getElementById('relPagTbody').innerHTML = html;
+
+        if(chartRelPagamentos) chartRelPagamentos.destroy();
+        let ctx = document.getElementById('graficoRelPagamentos');
+        if(ctx && labels.length > 0) { 
+            chartRelPagamentos = new Chart(ctx, { 
+                type: 'pie', 
+                data: { labels: labels, datasets: [{ data: dados, backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'] }] }, 
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } 
+            }); 
+        }
+    }
+</script>
+</body>
+</html>
