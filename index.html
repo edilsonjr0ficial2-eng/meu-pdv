@@ -1,124 +1,152 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistema de Gestão Arena</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* RECOLOQUEI TODO O SEU CSS ORIGINAL AQUI */
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; background-color: #f1f5f9; display: flex; height: 100vh; height: 100dvh; overflow: hidden; -webkit-font-smoothing: antialiased; padding-left: 65px; }
-        @media screen { #cupao-impressao { display: none; } }
-        @media print { 
-            body.imprimindo-cupom * { visibility: hidden; display: none !important; } 
-            body.imprimindo-cupom #cupao-impressao, body.imprimindo-cupom #cupao-impressao * { visibility: visible; display: block !important; } 
-            body.imprimindo-cupom #cupao-impressao { position: absolute; left: 0; top: 0; width: 58mm; padding: 0; margin: 0; font-family: monospace; font-size: 12px; color: #000; } 
-        }
-        /* ... (O resto do seu CSS gigante continua aqui, não mexi em nada da estética) */
-        #tela-login { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #1e293b; display: flex; justify-content: center; align-items: center; z-index: 999999; flex-direction: column; }
-        .login-box { background: #fff; padding: 40px; border-radius: 10px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        #tela-sincronizacao { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(5px); z-index: 9999999; flex-direction: column; justify-content: center; align-items: center; }
-        .sidebar { position: fixed; top: 0; left: 0; width: 65px; height: 100%; background-color: #1e293b; color: white; display: flex; flex-direction: column; padding-top: 20px; transition: width 0.3s; z-index: 1000; overflow: hidden; }
-        .sidebar:hover { width: 250px; }
-        .menu-item { padding: 15px; cursor: pointer; display: flex; align-items: center; }
-        .menu-item.ativo { background-color: #0f172a; border-left: 4px solid #38bdf8; color: #38bdf8; }
-        .main-content { flex: 1; padding: 15px; overflow-y: auto; position: relative; }
-        .tela { display: none; } .tela.ativa { display: block; }
-        /* (Mantive todas as suas classes de botões e grids) */
-    </style>
-</head>
-<body>
+function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var getDados = (nome) => {
+    var sheet = ss.getSheetByName(nome);
+    if(!sheet) return [];
+    var data = sheet.getDataRange().getValues();
+    var headers = data.length > 0 ? data.shift() : [];
+    return data.map(row => { let obj = {}; headers.forEach((h, i) => obj[h] = row[i]); return obj; });
+  };
+  return ContentService.createTextOutput(JSON.stringify({
+    produtos: getDados("Produtos"), caixa: getDados("Caixa"), 
+    comandas: getDados("Comandas"), turnos: getDados("Turnos"), 
+    clientes: getDados("Clientes"), usuarios: getDados("Usuarios"),
+    vendas: getDados("Vendas"), historico: getDados("Historico_Estoque")
+  })).setMimeType(ContentService.MimeType.JSON);
+}
 
-<div id="tela-login">...</div>
-<div id="tela-sincronizacao"><div class="sync-text">A Processar...</div></div>
-<div id="cupao-impressao"></div>
+function doPost(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  try {
+    var dados = JSON.parse(e.postData.contents);
+    var dataHora = new Date().toLocaleString("pt-BR", {timeZone: "America/Fortaleza"});
+    
+    function formataBR(valor) {
+      var num = parseFloat(String(valor).replace(',', '.'));
+      if (isNaN(num)) return "0,00";
+      return num.toFixed(2).replace('.', ',');
+    }
 
-<div class="sidebar">
-    <h2>🎯 Arena Vitale</h2>
-    </div>
-
-<div class="main-content">
-    <div id="status-bar" style="display:none;"></div>
-
-    <div id="tela-caixa" class="tela ativa">
-        </div>
-
-    </div>
-
-<script>
-    // AQUI ESTÃO AS ÚNICAS TRÊS MUDANÇAS QUE FIZ NO SEU JS PARA FUNCIONAR:
-
-    const API_URL = "SUA_URL_DA_NOVA_IMPLANTAÇÃO"; 
-
-    // 1. CORREÇÃO NA FUNÇÃO DE CRIAR COMANDA (AGUARDA O GOOGLE)
-    async function criarNovaComandaModal() { 
-        if (carrinho.length === 0) return alert("Carrinho vazio!");
-        let nome = prompt("Nome do Cliente?"); 
-        if(!nome) return; 
-
-        fecharModalComandas(); 
-        document.getElementById('tela-sincronizacao').style.display = 'flex';
-
-        // Recalcula o total aqui por segurança absoluta
-        let totalCalculado = carrinho.reduce((acc, i) => acc + (parseFloat(i.preco) * parseInt(i.qtd)), 0);
-
-        try {
-            // O segredo está no AWAIT: ele trava aqui até o Google responder
-            const resposta = await reqPOST({ 
-                acao: "abrir_comanda", 
-                cliente: nome, 
-                total: totalCalculado, 
-                carrinho: [...carrinho], // Manda a cópia dos itens
-                operador: operadorAtual 
-            }); 
+    function alterarEstoque(carrinho, operacao, operador, contexto) {
+      var sheetProd = ss.getSheetByName("Produtos");
+      var valores = sheetProd.getDataRange().getValues();
+      var sheetHist = ss.getSheetByName("Historico_Estoque");
+      
+      for (var c = 0; c < carrinho.length; c++) {
+        var itemCod = String(carrinho[c].codigo);
+        if(itemCod === "SERVICO" || itemCod === "DESC") continue;
+        var qtdItem = parseInt(carrinho[c].qtd) || 1;
+        var nomeItem = carrinho[c].nome || ("Cód: " + itemCod);
+        
+        for (var i = 1; i < valores.length; i++) {
+          if (String(valores[i][0]) === itemCod) {
+            var qtdAtual = parseInt(valores[i][4]) || 0;
+            var novaQtd = operacao === "descontar" ? (qtdAtual - qtdItem) : (qtdAtual + qtdItem);
+            sheetProd.getRange(i + 1, 5).setValue(novaQtd);
             
-            // SÓ LIMPA A TELA DEPOIS QUE O GOOGLE DISSER QUE RECEBEU
-            limparCarrinhoNovaVenda(); 
-            alert("Comanda aberta com sucesso!");
-            setTimeout(() => { recarregarDadosSilencioso(); }, 1000);
-        } catch (e) {
-            alert("ERRO: O Google não respondeu. Seus itens continuam no carrinho, tente gravar de novo!");
-        } finally {
-            document.getElementById('tela-sincronizacao').style.display = 'none';
+            if(sheetHist) {
+                var sinalQtd = operacao === "descontar" ? ("-" + qtdItem) : ("+" + qtdItem);
+                sheetHist.appendRow([new Date().getTime(), dataHora, operador || "Sistema", nomeItem, sinalQtd, contexto || "Movimentação"]);
+            }
+            break;
+          }
         }
+      }
     }
 
-    // 2. CORREÇÃO NA ATUALIZAÇÃO (F5)
-    async function atualizarComandaExistente() { 
-        let clienteSel = document.getElementById('selectClienteVenda').value; 
-        document.getElementById('tela-sincronizacao').style.display = 'flex';
-
-        try {
-            await reqPOST({ 
-                acao: "atualizar_comanda", 
-                id_comanda: idComandaEmEdicao, 
-                cliente: clienteSel, 
-                total: total, 
-                carrinho: [...carrinho], 
-                operador: operadorAtual 
-            }); 
-            cancelarEdicaoComanda(); 
-            alert("Comanda atualizada!");
-            setTimeout(() => { recarregarDadosSilencioso(); }, 1000);
-        } catch (e) {
-            alert("Erro ao atualizar!");
-        } finally {
-            document.getElementById('tela-sincronizacao').style.display = 'none';
+    if (dados.acao === "adicionar_usuario") { ss.getSheetByName("Usuarios").appendRow([dados.login, dados.senha, dados.cargo || "Operador"]); return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); }
+    if (dados.acao === "remover_usuario") { var sU = ss.getSheetByName("Usuarios"); var vU = sU.getDataRange().getValues(); for (var i = 1; i < vU.length; i++) { if (String(vU[i][0]).toLowerCase() === String(dados.login).toLowerCase()) { sU.deleteRow(i + 1); return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); } } }
+    
+    if (dados.acao === "excluir_caixa") {
+      var sheetCaixa = ss.getSheetByName("Caixa"); var valoresCaixa = sheetCaixa.getDataRange().getValues();
+      for (var i = 1; i < valoresCaixa.length; i++) {
+        if (String(valoresCaixa[i][0]) === String(dados.id_transacao)) {
+          var pacoteItens = valoresCaixa[i][5];
+          if (pacoteItens) { try { var itensParaDevolver = JSON.parse(pacoteItens); alterarEstoque(itensParaDevolver, "devolver", dados.operador, "Estorno Caixa"); } catch(erroIgnorado) {} }
+          sheetCaixa.deleteRow(i + 1);
+          var sheetVendas = ss.getSheetByName("Vendas");
+          if (sheetVendas) { var valoresVendas = sheetVendas.getDataRange().getValues(); for (var j = 1; j < valoresVendas.length; j++) { if (String(valoresVendas[j][0]) === String(dados.id_transacao)) { sheetVendas.deleteRow(j + 1); break; } } }
+          return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON);
         }
+      }
     }
 
-    // 3. CORREÇÃO NO EXCLUIR (TRIM NO ID)
-    async function excluirComanda(id) {
-        if(!confirm("Deseja apagar?")) return;
-        document.getElementById('tela-sincronizacao').style.display = 'flex';
-        await reqPOST({ acao: "excluir_comanda", id_comanda: String(id).trim() });
-        await carregarDados();
-        document.getElementById('tela-sincronizacao').style.display = 'none';
+    if (dados.acao === "entrada_estoque") { var sheetProd = ss.getSheetByName("Produtos"); var valores = sheetProd.getDataRange().getValues(); for (var i = 1; i < valores.length; i++) { if (String(valores[i][0]) === String(dados.id_produto)) { alterarEstoque([{codigo: dados.id_produto, nome: valores[i][1], qtd: dados.qtd}], "devolver", dados.operador, "Entrada Manual de Estoque"); return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); } } }
+
+    if (dados.acao === "adicionar") { ss.getSheetByName("Produtos").appendRow([dados.id, dados.nome, formataBR(dados.custo), formataBR(dados.preco), dados.quantidade, dados.estoque_minimo || 0]); return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); }
+    if (dados.acao === "editar_produto") { var sheetProd = ss.getSheetByName("Produtos"); var valores = sheetProd.getDataRange().getValues(); for (var i = 1; i < valores.length; i++) { if (String(valores[i][0]) === String(dados.id_antigo)) { sheetProd.getRange(i + 1, 1).setValue(dados.id); sheetProd.getRange(i + 1, 2).setValue(dados.nome); sheetProd.getRange(i + 1, 3).setValue(formataBR(dados.custo)); sheetProd.getRange(i + 1, 4).setValue(formataBR(dados.preco)); sheetProd.getRange(i + 1, 5).setValue(dados.quantidade); sheetProd.getRange(i + 1, 6).setValue(dados.estoque_minimo || 0); return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); } } }
+    if (dados.acao === "remover") { var sheetProd = ss.getSheetByName("Produtos"); var valores = sheetProd.getDataRange().getValues(); for (var i = 1; i < valores.length; i++) { if (String(valores[i][0]) === String(dados.id)) { sheetProd.deleteRow(i + 1); return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); } } }
+    
+    // --- ALTERAÇÕES NA ABERTURA DA COMANDA (Colunas F e G) ---
+    if (dados.acao === "abrir_comanda") { 
+      var idComanda = new Date().getTime(); 
+      alterarEstoque(dados.carrinho, "descontar", dados.operador, "Abertura Comanda: " + dados.cliente); 
+      // Adicionado dataHora na coluna 6 e operador na coluna 7
+      ss.getSheetByName("Comandas").appendRow([idComanda, dados.cliente, JSON.stringify(dados.carrinho), formataBR(dados.total), "[]", dataHora, dados.operador || "Sistema"]); 
+      return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); 
+    }
+    
+    if (dados.acao === "adicionar_item_comanda") { var sheetCom = ss.getSheetByName("Comandas"); var valoresCom = sheetCom.getDataRange().getValues(); for (var i = 1; i < valoresCom.length; i++) { if (String(valoresCom[i][0]) === String(dados.id_comanda)) { alterarEstoque(dados.carrinho, "descontar", dados.operador, "Adição Comanda: " + dados.cliente); var itensAtuais = JSON.parse(valoresCom[i][2]); var novoTotal = parseFloat(String(valoresCom[i][3]).replace(',','.')) + parseFloat(String(dados.total).replace(',','.')); sheetCom.getRange(i + 1, 3).setValue(JSON.stringify(itensAtuais.concat(dados.carrinho))); sheetCom.getRange(i + 1, 4).setValue(formataBR(novoTotal)); return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); } } }
+    if (dados.acao === "excluir_comanda") { var sheetCom = ss.getSheetByName("Comandas"); var valoresCom = sheetCom.getDataRange().getValues(); for (var i = 1; i < valoresCom.length; i++) { if (String(valoresCom[i][0]) === String(dados.id_comanda)) { var itens = JSON.parse(valoresCom[i][2]); alterarEstoque(itens, "devolver", dados.operador, "Exclusão Comanda: " + dados.cliente); sheetCom.deleteRow(i + 1); return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); } } }
+    if (dados.acao === "atualizar_comanda") { var sheetCom = ss.getSheetByName("Comandas"); var valoresCom = sheetCom.getDataRange().getValues(); for (var i = 1; i < valoresCom.length; i++) { if (String(valoresCom[i][0]) === String(dados.id_comanda)) { var itensAntigos = JSON.parse(valoresCom[i][2]); alterarEstoque(itensAntigos, "devolver", dados.operador, "Edição Comanda (Estorno): " + dados.cliente); alterarEstoque(dados.carrinho, "descontar", dados.operador, "Edição Comanda (Nova Inserção): " + dados.cliente); sheetCom.getRange(i + 1, 2).setValue(dados.cliente); sheetCom.getRange(i + 1, 3).setValue(JSON.stringify(dados.carrinho)); sheetCom.getRange(i + 1, 4).setValue(formataBR(dados.total)); return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); } } }
+    if (dados.acao === "desconto_comanda") { var sheetCom = ss.getSheetByName("Comandas"); var valoresCom = sheetCom.getDataRange().getValues(); for (var i = 1; i < valoresCom.length; i++) { if (String(valoresCom[i][0]) === String(dados.id_comanda)) { var itensAtuais = JSON.parse(valoresCom[i][2]); var desconto = parseFloat(String(dados.valor_desconto).replace(',', '.')); var totalAtual = parseFloat(String(valoresCom[i][3]).replace(',', '.')); itensAtuais.push({ codigo: 'DESC', nome: 'Desconto Especial', preco: -desconto, qtd: 1 }); var novoTotal = totalAtual - desconto; sheetCom.getRange(i + 1, 3).setValue(JSON.stringify(itensAtuais)); sheetCom.getRange(i + 1, 4).setValue(formataBR(novoTotal)); return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); } } }
+
+    if (dados.acao === "pagamento_parcial_comanda") { 
+        var sheetCom = ss.getSheetByName("Comandas"); var valoresCom = sheetCom.getDataRange().getValues(); 
+        for (var i = 1; i < valoresCom.length; i++) { 
+            if (String(valoresCom[i][0]) === String(dados.id_comanda)) { 
+                var cliente = valoresCom[i][1]; 
+                var totalAtual = parseFloat(String(valoresCom[i][3]).replace(',','.')); 
+                var valorPago = parseFloat(String(dados.valor_pago).replace(',','.')); 
+                var novoTotal = totalAtual - valorPago; 
+                sheetCom.getRange(i + 1, 4).setValue(formataBR(novoTotal)); 
+                
+                var idVenda = new Date().getTime(); 
+                var historicoPgto = [];
+                try { historicoPgto = JSON.parse(valoresCom[i][4] || "[]"); } catch(e) {}
+                historicoPgto.push({ id_transacao: idVenda, nome: dados.pagador, valor: valorPago });
+                sheetCom.getRange(i + 1, 5).setValue(JSON.stringify(historicoPgto));
+
+                var descCompleta = `[${dados.operador}] Pgto Parcial (${dados.pagador}): ${cliente} | ${dados.forma_pagamento}`; 
+                ss.getSheetByName("Vendas").appendRow([idVenda, dataHora, formataBR(valorPago), descCompleta]); 
+                ss.getSheetByName("Caixa").appendRow([idVenda, dataHora, "Entrada", descCompleta, formataBR(valorPago)]); 
+                return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); 
+            } 
+        } 
     }
 
-    // O RESTANTE DO SEU CÓDIGO (LÓGICA DE GRÁFICOS, QR CODE, ETC) DEVE SER MANTIDO IGUAL AO INDEX (6).
-</script>
-</body>
-</html>
+    if (dados.acao === "remover_pagamento_parcial") {
+      var sheetCom = ss.getSheetByName("Comandas"); var valoresCom = sheetCom.getDataRange().getValues();
+      for (var i = 1; i < valoresCom.length; i++) {
+        if (String(valoresCom[i][0]) === String(dados.id_comanda)) {
+          var totalAtual = parseFloat(String(valoresCom[i][3]).replace(',','.'));
+          var historicoPgto = [];
+          try { historicoPgto = JSON.parse(valoresCom[i][4] || "[]"); } catch(e) {}
+          
+          var idx = historicoPgto.findIndex(p => String(p.id_transacao) === String(dados.id_transacao));
+          if(idx !== -1) {
+            var valEstornado = parseFloat(historicoPgto[idx].valor);
+            historicoPgto.splice(idx, 1); 
+            
+            sheetCom.getRange(i + 1, 4).setValue(formataBR(totalAtual + valEstornado)); 
+            sheetCom.getRange(i + 1, 5).setValue(JSON.stringify(historicoPgto));
+
+            var sC = ss.getSheetByName("Caixa"); if(sC) { var vC = sC.getDataRange().getValues(); for(var c=1; c<vC.length; c++){ if(String(vC[c][0])===String(dados.id_transacao)){ sC.deleteRow(c+1); break; } } }
+            var sV = ss.getSheetByName("Vendas"); if(sV) { var vV = sV.getDataRange().getValues(); for(var v=1; v<vV.length; v++){ if(String(vV[v][0])===String(dados.id_transacao)){ sV.deleteRow(v+1); break; } } }
+          }
+          return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+    }
+    
+    if (dados.acao === "cobrar_comanda") { var sheetCom = ss.getSheetByName("Comandas"); var valoresCom = sheetCom.getDataRange().getValues(); for (var i = 1; i < valoresCom.length; i++) { if (String(valoresCom[i][0]) === String(dados.id_comanda)) { var cliente = valoresCom[i][1]; var pacoteItens = valoresCom[i][2]; var total = formataBR(valoresCom[i][3]); var idVenda = new Date().getTime(); var descCompleta = `[${dados.operador}] Pgto Comanda (${dados.pagador}): ${cliente} | ${dados.forma_pagamento}`; ss.getSheetByName("Vendas").appendRow([idVenda, dataHora, total, descCompleta]); ss.getSheetByName("Caixa").appendRow([idVenda, dataHora, "Entrada", descCompleta, total, pacoteItens]); sheetCom.deleteRow(i + 1); return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); } } }
+    if (dados.acao === "venda") { var idVenda = new Date().getTime(); var resumoItens = dados.carrinho.map(item => item.qtd + "x " + item.nome).join(", "); alterarEstoque(dados.carrinho, "descontar", dados.operador, "Venda Direta: " + dados.cliente); var descCompleta = `[${dados.operador}] Venda (${dados.pagador}): ${dados.cliente} | ${dados.forma_pagamento}`; ss.getSheetByName("Vendas").appendRow([idVenda, dataHora, formataBR(dados.total), resumoItens]); ss.getSheetByName("Caixa").appendRow([idVenda, dataHora, "Entrada", descCompleta, formataBR(dados.total), JSON.stringify(dados.carrinho)]); return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); }
+    if (dados.acao === "caixa") { var idTransacao = new Date().getTime(); var descCompleta = `[${dados.operador}] ${dados.descricao}`; ss.getSheetByName("Caixa").appendRow([idTransacao, dataHora, dados.tipo, descCompleta, formataBR(dados.valor)]); return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); }
+
+    if (dados.acao === "adicionar_cliente") { ss.getSheetByName("Clientes").appendRow([dados.id, dados.nome, dados.telefone]); return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); }
+    if (dados.acao === "remover_cliente") { var s = ss.getSheetByName("Clientes"); var v = s.getDataRange().getValues(); for (var i = 1; i < v.length; i++) { if (String(v[i][0]) === String(dados.id)) { s.deleteRow(i + 1); return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); } } }
+    if (dados.acao === "abrir_caixa") { var idT = new Date().getTime(); ss.getSheetByName("Turnos").appendRow([idT, "Aberto", dataHora, formataBR(dados.fundo), "", "", ""]); ss.getSheetByName("Caixa").appendRow([idT, dataHora, "Entrada", `[${dados.operador}] Abertura de Caixa`, formataBR(dados.fundo)]); return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); }
+    if (dados.acao === "fechar_caixa") { var sT = ss.getSheetByName("Turnos"); var vT = sT.getDataRange().getValues(); for (var i = 1; i < vT.length; i++) { if (vT[i][1] === "Aberto") { sT.getRange(i + 1, 2).setValue("Fechado"); sT.getRange(i + 1, 5).setValue(dataHora); sT.getRange(i + 1, 6).setValue(formataBR(dados.valor_apurado)); sT.getRange(i + 1, 7).setValue(formataBR(dados.diferenca)); break; } } return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON); }
+    
+  } catch (erro) { return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: erro.message})).setMimeType(ContentService.MimeType.JSON); }
+}
