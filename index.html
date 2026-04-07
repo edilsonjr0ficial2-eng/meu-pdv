@@ -193,7 +193,8 @@
     <div id="cargoLogadoText">Cargo: Nenhum</div>
     
     <div class="menu-item ativo" onclick="mudarTela('tela-caixa', this)"><i>🛒</i> <span>Caixa</span></div>
-    <div class="menu-item" onclick="mudarTela('tela-comandas', this)"><i>📝</i> <span>Comandas</span></div>
+    <div class="menu-item" onclick="mudarTela('tela-comandas', this)"><i>📝</i> <span>Comandas</span></div>
+    <div class="menu-item" onclick="mudarTela('tela-comandas-fechadas', this)"><i>🏁</i> <span>Liquidadas</span></div>     <div class="menu-item" onclick="mudarTela('tela-clientes', this)"><i>👥</i> <span>Clientes</span></div>
     <div class="menu-item" onclick="mudarTela('tela-clientes', this)"><i>👥</i> <span>Clientes</span></div>
     <div class="menu-item" onclick="mudarTela('tela-livro', this)"><i>📠</i> <span>Controle de Caixa</span></div>
     
@@ -214,6 +215,13 @@
             <span>✏️ A editar a Comanda de <span id="nomeEdicaoComanda"></span></span>
             <button type="button" class="btn-vermelho" style="padding:4px 8px; font-size:12px;" onclick="cancelarEdicaoComanda()">X Cancelar Edição</button>
         </div>
+        <div id="tela-comandas-fechadas" class="tela">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>Comandas Liquidadas</h1>
+            <span style="font-size: 12px; color: #64748b; font-weight: 500;">Exibindo os últimos fechamentos</span>
+        </div>
+        <div class="comandas-grid" id="listaComandasFechadasGrid"></div>
+    </div>
 
         <div style="background: #fff; border-radius: 8px; padding: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; flex: 1; min-height: 0;">
             <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; gap: 10px;">
@@ -1036,14 +1044,15 @@
     }
 
     function atualizarTodasAsTelas() {
-        atualizarInterfaceTurno(); atualizarTabelaEstoque(); atualizarTabelaComandas(); 
-        atualizarDashboardECaixa(); atualizarListasClientes(); atualizarListaUsuarios();
-        
-        // Se o modal do Histórico estiver aberto, atualiza a lista dele também
-        if(document.getElementById('modalHistorico').style.display === 'flex') {
-            renderizarHistoricoModal();
-        }
-    }
+        atualizarInterfaceTurno(); atualizarTabelaEstoque(); atualizarTabelaComandas(); 
+        atualizarTabelaComandasFechadas(); // <--- NOVA LINHA AQUI
+        atualizarDashboardECaixa(); atualizarListasClientes(); atualizarListaUsuarios();
+        
+        // Se o modal do Histórico estiver aberto, atualiza a lista dele também
+        if(document.getElementById('modalHistorico').style.display === 'flex') {
+            renderizarHistoricoModal();
+        }
+    }
 
     function mudarTela(idTela, elementoMenu) {
         document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
@@ -2052,6 +2061,71 @@ function mostrarAviso(mensagem, tipo = 'sucesso') {
         div.style.opacity = '0'; // Faz sumir
     }, 2500); // 2,5 segundos na tela
 }
+
+    function atualizarTabelaComandasFechadas() {
+        let grid = document.getElementById('listaComandasFechadasGrid');
+        if (!grid) return;
+
+        // 1. Filtra do Caixa Global apenas o que for pagamento de comanda fechada
+        let comandasFechadas = bancoCaixaGlobal.filter(m => String(m.Descricao || '').includes('Pgto Comanda'));
+
+        if (comandasFechadas.length === 0) {
+            grid.innerHTML = `<div style="text-align: center; width:100%; color:#64748b; padding: 20px;">Nenhuma comanda liquidada recentemente.</div>`;
+            return;
+        }
+
+        // 2. Inverte para mostrar as mais recentes primeiro e limita a 50 para não pesar a tela
+        let comandasRecentes = comandasFechadas.slice().reverse().slice(0, 50);
+
+        grid.innerHTML = comandasRecentes.map(c => {
+            let itensStr = "";
+            try {
+                // Tenta pegar o JSON dos itens. Como as colunas variam, buscamos pelo valor da 6ª coluna (índice 5) do bancoCaixaGlobal
+                let jsonStr = c.Itens_JSON || c.Itens || Object.values(c)[5] || "[]";
+                let itensObj = JSON.parse(jsonStr);
+                if (itensObj && itensObj.length > 0) {
+                    itensStr = itensObj.map(i => `• ${i.qtd}x ${i.nome}`).join('<br>');
+                } else {
+                    itensStr = "<span style='color:#94a3b8;'>Itens arquivados s/ detalhe</span>";
+                }
+            } catch (e) {
+                itensStr = "<span style='color:#94a3b8;'>Itens arquivados s/ detalhe</span>";
+            }
+
+            let valorTotal = parseFloat(String(c.Valor || 0).replace(',', '.')) || 0;
+            let dataFormatada = formatarDataExibicao(c.Data_Hora);
+            
+            // 3. Extrai o nome do Cliente e Forma de Pagamento da descrição
+            // Padrão salvo: "[Operador] Pgto Comanda (Pagador): Cliente | Forma_Pagamento"
+            let desc = String(c.Descricao || '');
+            let clienteExtract = "Cliente";
+            let formaPgto = "";
+            let match = desc.match(/Pgto Comanda \(.*?\):\s*(.*?)\s*\|(.*)/);
+            if (match) {
+                clienteExtract = match[1].trim();
+                formaPgto = match[2].trim();
+            } else {
+                clienteExtract = desc.split(':')[1] ? desc.split(':')[1].split('|')[0].trim() : desc;
+            }
+
+            return `
+            <div class="comanda-card" style="border-top: 5px solid #16a34a; opacity: 0.85;">
+                <div class="comanda-header">
+                    <h3 style="color: #16a34a;">✅ ${clienteExtract}</h3>
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-bottom: 10px; display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 5px;">
+                    <span>📅 ${dataFormatada}</span>
+                    <span>${formaPgto ? '💳 ' + formaPgto : ''}</span>
+                </div>
+                <div class="comanda-body">
+                    <div class="itens">${itensStr}</div>
+                </div>
+                <div style="text-align: right; margin-bottom: 0;">
+                    <div class="comanda-valor" style="color: #16a34a;">Pago: R$ ${valorTotal.toFixed(2)}</div>
+                </div>
+            </div>`;
+        }).join('');
+    }
     
 </script>
 
