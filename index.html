@@ -886,19 +886,16 @@
         if(str.includes('T')) return new Date(str); let partes = str.split(/[\s,]+/); let dma = partes[0].split('/'); if(dma.length === 3) return new Date(`${dma[2]}-${dma[1]}-${dma[0]}T12:00:00`); return new Date(0); 
     }
 
-    async function reqPOST(dados) { 
-        document.getElementById('tela-sincronizacao').style.display = 'flex';
-        try {
-            let resposta = await fetch(API_URL, { method: 'POST', body: JSON.stringify(dados), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); 
-            return resposta;
-        } finally {
-            setTimeout(() => {
-                if (document.getElementById('tela-sincronizacao').style.display === 'flex') {
-                    document.getElementById('tela-sincronizacao').style.display = 'none';
-                }
-            }, 3000);
-        }
-    }
+    async function reqPOST(dados) { 
+        document.getElementById('tela-sincronizacao').style.display = 'flex';
+        try {
+            let resposta = await fetch(API_URL, { method: 'POST', body: JSON.stringify(dados), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); 
+            return resposta;
+        } catch (erro) {
+            document.getElementById('tela-sincronizacao').style.display = 'none';
+            throw erro;
+        }
+    }
 
     document.getElementById('loginSenha').addEventListener('keypress', e => { if(e.key === 'Enter') { e.preventDefault(); fazerLogin(); } });
 
