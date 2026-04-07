@@ -1359,16 +1359,27 @@
         document.getElementById('codigoInput').value = ""; 
     }
 
-    function processarEntradaCodigo(termo) { 
-        termo = String(termo || '').toLowerCase(); let prod = bancoDeProdutos.find(p => String(p.ID_Produto || '').toLowerCase() === termo || String(p.Nome_Produto || '').toLowerCase() === termo); 
-        if (!prod) { let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto || '').toLowerCase().includes(termo)); if (achados.length === 1) prod = achados[0]; else if (achados.length > 1) { alert("Múltiplos produtos encontrados. Digite o código exato ou clique na lista."); return; } } 
-        if (prod) { 
-            let preco = parseFloat(String(prod.Preco_Venda || 0).replace(',','.')) || 0; let qtdMult = parseInt(document.getElementById('qtdInput').value) || 1;
-            let ext = carrinho.find(i => String(i.codigo) === String(prod.ID_Produto)); 
-            if(ext) { ext.qtd += qtdMult; } else { carrinho.push({ codigo: prod.ID_Produto, nome: prod.Nome_Produto, preco: preco, qtd: qtdMult }); } 
-            total += (preco * qtdMult); atualizarCarrinho(); document.getElementById('qtdInput').value = "1"; 
-        } else { alert("Produto não encontrado!"); } 
-    }
+    function processarEntradaCodigo(termo) { 
+        termo = String(termo || '').toLowerCase(); let prod = bancoDeProdutos.find(p => String(p.ID_Produto || '').toLowerCase() === termo || String(p.Nome_Produto || '').toLowerCase() === termo); 
+        if (!prod) { let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto || '').toLowerCase().includes(termo)); if (achados.length === 1) prod = achados[0]; else if (achados.length > 1) { alert("Múltiplos produtos encontrados. Digite o código exato ou clique na lista."); return; } } 
+        if (prod) { 
+            let preco = parseFloat(String(prod.Preco_Venda || 0).replace(',','.')) || 0; let qtdMult = parseInt(document.getElementById('qtdInput').value) || 1;
+            
+            // 1. Pergunta quem pegou o produto
+            let nomePessoa = prompt(`Quem pegou: ${prod.Nome_Produto}?\n(Deixe em branco ou cancele se não quiser identificar)`);
+            let nomeFinal = prod.Nome_Produto;
+            
+            // 2. Se a pessoa digitou um nome, adiciona entre parênteses ao lado do produto
+            if (nomePessoa && nomePessoa.trim() !== "") {
+                nomeFinal = `${prod.Nome_Produto} (${nomePessoa.trim()})`;
+            }
+
+            // 3. Modificamos a busca para agrupar apenas se o nome também for igual
+            let ext = carrinho.find(i => String(i.codigo) === String(prod.ID_Produto) && i.nome === nomeFinal); 
+            if(ext) { ext.qtd += qtdMult; } else { carrinho.push({ codigo: prod.ID_Produto, nome: nomeFinal, preco: preco, qtd: qtdMult }); } 
+            total += (preco * qtdMult); atualizarCarrinho(); document.getElementById('qtdInput').value = "1"; 
+        } else { alert("Produto não encontrado!"); } 
+    }
     
     function removerItemCarrinho(index) {
         let confirmacao = confirm(`Deseja remover ${carrinho[index].nome} da venda atual?`);
