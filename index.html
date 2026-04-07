@@ -2010,14 +2010,13 @@
     }
 
     async function removerPagamentoParcial(idComanda, idTransacao) {
-        verificarPermissaoGerente('Estornar Pagamento Parcial', async () => {
-            if(confirm("Deseja realmente estornar este pagamento parcial?\\nO valor voltará a ficar como 'Falta' na comanda.")) {
-                document.getElementById('status-bar').style.display = 'block'; document.getElementById('status-bar').innerText = "A estornar pagamento...";
-                await reqPOST({ acao: "remover_pagamento_parcial", id_comanda: idComanda, id_transacao: idTransacao, operador: operadorAtual });
-                alert("Pagamento estornado com sucesso!"); recarregarDadosSilencioso();
-            }
-        });
-    }
+        verificarPermissaoGerente('Estornar Pagamento Parcial', async () => {
+            if(confirm("Deseja realmente estornar este pagamento parcial?\\nO valor voltará a ficar como 'Falta' na comanda.")) {
+                await reqPOST({ acao: "remover_pagamento_parcial", id_comanda: idComanda, id_transacao: idTransacao, operador: operadorAtual });
+                alert("Pagamento estornado com sucesso!"); recarregarDadosSilencioso();
+            }
+        });
+    }
 
 </script>
 
