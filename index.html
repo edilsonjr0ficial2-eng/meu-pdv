@@ -1491,23 +1491,23 @@
         if(carrinho.length > 0) { adicionarNaComandaExistente(idComanda, nomeCli); } else { fecharModalComandas(); editarComanda(idComanda); }
     }
 
-    async function criarNovaComandaModal() { 
-        fecharModalComandas(); 
-        let nome = prompt("Nome do Cliente para a NOVA comanda?"); 
-        if(!nome) return; 
-        await reqPOST({ acao: "abrir_comanda", cliente: nome, total: total, carrinho: carrinho, operador: operadorAtual }); 
-        alert("Comanda criada!"); 
-        limparCarrinhoNovaVenda(); 
-        recarregarDadosSilencioso(); 
-    }
+    async function criarNovaComandaModal() { 
+        fecharModalComandas(); 
+        let nome = prompt("Nome do Cliente para a NOVA comanda?"); 
+        if(!nome) return; 
+        await reqPOST({ acao: "abrir_comanda", cliente: nome, total: total, carrinho: carrinho, operador: operadorAtual }); 
+        mostrarAviso("Comanda criada!"); // <--- MUDANÇA AQUI
+        limparCarrinhoNovaVenda(); 
+        recarregarDadosSilencioso(); 
+    }
     
-    async function adicionarNaComandaExistente(idComanda, nomeCli) { 
-        fecharModalComandas(); 
-        await reqPOST({ acao: "adicionar_item_comanda", id_comanda: idComanda, total: total, carrinho: carrinho, operador: operadorAtual }); 
-        alert(`Itens adicionados!`); 
-        limparCarrinhoNovaVenda(); 
-        recarregarDadosSilencioso(); 
-    }
+    async function adicionarNaComandaExistente(idComanda, nomeCli) { 
+        fecharModalComandas(); 
+        await reqPOST({ acao: "adicionar_item_comanda", id_comanda: idComanda, total: total, carrinho: carrinho, operador: operadorAtual }); 
+        mostrarAviso("Itens adicionados!"); // <--- MUDANÇA AQUI
+        limparCarrinhoNovaVenda(); 
+        recarregarDadosSilencioso(); 
+    }
     
     let draggedCard = null;
 
@@ -1601,7 +1601,7 @@
 
     function cancelarEdicaoComanda() { limparCarrinhoNovaVenda(); }
     function acaoBotaoComanda() { if(!turnoAtual) return alert("Abra o caixa!"); if(carrinho.length === 0) return alert("Carrinho vazio!"); if(idComandaEmEdicao) { atualizarComandaExistente(); } else { abrirModalComandas(); } }
-    async function atualizarComandaExistente() { let clienteSel = document.getElementById('selectClienteVenda').value; await reqPOST({ acao: "atualizar_comanda", id_comanda: idComandaEmEdicao, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual }); alert("Comanda atualizada!"); cancelarEdicaoComanda(); recarregarDadosSilencioso(); }
+    async function atualizarComandaExistente() { let clienteSel = document.getElementById('selectClienteVenda').value; await reqPOST({ acao: "atualizar_comanda", id_comanda: idComandaEmEdicao, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual }); mostrarAviso("Comanda atualizada!"); cancelarEdicaoComanda(); recarregarDadosSilencioso(); }
     
     async function excluirComanda(idComanda) { if(confirm("ATENÇÃO: Deseja excluir a comanda e devolver TODOS os itens ao estoque sem cobrar?")) { await reqPOST({ acao: "excluir_comanda", id_comanda: idComanda, operador: operadorAtual }); recarregarDadosSilencioso(); } }
 
@@ -1817,7 +1817,7 @@
         if(!l || !s) return alert("Preencha Login e Senha!"); 
         if(bancoUsuarios.find(u => String(u.Login||'').toLowerCase() === l.toLowerCase())) return alert("Login já existe!"); 
         let btn = document.getElementById('btnAdicionarUser'); btn.innerText = "Aguarde..."; btn.disabled = true;
-        try { await reqPOST({ acao: "adicionar_usuario", login: l, senha: s, cargo: c }); document.getElementById('novoUserLogin').value = ""; document.getElementById('novoUserSenha').value = ""; await recarregarDadosSilencioso(); alert("Usuário criado com sucesso!"); } catch (error) { alert("Falha na comunicação. Verifique se o Google Apps Script está aceitando o campo 'cargo'."); } finally { btn.innerText = "Criar Operador"; btn.disabled = false; }
+        try { await reqPOST({ acao: "adicionar_usuario", login: l, senha: s, cargo: c }); document.getElementById('novoUserLogin').value = ""; document.getElementById('novoUserSenha').value = ""; await recarregarDadosSilencioso(); mostrarAviso("Usuário criado com sucesso!"); }  catch (error) { alert("Falha na comunicação. Verifique se o Google Apps Script está aceitando o campo 'cargo'."); } finally { btn.innerText = "Criar Operador"; btn.disabled = false; }
     }
     
     async function removerUsuarioSistema(login) { if(confirm(`Remover acesso de ${login}?`)) { await reqPOST({ acao: "remover_usuario", login: login }); recarregarDadosSilencioso(); } }
@@ -2029,6 +2029,30 @@
         });
     }
 
+    let tempoAviso;
+function mostrarAviso(mensagem, tipo = 'sucesso') {
+    let div = document.getElementById('toast-aviso');
+    
+    // Se a caixinha ainda não existir, o sistema cria ela
+    if (!div) {
+        div = document.createElement('div');
+        div.id = 'toast-aviso';
+        div.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 8px; font-weight: bold; color: #fff; z-index: 9999999; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: opacity 0.3s ease-in-out; opacity: 0; pointer-events: none;';
+        document.body.appendChild(div);
+    }
+
+    // Define a cor (verde para sucesso, vermelho para erro)
+    div.style.backgroundColor = tipo === 'erro' ? '#ef4444' : '#10b981';
+    div.innerText = mensagem;
+    div.style.opacity = '1'; // Faz aparecer
+
+    // Limpa o tempo anterior (caso clique várias vezes rápido) e programa para sumir
+    clearTimeout(tempoAviso);
+    tempoAviso = setTimeout(() => {
+        div.style.opacity = '0'; // Faz sumir
+    }, 2500); // 2,5 segundos na tela
+}
+    
 </script>
 
 </body>
