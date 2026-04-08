@@ -2063,7 +2063,7 @@ function mostrarAviso(mensagem, tipo = 'sucesso') {
     }, 2500); // 2,5 segundos na tela
 }
 
-    function atualizarTabelaComandasFechadas() {
+function atualizarTabelaComandasFechadas() {
         let grid = document.getElementById('listaComandasFechadasGrid');
         if (!grid) return;
 
@@ -2104,24 +2104,28 @@ function mostrarAviso(mensagem, tipo = 'sucesso') {
                 clienteExtract = desc.split(':')[1] ? desc.split(':')[1].split('|')[0].trim() : desc;
             }
 
+            /* AQUI ESTÁ A MÁGICA: Adicionado text-align: left, height: max-content e white-space: nowrap para blindar o layout */
             return `
-            <div class="comanda-card" style="border-top: 5px solid #16a34a; opacity: 0.85;">
-                <div class="comanda-header">
-                    <h3 style="color: #16a34a;">✅ ${clienteExtract}</h3>
+            <div class="comanda-card" style="border-top: 5px solid #16a34a; opacity: 0.85; text-align: left; height: max-content;">
+                <div class="comanda-header" style="justify-content: flex-start; padding-bottom: 5px;">
+                    <h3 style="color: #16a34a; margin: 0; display: flex; align-items: center; gap: 8px;">
+                        ✅ <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${clienteExtract}</span>
+                    </h3>
                 </div>
                 <div style="font-size: 11px; color: #64748b; margin-bottom: 10px; display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 5px;">
-                    <span>📅 ${dataFormatada}</span>
-                    <span>${formaPgto ? '💳 ' + formaPgto : ''}</span>
+                    <span style="white-space: nowrap;">📅 ${dataFormatada}</span>
+                    <span style="text-align: right;">${formaPgto ? '💳 ' + formaPgto : ''}</span>
                 </div>
                 <div class="comanda-body">
-                    <div class="itens">${itensStr}</div>
+                    <div class="itens" style="text-align: left;">${itensStr}</div>
                 </div>
                 <div style="text-align: right; margin-bottom: 0;">
-                    <div class="comanda-valor" style="color: #16a34a;">Pago: R$ ${valorTotal.toFixed(2)}</div>
+                    <div class="comanda-valor" style="color: #16a34a; font-size: 18px;">Pago: R$ ${valorTotal.toFixed(2)}</div>
                 </div>
             </div>`;
         }).join('');
     }
+    
 </script>
 
 </body>
