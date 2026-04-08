@@ -193,9 +193,8 @@
     <div id="cargoLogadoText">Cargo: Nenhum</div>
     
     <div class="menu-item ativo" onclick="mudarTela('tela-caixa', this)"><i>🛒</i> <span>Caixa</span></div>
-    <div class="menu-item" onclick="mudarTela('tela-comandas', this)"><i>📝</i> <span>Comandas</span></div>
-    <div class="menu-item" onclick="mudarTela('tela-comandas-fechadas', this)"><i>🏁</i> <span>Liquidadas</span></div>
-    <div class="menu-item" onclick="mudarTela('tela-clientes', this)"><i>👥</i> <span>Clientes</span></div>
+    <div class="menu-item" onclick="mudarTela('tela-comandas', this)"><i>📝</i> <span>Comandas</span></div>
+    <div class="menu-item" onclick="mudarTela('tela-clientes', this)"><i>👥</i> <span>Clientes</span></div>
     <div class="menu-item" onclick="mudarTela('tela-livro', this)"><i>📠</i> <span>Controle de Caixa</span></div>
     
     <div class="menu-item" id="menu-estoque" onclick="mudarTela('tela-estoque', this)"><i>📦</i> <span>Estoque</span></div>
@@ -326,23 +325,15 @@
     </div>
 
     <div id="tela-comandas" class="tela">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h1>Comandas Abertas</h1>
-            <span style="font-size: 12px; color: #64748b; font-weight: 500;">Dica: Arraste os cartões para organizar</span>
-        </div>
-        <div class="comandas-grid" id="listaComandasGrid"></div>
-    </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>Comandas Abertas</h1>
+            <span style="font-size: 12px; color: #64748b; font-weight: 500;">Dica: Arraste os cartões para organizar</span>
+        </div>
+        <div class="comandas-grid" id="listaComandasGrid"></div>
+    </div>
 
-    <div id="tela-comandas-fechadas" class="tela">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h1>Comandas Liquidadas</h1>
-            <span style="font-size: 12px; color: #64748b; font-weight: 500;">Exibindo os últimos fechamentos</span>
-        </div>
-        <div class="comandas-grid" id="listaComandasFechadasGrid"></div>
-    </div>
-
-    <div id="tela-clientes" class="tela">
-        <h1>Gestão de Clientes</h1>
+    <div id="tela-clientes" class="tela">
+        <h1>Gestão de Clientes</h1>
         <div class="form-grupo">
             <div><label>ID/Cartão</label><input type="text" id="novoIdCli" placeholder="Ex: 001" autocomplete="off"></div>
             <div><label>Nome do Cliente</label><input type="text" id="novoNomeCli" autocomplete="off"></div>
@@ -1045,9 +1036,8 @@
     }
 
     function atualizarTodasAsTelas() {
-        atualizarInterfaceTurno(); atualizarTabelaEstoque(); atualizarTabelaComandas(); 
-        atualizarTabelaComandasFechadas();
-        atualizarDashboardECaixa(); atualizarListasClientes(); atualizarListaUsuarios();
+        atualizarInterfaceTurno(); atualizarTabelaEstoque(); atualizarTabelaComandas(); 
+        atualizarDashboardECaixa(); atualizarListasClientes(); atualizarListaUsuarios();
         
         // Se o modal do Histórico estiver aberto, atualiza a lista dele também
         if(document.getElementById('modalHistorico').style.display === 'flex') {
@@ -2062,66 +2052,7 @@ function mostrarAviso(mensagem, tipo = 'sucesso') {
         div.style.opacity = '0'; // Faz sumir
     }, 2500); // 2,5 segundos na tela
 }
-
-    function atualizarTabelaComandasFechadas() {
-        let grid = document.getElementById('listaComandasFechadasGrid');
-        if (!grid) return;
-
-        let comandasFechadas = bancoCaixaGlobal.filter(m => String(m.Descricao || '').includes('Pgto Comanda'));
-
-        if (comandasFechadas.length === 0) {
-            grid.innerHTML = `<div style="text-align: center; width:100%; color:#64748b; padding: 20px;">Nenhuma comanda liquidada recentemente.</div>`;
-            return;
-        }
-
-        let comandasRecentes = comandasFechadas.slice().reverse().slice(0, 50);
-
-        grid.innerHTML = comandasRecentes.map(c => {
-            let itensStr = "";
-            try {
-                let jsonStr = c.Itens_JSON || c.Itens || Object.values(c)[5] || "[]";
-                let itensObj = JSON.parse(jsonStr);
-                if (itensObj && itensObj.length > 0) {
-                    itensStr = itensObj.map(i => `• ${i.qtd}x ${i.nome}`).join('<br>');
-                } else {
-                    itensStr = "<span style='color:#94a3b8;'>Itens arquivados s/ detalhe</span>";
-                }
-            } catch (e) {
-                itensStr = "<span style='color:#94a3b8;'>Itens arquivados s/ detalhe</span>";
-            }
-
-            let valorTotal = parseFloat(String(c.Valor || 0).replace(',', '.')) || 0;
-            let dataFormatada = formatarDataExibicao(c.Data_Hora);
-            
-            let desc = String(c.Descricao || '');
-            let clienteExtract = "Cliente";
-            let formaPgto = "";
-            let match = desc.match(/Pgto Comanda \(.*?\):\s*(.*?)\s*\|(.*)/);
-            if (match) {
-                clienteExtract = match[1].trim();
-                formaPgto = match[2].trim();
-            } else {
-                clienteExtract = desc.split(':')[1] ? desc.split(':')[1].split('|')[0].trim() : desc;
-            }
-
-            return `
-            <div class="comanda-card" style="border-top: 5px solid #16a34a; opacity: 0.85;">
-                <div class="comanda-header">
-                    <h3 style="color: #16a34a;">✅ ${clienteExtract}</h3>
-                </div>
-                <div style="font-size: 11px; color: #64748b; margin-bottom: 10px; display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 5px;">
-                    <span>📅 ${dataFormatada}</span>
-                    <span>${formaPgto ? '💳 ' + formaPgto : ''}</span>
-                </div>
-                <div class="comanda-body">
-                    <div class="itens">${itensStr}</div>
-                </div>
-                <div style="text-align: right; margin-bottom: 0;">
-                    <div class="comanda-valor" style="color: #16a34a;">Pago: R$ ${valorTotal.toFixed(2)}</div>
-                </div>
-            </div>`;
-        }).join('');
-    }
+    
 </script>
 
 </body>
