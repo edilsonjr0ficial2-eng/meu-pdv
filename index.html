@@ -2118,16 +2118,6 @@
         });
     }
 
-    let tempoAviso;
-    function mostrarAviso(mensagem, tipo = 'sucesso') {
-        let div = document.getElementById('toast-aviso');
-        
-        if (!div) {
-            div = document.createElement('div');
-            div.id = 'toast-aviso';
-            document.body.appendChild(div);
-        }
-
         // Estilo super premium e flutuante no centro-baixo da tela
         div.style.cssText = `
             position: fixed; 
