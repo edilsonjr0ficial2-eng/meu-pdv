@@ -278,15 +278,14 @@
                     <span>Subtotal</span>
                     <span>R$ <span id="valorSubtotal">0,00</span></span>
                 </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; font-weight:bold; color:#111; align-items:center;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span>Tx. Serviço</span>
-                        <button style="background:#3b82f6; color:#fff; border:none; border-radius:4px; padding:2px 8px; cursor:pointer; font-size:11px;">%</button>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:6px;">
-                        <span style="color:#64748b;">R$</span>
-                        <input type="text" value="0,00" disabled style="width:80px; text-align:right; border:1px solid #e2e8f0; border-radius:4px; padding:4px 6px; background:#fff; font-weight:bold; color:#111; font-size: 12px;">
-                    </div>
+                <div <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; font-weight:bold; color:#111; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:#0ea5e9;">🎟️ Cupom</span>
+                        <input type="text" id="inputCupom" placeholder="CÓDIGO" style="width: 100px; text-transform: uppercase; border:1px solid #cbd5e1; border-radius:4px; padding:4px 6px; font-size: 12px; outline:none;">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <button type="button" onclick="aplicarCupomCaixa()" style="background:#10b981; color:#fff; border:none; border-radius:4px; padding:4px 10px; cursor:pointer; font-size:12px; font-weight:bold;">Validar</button>
+                    </div>
                 </div>
                 <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:20px; font-weight:900; color:#000; border-top: 1px solid #e2e8f0; padding-top: 8px;">
                     <span>Total</span>
@@ -505,16 +504,23 @@
                 </div>
             </div>
             <div class="relatorio-card" onclick="abrirRelatorioPagamentos()">
-                <div class="rel-icon">💳</div>
-                <div class="rel-text">
-                    <h4>Vendas por Forma de Pagamento</h4>
-                    <p>Análise das vendas por método recebido</p>
-                </div>
-            </div>
-        </div>
-    </div>
+                <div class="rel-icon">💳</div>
+                <div class="rel-text">
+                    <h4>Vendas por Forma de Pagamento</h4>
+                    <p>Análise das vendas por método recebido</p>
+                </div>
+            </div>
+            <div class="relatorio-card" onclick="mudarTela('tela-gestao-cupons')">
+                <div class="rel-icon">🎟️</div>
+                <div class="rel-text">
+                    <h4>Gestão de Cupons</h4>
+                    <p>Criar cupons e ver gráfico de uso</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <div id="tela-relatorio-estoque" class="tela" style="background: transparent; border: none; box-shadow: none; padding: 0;">
+    <div id="tela-relatorio-estoque" class="tela" style="background: transparent; border: none; box-shadow: none; padding: 0;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
             <h2 style="margin: 0; color: #1e293b; display: flex; align-items: center; gap: 10px;">
                 <button onclick="mudarTela('tela-relatorios')" style="background:transparent; border:none; font-size:20px; cursor:pointer; color:#3b82f6;">⬅️</button> 
@@ -703,11 +709,51 @@
                             <tr><th style="padding:10px; border-bottom: 1px solid #e2e8f0;">Categoria/Tipo</th><th style="padding:10px; text-align:right; border-bottom: 1px solid #e2e8f0;">Valor</th></tr>
                         </thead>
                         <tbody id="relFluxoCategorias"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tela-gestao-cupons" class="tela" style="background: transparent; border: none; box-shadow: none; padding: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <h2 style="margin: 0; color: #1e293b; display: flex; align-items: center; gap: 10px;">
+                <button onclick="mudarTela('tela-relatorios')" style="background:transparent; border:none; font-size:20px; cursor:pointer; color:#3b82f6;">⬅️</button>
+                Gestão de Cupons Promocionais
+            </h2>
+        </div>
+        
+        <div style="background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
+            <div class="form-grupo">
+                <div><label>Código do Cupom</label><input type="text" id="novoCupomCod" placeholder="Ex: VERAO10" style="text-transform: uppercase;"></div>
+                <div><label>Tipo de Desconto</label>
+                    <select id="novoCupomTipo">
+                        <option value="Fixo">Valor Fixo (R$)</option>
+                        <option value="Porcentagem">Porcentagem (%)</option>
+                        <option value="Coringa">Coringa (Digitar na hora)</option>
+                    </select>
+                </div>
+                <div><label>Valor ou %</label><input type="number" id="novoCupomValor" placeholder="Ex: 10"></div>
+                <button type="button" class="btn-verde" style="margin-bottom: 2px;" onclick="salvarCupomBanco()">Salvar Cupom</button>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+            <div class="table-responsive" style="flex:1; background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <table style="margin-top:0;">
+                    <thead><tr><th>Código</th><th>Tipo</th><th>Valor / %</th><th>Ações</th></tr></thead>
+                    <tbody id="listaCuponsGestao"></tbody>
+                </table>
+            </div>
+            <div style="flex:1; min-width:300px; background:#fff; padding:20px; border-radius:8px; border:1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <h3 style="margin-top:0; color:#475569; text-align:center;">📊 Gráfico de Uso em Vendas</h3>
+                <div style="position: relative; height: 250px; width: 100%;">
+                    <canvas id="graficoUsoCupons"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div>
 
@@ -864,7 +910,7 @@
     
     const TAXAS_CARTAO = { credito: 0.03, debito: 0.015, pix: 0, especie: 0 };
 
-    let bancoDeProdutos = [], bancoComandas = [], bancoCaixaGlobal = [], bancoClientes = [], bancoUsuarios = [], bancoVendas = [], bancoHistorico = [];
+    let bancoDeProdutos = [], bancoComandas = [], bancoCaixaGlobal = [], bancoClientes = [], bancoUsuarios = [], bancoVendas = [], bancoHistorico = [], bancoCupons = [];
     let turnoAtual = null, carrinho = [], total = 0, leitorHtml5 = null;
     let inputCameraAlvo = "codigoInput", idEditandoEstoque = null, operadorAtual = "", cargoAtual = "";
     
@@ -910,7 +956,7 @@
             const resposta = await fetch(API_URL); const dados = await resposta.json();
             bancoDeProdutos = dados.produtos || []; bancoComandas = dados.comandas || [];
             bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || [];
-            bancoUsuarios = dados.usuarios || []; bancoVendas = dados.vendas || []; bancoHistorico = dados.historico || [];
+            bancoUsuarios = dados.usuarios || []; bancoVendas = dados.vendas || []; bancoHistorico = dados.historico || []; bancoCupons = dados.cupons || [];
             turnoAtual = (dados.turnos || []).find(t => String(t.Status || '') === "Aberto");
             
             let opSalvo = localStorage.getItem('arena_operador'); let nomeSalvo = localStorage.getItem('arena_operador_nome');
@@ -1016,7 +1062,7 @@
         try {
             const resposta = await fetch(API_URL); const dados = await resposta.json();
             bancoDeProdutos = dados.produtos || []; bancoComandas = dados.comandas || [];
-            bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || []; bancoUsuarios = dados.usuarios || []; bancoVendas = dados.vendas || []; bancoHistorico = dados.historico || [];
+            bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || []; bancoUsuarios = dados.usuarios || []; bancoVendas = dados.vendas || []; bancoHistorico = dados.historico || []; bancoCupons = dados.cupons || [];
             turnoAtual = (dados.turnos || []).find(t => String(t.Status || '') === "Aberto"); 
             
             atualizarTodasAsTelas();
@@ -1036,8 +1082,8 @@
     }
 
     function atualizarTodasAsTelas() {
-        atualizarInterfaceTurno(); atualizarTabelaEstoque(); atualizarTabelaComandas(); 
-        atualizarDashboardECaixa(); atualizarListasClientes(); atualizarListaUsuarios();
+        atualizarInterfaceTurno(); atualizarTabelaEstoque(); atualizarTabelaComandas(); 
+        atualizarDashboardECaixa(); atualizarListasClientes(); atualizarListaUsuarios(); atualizarListaCupons();
         
         // Se o modal do Histórico estiver aberto, atualiza a lista dele também
         if(document.getElementById('modalHistorico').style.display === 'flex') {
@@ -2052,6 +2098,107 @@ function mostrarAviso(mensagem, tipo = 'sucesso') {
         div.style.opacity = '0'; // Faz sumir
     }, 2500); // 2,5 segundos na tela
 }
+
+    // ==========================================
+    // FUNÇÕES DE CUPOM
+    // ==========================================
+    function aplicarCupomCaixa() {
+        if(carrinho.length === 0) return alert("Adicione produtos primeiro!");
+        let cod = document.getElementById('inputCupom').value.toUpperCase().trim();
+        if (!cod) return alert("Digite o código do cupom!");
+
+        let cupom = bancoCupons.find(c => String(c.Codigo).toUpperCase() === cod);
+        if (!cupom) return alert("Cupom inválido ou não encontrado!");
+
+        let descontoAplicado = 0;
+
+        if (cupom.Tipo === "Coringa") {
+            let valorCoringa = prompt(`Cupom Coringa '${cod}' ativado!\nTotal Atual: R$ ${total.toFixed(2)}\nQual o valor do desconto em R$?`);
+            if (!valorCoringa) return;
+            descontoAplicado = parseFloat(valorCoringa.replace(',', '.')) || 0;
+        } else if (cupom.Tipo === "Fixo") {
+            descontoAplicado = parseFloat(String(cupom.Valor).replace(',', '.'));
+        } else if (cupom.Tipo === "Porcentagem") {
+            let pct = parseFloat(String(cupom.Valor).replace(',', '.')) / 100;
+            descontoAplicado = total * pct;
+        }
+
+        if (descontoAplicado <= 0) return alert("Valor de desconto inválido!");
+        if (descontoAplicado > total) return alert("O desconto não pode ser maior que o total da compra!");
+
+        // Remove cupom antigo se houver para não acumular
+        let indexCupomAntigo = carrinho.findIndex(i => String(i.codigo) === 'CUPOM');
+        if(indexCupomAntigo !== -1) {
+            total -= (carrinho[indexCupomAntigo].preco * carrinho[indexCupomAntigo].qtd);
+            carrinho.splice(indexCupomAntigo, 1);
+        }
+
+        carrinho.push({ codigo: 'CUPOM', nome: `Cupom (${cod})`, preco: -descontoAplicado, qtd: 1 });
+        total -= descontoAplicado; 
+        atualizarCarrinho();
+        document.getElementById('inputCupom').value = "";
+        mostrarAviso(`Cupom ${cod} aplicado com sucesso!`);
+    }
+
+    async function salvarCupomBanco() {
+        let cod = document.getElementById('novoCupomCod').value.toUpperCase().trim();
+        let tipo = document.getElementById('novoCupomTipo').value;
+        let valor = document.getElementById('novoCupomValor').value || 0;
+
+        if (!cod) return alert("O código do cupom é obrigatório!");
+
+        await reqPOST({ acao: "adicionar_cupom", codigo: cod, tipo: tipo, valor: valor });
+        mostrarAviso("Cupom criado!");
+        document.getElementById('novoCupomCod').value = "";
+        document.getElementById('novoCupomValor').value = "";
+        recarregarDadosSilencioso();
+    }
+
+    async function removerCupom(cod) {
+        if(confirm(`Tem certeza que deseja apagar o cupom ${cod}?`)) {
+            await reqPOST({ acao: "remover_cupom", codigo: cod });
+            recarregarDadosSilencioso();
+        }
+    }
+
+    function atualizarListaCupons() {
+        let tbody = document.getElementById('listaCuponsGestao');
+        if(!tbody) return;
+        
+        tbody.innerHTML = bancoCupons.map(c => `<tr>
+            <td style="font-weight:bold; color:#0ea5e9;">${c.Codigo}</td>
+            <td>${c.Tipo}</td>
+            <td style="font-weight:bold;">${c.Tipo === 'Coringa' ? 'Definido na hora' : c.Valor}</td>
+            <td><button type="button" class="btn-vermelho" onclick="removerCupom('${c.Codigo}')">Apagar</button></td>
+        </tr>`).join('');
+
+        // Montar Gráfico
+        let contagem = {};
+        bancoVendas.forEach(v => {
+            if(!v.Itens_Vendidos) return;
+            let itensStr = String(v.Itens_Vendidos || '').split('(')[0];
+            itensStr.split(',').forEach(item => {
+                let match = item.trim().match(/^(\d+)x\s+Cupom \((.+)\)$/);
+                if(match) {
+                    let codCupom = match[2];
+                    contagem[codCupom] = (contagem[codCupom] || 0) + 1;
+                }
+            });
+        });
+
+        if(window.chartUsoCupons) window.chartUsoCupons.destroy();
+        let ctx = document.getElementById('graficoUsoCupons');
+        if(ctx && Object.keys(contagem).length > 0) {
+            window.chartUsoCupons = new Chart(ctx, { 
+                type: 'doughnut', 
+                data: { 
+                    labels: Object.keys(contagem), 
+                    datasets: [{ data: Object.values(contagem), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#a855f7'] }] 
+                }, 
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } 
+            });
+        }
+    }
     
 </script>
 
