@@ -194,7 +194,7 @@
     
     <div class="menu-item ativo" onclick="mudarTela('tela-caixa', this)"><i>🛒</i> <span>Caixa</span></div>
     <div class="menu-item" onclick="mudarTela('tela-comandas', this)"><i>📝</i> <span>Comandas</span></div>
-    <div class="menu-item" onclick="mudarTela('tela-comandas-fechadas', this)"><i>🏁</i> <span>Liquidadas</span></div>
+    <div class="menu-item" onclick="mudarTela('tela-comandas-fechadas', this)"><i>🧾</i> <span>Liquidadas</span></div>
     <div class="menu-item" onclick="mudarTela('tela-clientes', this)"><i>👥</i> <span>Clientes</span></div>
     <div class="menu-item" onclick="mudarTela('tela-livro', this)"><i>📠</i> <span>Controle de Caixa</span></div>
     
@@ -338,7 +338,7 @@
             <h1>Comandas Liquidadas</h1>
             <span style="font-size: 12px; color: #64748b; font-weight: 500;">Exibindo os últimos fechamentos</span>
         </div>
-        <div class="comandas-grid" id="listaComandasFechadasGrid"></div>
+        <div class="comandas-grid" id="listaComandasFechadasGrid" style="align-items: flex-start;"></div>
     </div>
 
     <div id="tela-clientes" class="tela">
@@ -2106,21 +2106,29 @@ function atualizarTabelaComandasFechadas() {
 
             /* AQUI ESTÁ A MÁGICA: Adicionado text-align: left, height: max-content e white-space: nowrap para blindar o layout */
             return `
-            <div class="comanda-card" style="border-top: 5px solid #16a34a; opacity: 0.85; text-align: left; height: max-content;">
-                <div class="comanda-header" style="justify-content: flex-start; padding-bottom: 5px;">
-                    <h3 style="color: #16a34a; margin: 0; display: flex; align-items: center; gap: 8px;">
-                        ✅ <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${clienteExtract}</span>
-                    </h3>
+            // ... (o código de cima continua igual)
+            let match = desc.match(/Pgto Comanda \(.*?\):\s*(.*?)\s*\|(.*)/);
+            if (match) {
+                clienteExtract = match[1].trim();
+                formaPgto = match[2].trim();
+            } else {
+                clienteExtract = desc.split(':')[1] ? desc.split(':')[1].split('|')[0].trim() : desc;
+            }
+
+            return `
+            <div class="comanda-card" style="border-top: 5px solid #16a34a; opacity: 0.9;">
+                <div class="comanda-header" style="justify-content: flex-start; margin-bottom: 8px;">
+                    <h3 style="color: #16a34a; margin: 0; font-size: 16px;">✅ ${clienteExtract}</h3>
                 </div>
-                <div style="font-size: 11px; color: #64748b; margin-bottom: 10px; display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 5px;">
-                    <span style="white-space: nowrap;">📅 ${dataFormatada}</span>
-                    <span style="text-align: right;">${formaPgto ? '💳 ' + formaPgto : ''}</span>
+                <div style="font-size: 12px; color: #64748b; margin-bottom: 12px; display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                    <span>📅 ${dataFormatada}</span>
+                    <span>${formaPgto ? '💳 ' + formaPgto : ''}</span>
                 </div>
-                <div class="comanda-body">
-                    <div class="itens" style="text-align: left;">${itensStr}</div>
+                <div class="comanda-body" style="text-align: left; flex: none; line-height: 1.6;">
+                    <div class="itens">${itensStr}</div>
                 </div>
-                <div style="text-align: right; margin-bottom: 0;">
-                    <div class="comanda-valor" style="color: #16a34a; font-size: 18px;">Pago: R$ ${valorTotal.toFixed(2)}</div>
+                <div style="text-align: right; margin-top: 15px;">
+                    <span style="color: #16a34a; font-size: 16px; font-weight: bold;">R$ ${valorTotal.toFixed(2)}</span>
                 </div>
             </div>`;
         }).join('');
