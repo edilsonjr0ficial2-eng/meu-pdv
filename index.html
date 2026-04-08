@@ -2266,19 +2266,71 @@
             });
         });
 
-        if(window.chartUsoCupons) window.chartUsoCupons.destroy();
-        let ctx = document.getElementById('graficoUsoCupons');
-        if(ctx && Object.keys(contagem).length > 0) {
-            window.chartUsoCupons = new Chart(ctx, { 
-                type: 'doughnut', 
-                data: { 
-                    labels: Object.keys(contagem), 
-                    datasets: [{ data: Object.values(contagem), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#a855f7'] }] 
-                }, 
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } 
-            });
-        }
-    }
+        if (window.chartUsoCupons) window.chartUsoCupons.destroy();
+        let ctx = document.getElementById('graficoUsoCupons');
+        if (ctx && Object.keys(contagem).length > 0) {
+            window.chartUsoCupons = new Chart(ctx, { 
+                type: 'doughnut', 
+                data: { 
+                    labels: Object.keys(contagem), 
+                    datasets: [{ data: Object.values(contagem), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#a855f7'] }] 
+                }, 
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } 
+            });
+        }
+    }
+
+    /* =========================================================
+       ✨ TOAST PREMIUM (Substitui os "alerts" feios pretos) 
+       ========================================================= */
+    let tempoAviso;
+    function mostrarAviso(mensagem, tipo = 'sucesso') {
+        let div = document.getElementById('toast-aviso');
+        
+        if (!div) {
+            div = document.createElement('div');
+            div.id = 'toast-aviso';
+            document.body.appendChild(div);
+        }
+
+        // Estilo super premium e flutuante no centro-baixo da tela
+        div.style.cssText = `
+            position: fixed; 
+            bottom: 40px; 
+            left: 50%; 
+            transform: translateX(-50%) translateY(20px); 
+            padding: 14px 24px; 
+            border-radius: 50px; 
+            font-weight: 600; 
+            font-size: 15px; 
+            color: #fff; 
+            z-index: 9999999; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); 
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); 
+            opacity: 0; 
+            pointer-events: none; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            background: ${tipo === 'erro' ? '#ef4444' : '#10b981'};
+            border: 1px solid ${tipo === 'erro' ? '#dc2626' : '#059669'};
+        `;
+        
+        div.innerHTML = `${tipo === 'erro' ? '⚠️' : '✅'} ${mensagem}`;
+        
+        // Faz a animação de subir
+        setTimeout(() => {
+            div.style.opacity = '1';
+            div.style.transform = 'translateX(-50%) translateY(0)';
+        }, 10);
+
+        // Faz a animação de sumir
+        clearTimeout(tempoAviso);
+        tempoAviso = setTimeout(() => {
+            div.style.opacity = '0';
+            div.style.transform = 'translateX(-50%) translateY(20px)';
+        }, 3500);
+    }
     
 </script>
 
