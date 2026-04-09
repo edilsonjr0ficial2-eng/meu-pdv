@@ -118,14 +118,15 @@
         .linha-pag input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 16px; -webkit-appearance: none; appearance: none; min-width:150px;}
 
         .comandas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
-        .comanda-card { background: #fff; border: 1px solid #cbd5e1; border-radius: 10px; padding: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 5px solid #0ea5e9; display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; }
+        .comanda-card { background: #fff; border: 1px solid #cbd5e1; border-radius: 10px; padding: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 5px solid #0ea5e9; display: flex; flex-direction: column; cursor: grab; transition: transform 0.2s, box-shadow 0.2s; }
+        .comanda-card:active { cursor: grabbing; }
         .comanda-card.over { border: 2px dashed #0ea5e9; opacity: 0.6; transform: scale(1.02); }
         
         .comanda-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 5px; }
         .comanda-header h3 { margin: 0; font-size: 18px; color: #0f172a; display: flex; align-items: center; gap: 8px;}
         .comanda-header h3 span { pointer-events: none; }
         .comanda-header .id-comanda { font-size: 12px; color: #64748b; background: #f1f5f9; padding: 3px 8px; border-radius: 10px; font-weight: bold; pointer-events: none; }
-        .comanda-body { flex: 1; font-size: 14px; color: #475569; margin-bottom: 15px; }
+        .comanda-body { flex: 1; font-size: 14px; color: #475569; margin-bottom: 15px; pointer-events: none; }
         .comanda-body .itens { margin-bottom: 10px; line-height: 1.5; }
         .comanda-valor { font-size: 20px; font-weight: bold; color: #10b981; text-align: right; margin-bottom: 15px; pointer-events: none; }
         .comanda-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -147,53 +148,21 @@
         .rel-text p { margin: 5px 0 0 0; font-size: 12px; color: #64748b; line-height: 1.4; }
 
         @media (max-width: 768px) {
-            body { flex-direction: column; padding-left: 0; } 
-            /* ... um monte de outras regras de celular aqui ... */
-            .comandas-grid { grid-template-columns: 1fr; }
-        }
-
-        /* ==========================================
-           💎 UPGRADE DE DESIGN PREMIUM (UI/UX)
-           ========================================== */
-        
-        /* Campos de digitação mais bonitos e com foco moderno */
-        input, select { 
-            transition: all 0.3s ease; 
-            border: 1px solid #cbd5e1; 
-            background-color: #f8fafc;
+            body { flex-direction: column; padding-left: 0; } 
+            .sidebar { position: relative; width: 100vw; height: auto; padding-top: 0; flex-direction: row; overflow-x: auto; white-space: nowrap; align-items: center; justify-content: flex-start; flex-shrink: 0; border-bottom: 1px solid #0f172a; }
+            .sidebar:hover { width: 100vw; }
+            .sidebar h2, #operadorLogadoText, #cargoLogadoText { display: none; }
+            .menu-item { padding: 15px; font-size: 15px; border-left: none; border-bottom: 4px solid transparent; flex: 0 0 auto; }
+            .menu-item i { margin-right: 5px; width: auto; }
+            .menu-item span { opacity: 1; }
+            .menu-item.ativo { border-left-color: transparent; border-bottom-color: #38bdf8; background-color: transparent; color: #38bdf8; }
+            .main-content { padding: 10px; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; width: 100%; } 
+            .form-grupo div { min-width: 100%; } 
+            .botoes-caixa button, .btn-quadra { width: 100%; font-size: 16px; padding: 15px; margin-bottom: 5px; }
+            .linha-pag label { width:100%; margin-bottom:5px; }
+            .comandas-grid { grid-template-columns: 1fr; }
         }
-        input:focus, select:focus { 
-            border-color: #0ea5e9 !important; 
-            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15) !important; 
-            outline: none; 
-            background-color: #ffffff;
-        }
-
-        /* Suavizando as "Telas" e Cards para parecerem Flutuantes */
-        .tela, .comanda-card, .relatorio-card, .livro-card { 
-            border: 1px solid #f1f5f9 !important; 
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05) !important; 
-            border-radius: 12px !important; 
-            transition: all 0.2s ease;
-        }
-
-        /* Botões mais arredondados e com clique macio */
-        button { 
-            border-radius: 8px !important; 
-            letter-spacing: 0.3px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-        }
-        button:active:not(:disabled) { 
-            transform: translateY(2px); 
-            box-shadow: none; 
-        }
-
-        /* Melhorando as tabelas para ficarem mais "Clean" */
-        th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; background-color: #f8fafc !important; }
-        td { font-size: 14px; }
-        tr:hover td { background-color: #f8fafc; }
-
-    </style>
+    </style>
 </head>
 <body>
 
@@ -310,14 +279,15 @@
                     <span>Subtotal</span>
                     <span>R$ <span id="valorSubtotal">0,00</span></span>
                 </div>
-                <div <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; font-weight:bold; color:#111; align-items:center;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="color:#0ea5e9;">🎟️ Cupom</span>
-                        <input type="text" id="inputCupom" placeholder="CÓDIGO" style="width: 100px; text-transform: uppercase; border:1px solid #cbd5e1; border-radius:4px; padding:4px 6px; font-size: 12px; outline:none;">
-                    </div>
-                    <div style="display:flex; align-items:center; gap:6px;">
-                        <button type="button" onclick="aplicarCupomCaixa()" style="background:#10b981; color:#fff; border:none; border-radius:4px; padding:4px 10px; cursor:pointer; font-size:12px; font-weight:bold;">Validar</button>
-                    </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; font-weight:bold; color:#111; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span>Tx. Serviço</span>
+                        <button style="background:#3b82f6; color:#fff; border:none; border-radius:4px; padding:2px 8px; cursor:pointer; font-size:11px;">%</button>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="color:#64748b;">R$</span>
+                        <input type="text" value="0,00" disabled style="width:80px; text-align:right; border:1px solid #e2e8f0; border-radius:4px; padding:4px 6px; background:#fff; font-weight:bold; color:#111; font-size: 12px;">
+                    </div>
                 </div>
                 <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:20px; font-weight:900; color:#000; border-top: 1px solid #e2e8f0; padding-top: 8px;">
                     <span>Total</span>
@@ -536,23 +506,16 @@
                 </div>
             </div>
             <div class="relatorio-card" onclick="abrirRelatorioPagamentos()">
-                <div class="rel-icon">💳</div>
-                <div class="rel-text">
-                    <h4>Vendas por Forma de Pagamento</h4>
-                    <p>Análise das vendas por método recebido</p>
-                </div>
-            </div>
-            <div class="relatorio-card" onclick="mudarTela('tela-gestao-cupons')">
-                <div class="rel-icon">🎟️</div>
-                <div class="rel-text">
-                    <h4>Gestão de Cupons</h4>
-                    <p>Criar cupons e ver gráfico de uso</p>
-                </div>
-            </div>
-        </div>
-    </div>
+                <div class="rel-icon">💳</div>
+                <div class="rel-text">
+                    <h4>Vendas por Forma de Pagamento</h4>
+                    <p>Análise das vendas por método recebido</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <div id="tela-relatorio-estoque" class="tela" style="background: transparent; border: none; box-shadow: none; padding: 0;">
+    <div id="tela-relatorio-estoque" class="tela" style="background: transparent; border: none; box-shadow: none; padding: 0;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
             <h2 style="margin: 0; color: #1e293b; display: flex; align-items: center; gap: 10px;">
                 <button onclick="mudarTela('tela-relatorios')" style="background:transparent; border:none; font-size:20px; cursor:pointer; color:#3b82f6;">⬅️</button> 
@@ -741,60 +704,13 @@
                             <tr><th style="padding:10px; border-bottom: 1px solid #e2e8f0;">Categoria/Tipo</th><th style="padding:10px; text-align:right; border-bottom: 1px solid #e2e8f0;">Valor</th></tr>
                         </thead>
                         <tbody id="relFluxoCategorias"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="tela-gestao-cupons" class="tela" style="background: transparent; border: none; box-shadow: none; padding: 0;">
-                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05);">
-            <button onclick="mudarTela('tela-relatorios')" style="background:#f1f5f9; color:#475569; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:bold; box-shadow:none;">⬅️ Voltar</button>
-            <h2 style="margin: 0; color: #1e293b; font-size: 20px;">Gestão de Cupons Promocionais 🎟️</h2>
-        </div>
-        
-                <div style="background: #fff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05); margin-bottom: 25px;">
-            <h3 style="margin-top:0; color:#334155; font-size:16px; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">Criar Novo Cupom</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
-                <div style="display: flex; flex-direction: column;">
-                    <label style="font-size:13px; color:#64748b; font-weight:bold; margin-bottom:5px;">Código do Cupom</label>
-                    <input type="text" id="novoCupomCod" placeholder="Ex: VERAO10" style="text-transform: uppercase; padding:12px; width:100%; border-radius: 8px;">
+                    </table>
                 </div>
-                <div style="display: flex; flex-direction: column;">
-                    <label style="font-size:13px; color:#64748b; font-weight:bold; margin-bottom:5px;">Tipo de Desconto</label>
-                    <select id="novoCupomTipo" style="padding:12px; width:100%; border-radius: 8px;">
-                        <option value="Fixo">Valor Fixo (R$)</option>
-                        <option value="Porcentagem">Porcentagem (%)</option>
-                        <option value="Coringa">Coringa (Definido no Caixa)</option>
-                    </select>
-                </div>
-                <div style="display: flex; flex-direction: column;">
-                    <label style="font-size:13px; color:#64748b; font-weight:bold; margin-bottom:5px;">Valor ou %</label>
-                    <input type="number" id="novoCupomValor" placeholder="Ex: 10" style="padding:12px; width:100%; border-radius: 8px;">
-                </div>
-                <button type="button" style="background:#10b981; color:white; padding:12px; font-weight:bold; border:none; cursor:pointer; height: 43px; border-radius: 8px;" onclick="salvarCupomBanco()">💾 Salvar Cupom</button>
-            </div>
-        </div>
+            </div>
+        </div>
+    </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px;">
-            <div style="background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05);">
-                <h3 style="margin-top:0; color:#334155; font-size:16px; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">Lista de Cupons Ativos</h3>
-                <div class="table-responsive" style="border:none;">
-                    <table style="width:100%; border-collapse:collapse;">
-                        <thead><tr style="border-bottom:2px solid #f1f5f9;"><th style="padding:10px;">Código</th><th style="padding:10px;">Tipo</th><th style="padding:10px;">Valor</th><th style="padding:10px; text-align:right;">Ação</th></tr></thead>
-                        <tbody id="listaCuponsGestao"></tbody>
-                    </table>
-                </div>
-            </div>
-            <div style="background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center;">
-                <h3 style="margin-top:0; color:#334155; font-size:16px; width: 100%; text-align: left; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">📊 Uso dos Cupons nas Vendas</h3>
-                <div style="position: relative; height: 250px; width: 100%; max-width: 300px;">
-                    <canvas id="graficoUsoCupons"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
+</div>
 
 <div id="modalMovimentacao" class="modal-overlay">
     <div class="modal-box" style="max-width: 400px; padding: 0; overflow: hidden; border-radius: 8px;">
@@ -949,7 +865,7 @@
     
     const TAXAS_CARTAO = { credito: 0.03, debito: 0.015, pix: 0, especie: 0 };
 
-    let bancoDeProdutos = [], bancoComandas = [], bancoCaixaGlobal = [], bancoClientes = [], bancoUsuarios = [], bancoVendas = [], bancoHistorico = [], bancoCupons = [];
+    let bancoDeProdutos = [], bancoComandas = [], bancoCaixaGlobal = [], bancoClientes = [], bancoUsuarios = [], bancoVendas = [], bancoHistorico = [];
     let turnoAtual = null, carrinho = [], total = 0, leitorHtml5 = null;
     let inputCameraAlvo = "codigoInput", idEditandoEstoque = null, operadorAtual = "", cargoAtual = "";
     
@@ -971,16 +887,19 @@
         if(str.includes('T')) return new Date(str); let partes = str.split(/[\s,]+/); let dma = partes[0].split('/'); if(dma.length === 3) return new Date(`${dma[2]}-${dma[1]}-${dma[0]}T12:00:00`); return new Date(0); 
     }
 
-    async function reqPOST(dados) { 
-        document.getElementById('tela-sincronizacao').style.display = 'flex';
-        try {
-            let resposta = await fetch(API_URL, { method: 'POST', body: JSON.stringify(dados), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); 
-            return resposta;
-        } catch (erro) {
-            document.getElementById('tela-sincronizacao').style.display = 'none';
-            throw erro;
-        }
-    }
+    async function reqPOST(dados) { 
+        document.getElementById('tela-sincronizacao').style.display = 'flex';
+        try {
+            let resposta = await fetch(API_URL, { method: 'POST', body: JSON.stringify(dados), headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); 
+            return resposta;
+        } finally {
+            setTimeout(() => {
+                if (document.getElementById('tela-sincronizacao').style.display === 'flex') {
+                    document.getElementById('tela-sincronizacao').style.display = 'none';
+                }
+            }, 3000);
+        }
+    }
 
     document.getElementById('loginSenha').addEventListener('keypress', e => { if(e.key === 'Enter') { e.preventDefault(); fazerLogin(); } });
 
@@ -995,7 +914,7 @@
             const resposta = await fetch(API_URL); const dados = await resposta.json();
             bancoDeProdutos = dados.produtos || []; bancoComandas = dados.comandas || [];
             bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || [];
-            bancoUsuarios = dados.usuarios || []; bancoVendas = dados.vendas || []; bancoHistorico = dados.historico || []; bancoCupons = dados.cupons || [];
+            bancoUsuarios = dados.usuarios || []; bancoVendas = dados.vendas || []; bancoHistorico = dados.historico || [];
             turnoAtual = (dados.turnos || []).find(t => String(t.Status || '') === "Aberto");
             
             let opSalvo = localStorage.getItem('arena_operador'); let nomeSalvo = localStorage.getItem('arena_operador_nome');
@@ -1101,7 +1020,7 @@
         try {
             const resposta = await fetch(API_URL); const dados = await resposta.json();
             bancoDeProdutos = dados.produtos || []; bancoComandas = dados.comandas || [];
-            bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || []; bancoUsuarios = dados.usuarios || []; bancoVendas = dados.vendas || []; bancoHistorico = dados.historico || []; bancoCupons = dados.cupons || [];
+            bancoCaixaGlobal = dados.caixa || []; bancoClientes = dados.clientes || []; bancoUsuarios = dados.usuarios || []; bancoVendas = dados.vendas || []; bancoHistorico = dados.historico || [];
             turnoAtual = (dados.turnos || []).find(t => String(t.Status || '') === "Aberto"); 
             
             atualizarTodasAsTelas();
@@ -1121,8 +1040,8 @@
     }
 
     function atualizarTodasAsTelas() {
-        atualizarInterfaceTurno(); atualizarTabelaEstoque(); atualizarTabelaComandas(); 
-        atualizarDashboardECaixa(); atualizarListasClientes(); atualizarListaUsuarios(); atualizarListaCupons();
+        atualizarInterfaceTurno(); atualizarTabelaEstoque(); atualizarTabelaComandas(); 
+        atualizarDashboardECaixa(); atualizarListasClientes(); atualizarListaUsuarios();
         
         // Se o modal do Histórico estiver aberto, atualiza a lista dele também
         if(document.getElementById('modalHistorico').style.display === 'flex') {
@@ -1444,27 +1363,16 @@
         document.getElementById('codigoInput').value = ""; 
     }
 
-    function processarEntradaCodigo(termo) { 
-        termo = String(termo || '').toLowerCase(); let prod = bancoDeProdutos.find(p => String(p.ID_Produto || '').toLowerCase() === termo || String(p.Nome_Produto || '').toLowerCase() === termo); 
-        if (!prod) { let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto || '').toLowerCase().includes(termo)); if (achados.length === 1) prod = achados[0]; else if (achados.length > 1) { alert("Múltiplos produtos encontrados. Digite o código exato ou clique na lista."); return; } } 
-        if (prod) { 
-            let preco = parseFloat(String(prod.Preco_Venda || 0).replace(',','.')) || 0; let qtdMult = parseInt(document.getElementById('qtdInput').value) || 1;
-            
-            // 1. Pergunta quem pegou o produto
-            let nomePessoa = prompt(`Quem pegou: ${prod.Nome_Produto}?\n(Deixe em branco ou cancele se não quiser identificar)`);
-            let nomeFinal = prod.Nome_Produto;
-            
-            // 2. Se a pessoa digitou um nome, adiciona entre parênteses ao lado do produto
-            if (nomePessoa && nomePessoa.trim() !== "") {
-                nomeFinal = `${prod.Nome_Produto} (${nomePessoa.trim()})`;
-            }
-
-            // 3. Modificamos a busca para agrupar apenas se o nome também for igual
-            let ext = carrinho.find(i => String(i.codigo) === String(prod.ID_Produto) && i.nome === nomeFinal); 
-            if(ext) { ext.qtd += qtdMult; } else { carrinho.push({ codigo: prod.ID_Produto, nome: nomeFinal, preco: preco, qtd: qtdMult }); } 
-            total += (preco * qtdMult); atualizarCarrinho(); document.getElementById('qtdInput').value = "1"; 
-        } else { alert("Produto não encontrado!"); } 
-    }
+    function processarEntradaCodigo(termo) { 
+        termo = String(termo || '').toLowerCase(); let prod = bancoDeProdutos.find(p => String(p.ID_Produto || '').toLowerCase() === termo || String(p.Nome_Produto || '').toLowerCase() === termo); 
+        if (!prod) { let achados = bancoDeProdutos.filter(p => String(p.Nome_Produto || '').toLowerCase().includes(termo)); if (achados.length === 1) prod = achados[0]; else if (achados.length > 1) { alert("Múltiplos produtos encontrados. Digite o código exato ou clique na lista."); return; } } 
+        if (prod) { 
+            let preco = parseFloat(String(prod.Preco_Venda || 0).replace(',','.')) || 0; let qtdMult = parseInt(document.getElementById('qtdInput').value) || 1;
+            let ext = carrinho.find(i => String(i.codigo) === String(prod.ID_Produto)); 
+            if(ext) { ext.qtd += qtdMult; } else { carrinho.push({ codigo: prod.ID_Produto, nome: prod.Nome_Produto, preco: preco, qtd: qtdMult }); } 
+            total += (preco * qtdMult); atualizarCarrinho(); document.getElementById('qtdInput').value = "1"; 
+        } else { alert("Produto não encontrado!"); } 
+    }
     
     function removerItemCarrinho(index) {
         let confirmacao = confirm(`Deseja remover ${carrinho[index].nome} da venda atual?`);
@@ -1576,23 +1484,23 @@
         if(carrinho.length > 0) { adicionarNaComandaExistente(idComanda, nomeCli); } else { fecharModalComandas(); editarComanda(idComanda); }
     }
 
-    async function criarNovaComandaModal() { 
-        fecharModalComandas(); 
-        let nome = prompt("Nome do Cliente para a NOVA comanda?"); 
-        if(!nome) return; 
-        await reqPOST({ acao: "abrir_comanda", cliente: nome, total: total, carrinho: carrinho, operador: operadorAtual }); 
-        mostrarAviso("Comanda criada!"); // <--- MUDANÇA AQUI
-        limparCarrinhoNovaVenda(); 
-        recarregarDadosSilencioso(); 
-    }
+    async function criarNovaComandaModal() { 
+        fecharModalComandas(); 
+        let nome = prompt("Nome do Cliente para a NOVA comanda?"); 
+        if(!nome) return; 
+        await reqPOST({ acao: "abrir_comanda", cliente: nome, total: total, carrinho: carrinho, operador: operadorAtual }); 
+        alert("Comanda criada!"); 
+        limparCarrinhoNovaVenda(); 
+        recarregarDadosSilencioso(); 
+    }
     
-    async function adicionarNaComandaExistente(idComanda, nomeCli) { 
-        fecharModalComandas(); 
-        await reqPOST({ acao: "adicionar_item_comanda", id_comanda: idComanda, total: total, carrinho: carrinho, operador: operadorAtual }); 
-        mostrarAviso("Itens adicionados!"); // <--- MUDANÇA AQUI
-        limparCarrinhoNovaVenda(); 
-        recarregarDadosSilencioso(); 
-    }
+    async function adicionarNaComandaExistente(idComanda, nomeCli) { 
+        fecharModalComandas(); 
+        await reqPOST({ acao: "adicionar_item_comanda", id_comanda: idComanda, total: total, carrinho: carrinho, operador: operadorAtual }); 
+        alert(`Itens adicionados!`); 
+        limparCarrinhoNovaVenda(); 
+        recarregarDadosSilencioso(); 
+    }
     
     let draggedCard = null;
 
@@ -1623,12 +1531,8 @@
                 try {
                     let pags = JSON.parse(c.Pagamentos_JSON);
                     if(pags.length > 0) {
-                        let strPags = pags.map(p => { 
-                            totalJaPago += parseFloat(String(p.valor).replace(',','.')) || 0; 
-                            let btnExcluir = p.id_transacao ? `<button type="button" onclick="removerPagamentoParcial('${c.ID_Comanda}', '${p.id_transacao}')" style="background:#fee2e2; border:none; color:#dc2626; cursor:pointer; font-size:12px; padding:3px 6px; margin-left:8px; border-radius:4px; font-weight:bold; transition:0.2s;" title="Estornar">Estornar</button>` : ''; 
-                            return `<div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:8px 12px; border-radius:8px; margin-top:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05); border:1px solid #e2e8f0;"><span style="color:#475569;">${p.nome}</span><span style="font-weight:bold; color:#10b981; display:flex; align-items:center;">R$ ${parseFloat(p.valor||0).toFixed(2)} ${btnExcluir}</span></div>`; 
-                        }).join('');
-                        pagamentosHtml = `<div style="margin-top:15px; background:#f8fafc; padding:12px; border-radius:10px; border: 1px dashed #cbd5e1;"><div style="font-size:11px; color:#64748b; font-weight:bold; text-transform:uppercase; margin-bottom:5px;">💳 Pgtos Parciais Recebidos</div>${strPags}</div>`;
+                        let strPags = pags.map(p => { totalJaPago += parseFloat(String(p.valor).replace(',','.')) || 0; let btnExcluir = p.id_transacao ? `<button type="button" onclick="removerPagamentoParcial('${c.ID_Comanda}', '${p.id_transacao}')" style="background:transparent; border:none; color:#dc2626; cursor:pointer; font-size:14px; padding:0; margin-left:5px;" title="Remover Pagamento">❌</button>` : ''; return `<b>${p.nome}</b> (R$ ${parseFloat(p.valor||0).toFixed(2)})${btnExcluir}`; }).join(' | ');
+                        pagamentosHtml = `<div style="font-size:12px; color:#16a34a; margin-top:10px; background:#dcfce7; padding:8px; border-radius:4px; border: 1px solid #bbf7d0;">✅ <b>Pgto Parcial:</b><br>${strPags}</div>`;
                     }
                 } catch(e){}
             }
@@ -1648,12 +1552,13 @@
             let opC = c.Operador || c.operador || '--';
 
             return `
-            <div class="comanda-card" data-id="${c.ID_Comanda}">
+            <div class="comanda-card" draggable="true" data-id="${c.ID_Comanda}">
                 <div class="comanda-header">
                     <h3>
                         👤 <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${c.Cliente || 'Sem Nome'}</span>
                         <button type="button" onclick="renomearComanda('${c.ID_Comanda}', '${clienteEscapado}')" style="background:transparent; border:none; cursor:pointer; font-size:14px; padding:0; margin-left:5px;" title="Renomear">✏️</button>
                     </h3>
+                    <span class="id-comanda">#${c.ID_Comanda}</span>
                 </div>
                 <div style="font-size: 11px; color: #64748b; margin-bottom: 10px; display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 5px;">
                     <span>📅 ${dataFormatada}</span>
@@ -1671,6 +1576,8 @@
             </div>`; 
         }).join(''); 
 
+        let cards = document.querySelectorAll('.comanda-card');
+        cards.forEach(card => { card.addEventListener('dragstart', handleDragStart); card.addEventListener('dragover', handleDragOver); card.addEventListener('dragenter', handleDragEnter); card.addEventListener('dragleave', handleDragLeave); card.addEventListener('drop', handleDrop); card.addEventListener('dragend', handleDragEnd); });
     }
 
     function editarComanda(idComanda) {
@@ -1690,7 +1597,7 @@
 
     function cancelarEdicaoComanda() { limparCarrinhoNovaVenda(); }
     function acaoBotaoComanda() { if(!turnoAtual) return alert("Abra o caixa!"); if(carrinho.length === 0) return alert("Carrinho vazio!"); if(idComandaEmEdicao) { atualizarComandaExistente(); } else { abrirModalComandas(); } }
-    async function atualizarComandaExistente() { let clienteSel = document.getElementById('selectClienteVenda').value; await reqPOST({ acao: "atualizar_comanda", id_comanda: idComandaEmEdicao, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual }); mostrarAviso("Comanda atualizada!"); cancelarEdicaoComanda(); recarregarDadosSilencioso(); }
+    async function atualizarComandaExistente() { let clienteSel = document.getElementById('selectClienteVenda').value; await reqPOST({ acao: "atualizar_comanda", id_comanda: idComandaEmEdicao, cliente: clienteSel, total: total, carrinho: carrinho, operador: operadorAtual }); alert("Comanda atualizada!"); cancelarEdicaoComanda(); recarregarDadosSilencioso(); }
     
     async function excluirComanda(idComanda) { if(confirm("ATENÇÃO: Deseja excluir a comanda e devolver TODOS os itens ao estoque sem cobrar?")) { await reqPOST({ acao: "excluir_comanda", id_comanda: idComanda, operador: operadorAtual }); recarregarDadosSilencioso(); } }
 
@@ -1906,7 +1813,7 @@
         if(!l || !s) return alert("Preencha Login e Senha!"); 
         if(bancoUsuarios.find(u => String(u.Login||'').toLowerCase() === l.toLowerCase())) return alert("Login já existe!"); 
         let btn = document.getElementById('btnAdicionarUser'); btn.innerText = "Aguarde..."; btn.disabled = true;
-        try { await reqPOST({ acao: "adicionar_usuario", login: l, senha: s, cargo: c }); document.getElementById('novoUserLogin').value = ""; document.getElementById('novoUserSenha').value = ""; await recarregarDadosSilencioso(); mostrarAviso("Usuário criado com sucesso!"); }  catch (error) { alert("Falha na comunicação. Verifique se o Google Apps Script está aceitando o campo 'cargo'."); } finally { btn.innerText = "Criar Operador"; btn.disabled = false; }
+        try { await reqPOST({ acao: "adicionar_usuario", login: l, senha: s, cargo: c }); document.getElementById('novoUserLogin').value = ""; document.getElementById('novoUserSenha').value = ""; await recarregarDadosSilencioso(); alert("Usuário criado com sucesso!"); } catch (error) { alert("Falha na comunicação. Verifique se o Google Apps Script está aceitando o campo 'cargo'."); } finally { btn.innerText = "Criar Operador"; btn.disabled = false; }
     }
     
     async function removerUsuarioSistema(login) { if(confirm(`Remover acesso de ${login}?`)) { await reqPOST({ acao: "remover_usuario", login: login }); recarregarDadosSilencioso(); } }
@@ -2110,216 +2017,15 @@
     }
 
     async function removerPagamentoParcial(idComanda, idTransacao) {
-        verificarPermissaoGerente('Estornar Pagamento Parcial', async () => {
-            if(confirm("Deseja realmente estornar este pagamento parcial?\\nO valor voltará a ficar como 'Falta' na comanda.")) {
-                await reqPOST({ acao: "remover_pagamento_parcial", id_comanda: idComanda, id_transacao: idTransacao, operador: operadorAtual });
-                alert("Pagamento estornado com sucesso!"); recarregarDadosSilencioso();
-            }
-        });
-    }
-
-        // Estilo super premium e flutuante no centro-baixo da tela
-        div.style.cssText = `
-            position: fixed; 
-            bottom: 40px; 
-            left: 50%; 
-            transform: translateX(-50%) translateY(20px); 
-            padding: 14px 24px; 
-            border-radius: 50px; 
-            font-weight: 600; 
-            font-size: 15px; 
-            color: #fff; 
-            z-index: 9999999; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15); 
-            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); 
-            opacity: 0; 
-            pointer-events: none; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            background: ${tipo === 'erro' ? '#ef4444' : '#10b981'};
-            border: 1px solid ${tipo === 'erro' ? '#dc2626' : '#059669'};
-        `;
-        
-        div.innerHTML = `${tipo === 'erro' ? '⚠️' : '✅'} ${mensagem}`;
-        
-        // Faz a animação de subir
-        setTimeout(() => {
-            div.style.opacity = '1';
-            div.style.transform = 'translateX(-50%) translateY(0)';
-        }, 10);
-
-        // Faz a animação de sumir
-        clearTimeout(tempoAviso);
-        tempoAviso = setTimeout(() => {
-            div.style.opacity = '0';
-            div.style.transform = 'translateX(-50%) translateY(20px)';
-        }, 3500);
-
-    // Define a cor (verde para sucesso, vermelho para erro)
-    div.style.backgroundColor = tipo === 'erro' ? '#ef4444' : '#10b981';
-    div.innerText = mensagem;
-    div.style.opacity = '1'; // Faz aparecer
-
-    // Limpa o tempo anterior (caso clique várias vezes rápido) e programa para sumir
-    clearTimeout(tempoAviso);
-    tempoAviso = setTimeout(() => {
-        div.style.opacity = '0'; // Faz sumir
-    }, 2500); // 2,5 segundos na tela
-
-    // ==========================================
-    // FUNÇÕES DE CUPOM
-    // ==========================================
-    function aplicarCupomCaixa() {
-        if(carrinho.length === 0) return alert("Adicione produtos primeiro!");
-        let cod = document.getElementById('inputCupom').value.toUpperCase().trim();
-        if (!cod) return alert("Digite o código do cupom!");
-
-        let cupom = bancoCupons.find(c => String(c.Codigo).toUpperCase() === cod);
-        if (!cupom) return alert("Cupom inválido ou não encontrado!");
-
-        let descontoAplicado = 0;
-
-        if (cupom.Tipo === "Coringa") {
-            let valorCoringa = prompt(`Cupom Coringa '${cod}' ativado!\nTotal Atual: R$ ${total.toFixed(2)}\nQual o valor do desconto em R$?`);
-            if (!valorCoringa) return;
-            descontoAplicado = parseFloat(valorCoringa.replace(',', '.')) || 0;
-        } else if (cupom.Tipo === "Fixo") {
-            descontoAplicado = parseFloat(String(cupom.Valor).replace(',', '.'));
-        } else if (cupom.Tipo === "Porcentagem") {
-            let pct = parseFloat(String(cupom.Valor).replace(',', '.')) / 100;
-            descontoAplicado = total * pct;
-        }
-
-        if (descontoAplicado <= 0) return alert("Valor de desconto inválido!");
-        if (descontoAplicado > total) return alert("O desconto não pode ser maior que o total da compra!");
-
-        // Remove cupom antigo se houver para não acumular
-        let indexCupomAntigo = carrinho.findIndex(i => String(i.codigo) === 'CUPOM');
-        if(indexCupomAntigo !== -1) {
-            total -= (carrinho[indexCupomAntigo].preco * carrinho[indexCupomAntigo].qtd);
-            carrinho.splice(indexCupomAntigo, 1);
-        }
-
-        carrinho.push({ codigo: 'CUPOM', nome: `Cupom (${cod})`, preco: -descontoAplicado, qtd: 1 });
-        total -= descontoAplicado; 
-        atualizarCarrinho();
-        document.getElementById('inputCupom').value = "";
-        mostrarAviso(`Cupom ${cod} aplicado com sucesso!`);
-    }
-
-    async function salvarCupomBanco() {
-        let cod = document.getElementById('novoCupomCod').value.toUpperCase().trim();
-        let tipo = document.getElementById('novoCupomTipo').value;
-        let valor = document.getElementById('novoCupomValor').value || 0;
-
-        if (!cod) return alert("O código do cupom é obrigatório!");
-
-        await reqPOST({ acao: "adicionar_cupom", codigo: cod, tipo: tipo, valor: valor });
-        mostrarAviso("Cupom criado!");
-        document.getElementById('novoCupomCod').value = "";
-        document.getElementById('novoCupomValor').value = "";
-        recarregarDadosSilencioso();
-    }
-
-    async function removerCupom(cod) {
-        if(confirm(`Tem certeza que deseja apagar o cupom ${cod}?`)) {
-            await reqPOST({ acao: "remover_cupom", codigo: cod });
-            recarregarDadosSilencioso();
-        }
-    }
-
-    function atualizarListaCupons() {
-        let tbody = document.getElementById('listaCuponsGestao');
-        if(!tbody) return;
-        
-        tbody.innerHTML = bancoCupons.map(c => `<tr>
-            <td style="font-weight:bold; color:#0ea5e9;">${c.Codigo}</td>
-            <td>${c.Tipo}</td>
-            <td style="font-weight:bold;">${c.Tipo === 'Coringa' ? 'Definido na hora' : c.Valor}</td>
-            <td><button type="button" class="btn-vermelho" onclick="removerCupom('${c.Codigo}')">Apagar</button></td>
-        </tr>`).join('');
-
-        // Montar Gráfico
-        let contagem = {};
-        bancoVendas.forEach(v => {
-            if(!v.Itens_Vendidos) return;
-            let itensStr = String(v.Itens_Vendidos || '').split('(')[0];
-            itensStr.split(',').forEach(item => {
-                let match = item.trim().match(/^(\d+)x\s+Cupom \((.+)\)$/);
-                if(match) {
-                    let codCupom = match[2];
-                    contagem[codCupom] = (contagem[codCupom] || 0) + 1;
-                }
-            });
-        });
-
-        if (window.chartUsoCupons) window.chartUsoCupons.destroy();
-        let ctx = document.getElementById('graficoUsoCupons');
-        if (ctx && Object.keys(contagem).length > 0) {
-            window.chartUsoCupons = new Chart(ctx, { 
-                type: 'doughnut', 
-                data: { 
-                    labels: Object.keys(contagem), 
-                    datasets: [{ data: Object.values(contagem), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#a855f7'] }] 
-                }, 
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } 
-            });
-        }
+        verificarPermissaoGerente('Estornar Pagamento Parcial', async () => {
+            if(confirm("Deseja realmente estornar este pagamento parcial?\\nO valor voltará a ficar como 'Falta' na comanda.")) {
+                document.getElementById('status-bar').style.display = 'block'; document.getElementById('status-bar').innerText = "A estornar pagamento...";
+                await reqPOST({ acao: "remover_pagamento_parcial", id_comanda: idComanda, id_transacao: idTransacao, operador: operadorAtual });
+                alert("Pagamento estornado com sucesso!"); recarregarDadosSilencioso();
+            }
+        });
     }
 
-    /* =========================================================
-       ✨ TOAST PREMIUM (Substitui os "alerts" feios pretos) 
-       ========================================================= */
-    let tempoAviso;
-    function mostrarAviso(mensagem, tipo = 'sucesso') {
-        let div = document.getElementById('toast-aviso');
-        
-        if (!div) {
-            div = document.createElement('div');
-            div.id = 'toast-aviso';
-            document.body.appendChild(div);
-        }
-
-        // Estilo super premium e flutuante no centro-baixo da tela
-        div.style.cssText = `
-            position: fixed; 
-            bottom: 40px; 
-            left: 50%; 
-            transform: translateX(-50%) translateY(20px); 
-            padding: 14px 24px; 
-            border-radius: 50px; 
-            font-weight: 600; 
-            font-size: 15px; 
-            color: #fff; 
-            z-index: 9999999; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15); 
-            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); 
-            opacity: 0; 
-            pointer-events: none; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            background: ${tipo === 'erro' ? '#ef4444' : '#10b981'};
-            border: 1px solid ${tipo === 'erro' ? '#dc2626' : '#059669'};
-        `;
-        
-        div.innerHTML = `${tipo === 'erro' ? '⚠️' : '✅'} ${mensagem}`;
-        
-        // Faz a animação de subir
-        setTimeout(() => {
-            div.style.opacity = '1';
-            div.style.transform = 'translateX(-50%) translateY(0)';
-        }, 10);
-
-        // Faz a animação de sumir
-        clearTimeout(tempoAviso);
-        tempoAviso = setTimeout(() => {
-            div.style.opacity = '0';
-            div.style.transform = 'translateX(-50%) translateY(20px)';
-        }, 3500);
-    }
-    
 </script>
 
 </body>
