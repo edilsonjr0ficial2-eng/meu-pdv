@@ -1454,8 +1454,17 @@
         } 
         
         if (prod) { 
-            // Ocultado e removido popup de "Quem pegou" conforme solicitado
-            let consumidorNome = document.getElementById('consumidorInput').value.trim();
+            // --- NOVO: Popup imediato perguntando quem pegou ---
+            let consumidorNome = prompt(`Quem pegou o produto: ${prod.Nome_Produto}? \n(Deixe em branco se for para a conta geral)`);
+            
+            // Se o operador clicar em "Cancelar" no popup, interrompe e não adiciona o produto
+            if (consumidorNome === null) {
+                document.getElementById('codigoInput').value = ""; // Limpa o input
+                return; 
+            }
+            
+            consumidorNome = consumidorNome.trim();
+            // ---------------------------------------------------
 
             let preco = parseFloat(String(prod.Preco_Venda || 0).replace(',','.')) || 0; 
             let qtdMult = parseInt(document.getElementById('qtdInput').value) || 1;
@@ -1471,7 +1480,8 @@
             atualizarCarrinho(); 
             
             document.getElementById('qtdInput').value = "1"; 
-            document.getElementById('consumidorInput').value = ""; 
+            // O input de consumidor oculto não é mais necessário para essa ação
+            
             if (window.innerWidth > 768) document.getElementById('codigoInput').focus();
         } else { 
             mostrarToast("Produto não encontrado!", "erro"); 
