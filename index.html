@@ -1235,7 +1235,7 @@
             
         } 
         else if (acao.tipo === 'comanda') {
-            await reqPOST({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr + acao.msgExtra });
+            await reqPOST({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr + acao.msgExtra, valor: totalPagoFinal });
             recarregarDadosSilencioso();
             
             let comandaImpressao = bancoComandas.find(c => String(c.ID_Comanda || '') === String(acao.id_comanda));
@@ -1248,7 +1248,7 @@
             if (totalPagoFinal >= acao.valorTotal - 0.01) {
                 document.getElementById('tela-sincronizacao').style.display = 'flex';
                 
-                await reqPOST({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr + " (Liquidação Final)" });
+                await reqPOST({ acao: "cobrar_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr + " (Liquidação Final)", valor: totalPagoFinal });
                 recarregarDadosSilencioso();
                 limparCarrinhoNovaVenda();
                 
@@ -1259,7 +1259,7 @@
                     imprimirCupao(pagadorNome !== "Não informado" ? pagadorNome : acao.cliente, iArr, acao.valorTotal);
                 }
             } else {
-                await reqPOST({ acao: "pagamento_parcial_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr, valor_pago: totalPagoFinal });
+                await reqPOST({ acao: "pagamento_parcial_comanda", id_comanda: acao.id_comanda, operador: operadorAtual, pagador: pagadorNome, forma_pagamento: formaPagStr, valor: totalPagoFinal, valor_pago: totalPagoFinal });
                 recarregarDadosSilencioso();
                 pagamentosComandaAtual += totalPagoFinal;
                 atualizarCarrinho();
