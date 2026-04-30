@@ -1324,30 +1324,57 @@
     }
     
 async function aplicarDescontoCaixa() {
-    // ... (validações de carrinho vazio e valor) ...
-    let motivo = prompt("Qual o motivo do desconto?");
-    let nomeDesconto = motivo ? `Desconto (${motivo})` : "Desconto";
+        if(carrinho.length === 0) { 
+            mostrarToast("Adicione produtos primeiro!", "erro"); 
+            return; 
+        }
+        
+        let descStr = prompt(`Total Atual: R$ ${total.toFixed(2)}\n\nDigite o valor do desconto (Ex: 10,00):`, "0,00");
+        if(!descStr) return; 
+        
+        let valDesc = parseFloat(descStr.replace(',', '.')); 
+        if(isNaN(valDesc) || valDesc <= 0) return;
+        if(valDesc > total) { 
+            mostrarToast("Desconto maior que o total!", "erro"); 
+            return; 
+        }
 
-    if (idComandaEmEdicao) {
-        // SE FOR COMANDA: Grava diretamente no servidor na hora!
-        document.getElementById('tela-sincronizacao').style.display = 'flex';
-        await reqPOST({ 
-            acao: "desconto_comanda", 
-            id_comanda: idComandaEmEdicao, 
-            valor_desconto: valDesc,
-            item: { codigo: 'DESC', nome: nomeDesconto, preco: -valDesc, qtd: 1 }
-            // ...
-        });
-        mostrarToast("Desconto gravado na comanda!", "sucesso");
-        await recarregarDadosSilencioso();
-        editarComanda(idComandaEmEdicao); // Atualiza a vista
-    } else {
-        // SE FOR VENDA NOVA: Adiciona ao carrinho normalmente
-        carrinho.push({ codigo: 'DESC', nome: nomeDesconto, preco: -valDesc, qtd: 1 });
-        total -= valDesc; 
-        atualizarCarrinho();
+        let motivo = prompt("Qual o motivo do desconto?");
+        if (motivo === null) return; 
+        
+        let nomeDesconto = motivo.trim() !== "" ? `Desconto (${motivo.trim()})` : "Desconto (Motivo não informado)";
+
+        if (idComandaEmEdicao) {
+            // Grava diretamente no servidor na hora!
+            document.getElementById('tela-sincronizacao').style.display = 'flex';
+            
+            try {
+                let itemDesconto = { codigo: 'DESC', nome: nomeDesconto, preco: -valDesc, qtd: 1, consumidor: "" };
+                await reqPOST({ 
+                    acao: "desconto_comanda", 
+                    id_comanda: idComandaEmEdicao, 
+                    valor_desconto: valDesc,
+                    motivo: nomeDesconto,
+                    item: itemDesconto,
+                    operador: operadorAtual 
+                });
+                mostrarToast("Desconto gravado na comanda!", "sucesso");
+                await recarregarDadosSilencioso();
+                editarComanda(idComandaEmEdicao); // Atualiza a vista
+            } catch (erro) {
+                mostrarToast("Erro ao comunicar com o servidor.", "erro");
+                console.error(erro);
+            } finally {
+                // O FINALLY GARANTE QUE A RAQUETE SOME SEMPRE, COM OU SEM ERRO!
+                document.getElementById('tela-sincronizacao').style.display = 'none';
+            }
+        } else {
+            // SE FOR VENDA NOVA: Adiciona ao carrinho normalmente
+            carrinho.push({ codigo: 'DESC', nome: nomeDesconto, preco: -valDesc, qtd: 1, consumidor: "" });
+            total -= valDesc; 
+            atualizarCarrinho();
+        }
     }
-}
 
     // --- NOVA LÓGICA DE TECLADO NAS SETAS (SUBSTITUI O KEYPRESS ANTIGO) ---
     let indexFocadoDropdown = -1; // Controle da posição da seta
